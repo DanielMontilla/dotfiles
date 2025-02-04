@@ -8,7 +8,9 @@
 
     ./../packages/git.nix
     ./../packages/neovim.nix
+    ./../packages/vscode.nix
     ./../packages/firefox.nix
+    ./../packages/spotify.nix
     ./../packages/hyprland.nix
     ./../packages/bitwarden.nix
   ];
