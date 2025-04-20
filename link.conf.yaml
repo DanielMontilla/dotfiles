@@ -1,0 +1,14 @@
+- defaults:
+    link:
+      relink: true
+      create: true
+
+- clean: ['~/.config']
+
+- link:
+    ~/.config/nvim:
+      path: neovim/
+    
+    ~/.config/hypr:
+      path: hyprland/
+      force: true
