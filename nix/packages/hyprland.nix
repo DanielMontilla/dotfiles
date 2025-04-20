@@ -3,14 +3,13 @@
 { config, pkgs, ... }:
 
 {
-  environment.systemPackages = [ pkgs.hyprland ];
 
-  programs.hyprland = {
-    enable = true;
-    xwayland.enable = true;
-    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
-    portalPackage = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
-  };
+	environment.systemPackages = [ pkgs.kitty pkgs.wofi ];
+
+	programs.hyprland = {
+		enable = true;
+		withUWSM = true;
+	};
 
   environment.sessionVariables = {
     WLR_NO_HARDWARE_CURSORS = "1";
