@@ -6,9 +6,4 @@
 - clean: ['~/.config']
 
 - link:
-    ~/.config/nvim:
-      path: neovim/
-    
-    ~/.config/hypr:
-      path: hyprland/
-      force: true
+    ~/.config/sway/config: sway/config
