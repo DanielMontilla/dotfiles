@@ -39,10 +39,6 @@
         # Hyprland
         pkgs.wayland
         pkgs.waybar
-        pkgs.swaynotificationcenter
-        pkgs.cava
-        pkgs.pavucontrol
-        pkgs.btop
       ];
     in {
       packages.${system}.default = pkgs.buildEnv {

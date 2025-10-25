@@ -23,3 +23,6 @@
 
     ~/.config/nvim/:
       path: shared/neovim/*
+
+    ~/.config/waybar/:
+      path: bulblax/waybar/*
