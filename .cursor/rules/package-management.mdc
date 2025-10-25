@@ -1,0 +1,143 @@
+---
+alwaysApply: true
+---
+# Package Management
+
+This system uses **Nix** for declarative package management. All packages are declared in [flake.nix](mdc:flake.nix).
+
+## Package Declaration
+
+**All packages must be declared in [flake.nix](mdc:flake.nix)** in the `my-packages` array.
+
+Packages are organized by category:
+- `# System` - Core system utilities
+- `# Fonts` - Font packages (use `pkgs.nerd-fonts.*`)
+- `# Terminal` - Terminal tools and shells
+- `# Apps` - GUI applications
+- `# Hyprland` - Wayland/Hyprland related packages
+
+## Checking Installed Packages
+
+### List All Installed Profile
+```bash
+nix profile list
+```
+This shows the current profile(s) with their flake location and store paths.
+
+### View Profile History
+```bash
+nix profile history
+```
+Shows all versions of your profile over time with changes.
+
+### Check Available Binaries
+```bash
+ls ~/.nix-profile/bin
+```
+Lists all executables installed in your profile.
+
+### View Packages from flake.nix
+Since all packages are declared in [flake.nix](mdc:flake.nix), you can simply read that file to see what's installed.
+
+## Adding New Packages
+
+1. **Open [flake.nix](mdc:flake.nix)**
+
+2. **Add the package** to the `my-packages` array in the appropriate category:
+   ```nix
+   my-packages = [
+     # System
+     pkgs.git
+     pkgs.dotbot
+     
+     # Apps
+     pkgs.firefox
+     pkgs.your-new-package  # Add here
+   ];
+   ```
+
+3. **Install the package**: Run from the dotfiles root:
+   ```bash
+   ./install
+   ```
+   This upgrades your Nix profile with the new package(s).
+
+## Updating Packages
+
+To update all packages to the latest versions:
+
+1. **Update the flake lock** (updates nixpkgs):
+   ```bash
+   nix flake update
+   ```
+
+2. **Reinstall the profile**:
+   ```bash
+   ./install
+   ```
+
+Or do both in one command:
+```bash
+nix flake update && ./install
+```
+
+## Removing Packages
+
+1. **Remove the package line** from [flake.nix](mdc:flake.nix)
+2. **Update the profile**:
+   ```bash
+   ./install
+   ```
+
+The package will be removed from your environment.
+
+## Finding Package Names
+
+Search for packages in nixpkgs:
+```bash
+nix search nixpkgs <package-name>
+```
+
+Examples:
+```bash
+nix search nixpkgs waybar
+nix search nixpkgs rofi
+nix search nixpkgs "nerd-fonts"
+```
+
+## Rollback to Previous Version
+
+If something breaks after an update:
+
+```bash
+# View available versions
+nix profile history
+
+# Rollback to a specific version (e.g., version 35)
+nix profile rollback --to 35
+```
+
+## Example Workflows
+
+### Adding rofi-wayland
+1. Open [flake.nix](mdc:flake.nix)
+2. Add in the Hyprland section:
+   ```nix
+   # Hyprland
+   pkgs.wayland
+   pkgs.waybar
+   pkgs.rofi-wayland  # New
+   ```
+3. Run `./install`
+
+### Updating All Packages
+```bash
+nix flake update && ./install
+```
+
+### Checking What's Installed
+```bash
+nix profile list
+# or
+cat flake.nix  # See declared packages
+```

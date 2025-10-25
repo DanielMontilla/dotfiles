@@ -1,0 +1,70 @@
+---
+appliesTo:
+  - "bulblax/waybar/**"
+  - "shared/hyprland/waybar.conf"
+---
+# Waybar Management
+
+This rule applies when working with waybar configuration files.
+
+## Configuration Locations
+
+- **Main config**: `bulblax/waybar/config.jsonc` (profile-specific)
+- **Styling**: `bulblax/waybar/style.css`
+- **Hyprland integration**: `shared/hyprland/waybar.conf`
+- **Scripts**: `bulblax/waybar/scripts/`
+
+## Useful Commands
+
+### Check if Waybar is Running
+```bash
+pgrep -a waybar
+```
+
+### Kill Waybar Process
+```bash
+pkill waybar
+```
+
+### Start Waybar
+Start through Hyprland (recommended - ensures proper Wayland environment):
+```bash
+hyprctl dispatch exec waybar
+```
+
+Or start directly (if in Wayland session):
+```bash
+waybar &
+```
+
+### Restart Waybar
+```bash
+pkill waybar && hyprctl dispatch exec waybar
+```
+
+### View Waybar Logs
+Waybar outputs to stdout/stderr, so you can capture logs:
+```bash
+pkill waybar
+waybar > /tmp/waybar.log 2>&1 &
+cat /tmp/waybar.log
+```
+
+## Keyboard Shortcut
+
+**SUPER + B** - Toggle waybar on/off (configured in Hyprland keybinds)
+
+This is often easier than manually killing/starting the process.
+
+## Configuration Updates
+
+After modifying waybar config files:
+1. Waybar should auto-reload in most cases
+2. If it doesn't, use **SUPER + B** twice (toggle off, then on)
+3. Or restart waybar: `pkill waybar && hyprctl dispatch exec waybar`
+
+## Common Issues
+
+- **"Bar need to run under Wayland"**: Always start waybar through `hyprctl dispatch exec waybar` or let Hyprland start it automatically
+- **Changes not applying**: Make sure the symlinks are correct (`~/.config/waybar/` → `dotfiles/bulblax/waybar/`)
+- **Module not showing**: Check `config.jsonc` has the module in the appropriate `modules-left`, `modules-center`, or `modules-right` array
