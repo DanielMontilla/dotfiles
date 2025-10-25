@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -e
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+FLAKE_TARGET="path:$SCRIPT_DIR"
+
+echo "Installing/updating profile from local flake..."
+
+# Check if we need to upgrade or add
+if nix profile list | grep -q "Flake attribute:.*packages.x86_64-linux.default"; then
+  echo "Upgrading existing profile..."
+  # Get the profile name
+  PROFILE_NAME=$(nix profile list | grep "^Name:" | awk '{print $2}' | sed 's/\x1b\[[0-9;]*m//g')
+  nix profile upgrade "$PROFILE_NAME"
+else
+  echo "Adding new profile..."
+  nix profile add "$FLAKE_TARGET"
+fi
+
+echo "Profile history:"
+nix profile history
+
+echo "Completed."
+

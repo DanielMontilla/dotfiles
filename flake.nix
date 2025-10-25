@@ -34,9 +34,15 @@
         pkgs.discord
         pkgs.brave
         pkgs.code-cursor
+        pkgs.slack
 
         # Hyprland
         pkgs.wayland
+        pkgs.waybar
+        pkgs.swaynotificationcenter
+        pkgs.cava
+        pkgs.pavucontrol
+        pkgs.btop
       ];
     in {
       packages.${system}.default = pkgs.buildEnv {
