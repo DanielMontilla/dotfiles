@@ -1,27 +1,45 @@
 {
-  description = "Daniel's NixOS configuration";
+  description = "Daniel's Nix configuration";
 
   inputs = {
-  	nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
 
   outputs = { self, nixpkgs }:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
       my-packages = [
-	pkgs.git
-	pkgs.firefox
-	pkgs.bitwarden
-	pkgs.neovim
-	pkgs.dotbot
-	pkgs.sway
-	pkgs.foot
+        # System
+        pkgs.git
+        pkgs.dotbot
+
+        # Fonts
+        pkgs.nerd-fonts.jetbrains-mono
+        pkgs.nerd-fonts.iosevka
+
+        # Terminal
+        pkgs.neovim
+        pkgs.starship
+
+        # Apps
+        pkgs.firefox
+        pkgs.bitwarden
+        pkgs.spotify
+        pkgs.discord
+        pkgs.brave
+        pkgs.code-cursor
+
+        # Hyprland
+        pkgs.wayland
       ];
     in {
-	packages.${system}.default = pkgs.buildEnv {
-		name = "home";
-		paths = my-packages;
-	};
+      packages.${system}.default = pkgs.buildEnv {
+        name = "home";
+        paths = my-packages;
+      };
     };
 }
