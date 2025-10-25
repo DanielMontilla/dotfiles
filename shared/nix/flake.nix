@@ -20,6 +20,7 @@
         # Fonts
         pkgs.nerd-fonts.jetbrains-mono
         pkgs.nerd-fonts.iosevka
+        pkgs.nerd-fonts.fira-code
 
         # Terminal
         pkgs.neovim

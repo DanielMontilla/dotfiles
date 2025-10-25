@@ -1,0 +1,25 @@
+- defaults:
+    link:
+      relink: true
+      create: true
+      glob: true
+      relative: true
+
+- clean: ['~/.config']
+
+- link:
+    ~/.config/fontconfig/fonts.conf: shared/fedora/fonts.conf
+
+    ~/.gitconfig: shared/git/gitconfig
+
+    ~/.config/fish/:
+      path: shared/fish/*
+
+    ~/.config/kitty/:
+      path: shared/kitty/*
+
+    ~/.config/hypr/:
+      path: shared/hyprland/*
+
+    ~/.config/nvim/:
+      path: shared/neovim/*
