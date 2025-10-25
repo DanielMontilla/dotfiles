@@ -10,6 +10,11 @@
 
     ~/.gitconfig: git/gitconfig
 
+    ~/.config/fish/:
+      path: fish/*
+      glob: true
+      relative: true
+
     ~/.config/kitty/:
       path: kitty/*
       glob: true

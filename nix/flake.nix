@@ -24,6 +24,7 @@
         # Terminal
         pkgs.neovim
         pkgs.starship
+        pkgs.fish
 
         # Apps
         pkgs.firefox
