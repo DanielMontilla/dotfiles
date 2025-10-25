@@ -6,4 +6,21 @@
 - clean: ['~/.config']
 
 - link:
-    ~/.config/sway/config: sway/config
+    ~/.config/fontconfig/fonts.conf: fedora/fonts.conf
+
+    ~/.gitconfig: git/gitconfig
+
+    ~/.config/kitty/:
+      path: kitty/*
+      glob: true
+      relative: true
+
+    ~/.config/hypr/:
+      path: hyprland/*
+      glob: true
+      relative: true
+
+    ~/.config/nvim/:
+      path: neovim/*
+      glob: true
+      relative: true
