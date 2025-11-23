@@ -12,10 +12,10 @@ if nix profile list | grep -q "Flake attribute:.*packages.x86_64-linux.default";
   echo "Upgrading existing profile..."
   # Get the profile name
   PROFILE_NAME=$(nix profile list | grep "^Name:" | awk '{print $2}' | sed 's/\x1b\[[0-9;]*m//g')
-  nix profile upgrade "$PROFILE_NAME"
+  nix profile upgrade "$PROFILE_NAME" --impure
 else
   echo "Adding new profile..."
-  nix profile add "$FLAKE_TARGET"
+  nix profile add "$FLAKE_TARGET" --impure
 fi
 
 echo "Profile history:"
