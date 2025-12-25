@@ -1,0 +1,7 @@
+command = fish
+window-decoration = false
+font-size = 16
+window-padding-x = 4
+window-padding-y = 4
+shell-integration = fish
+window-padding-color = extend

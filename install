@@ -2,24 +2,35 @@
 
 set -e
 
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-FLAKE_TARGET="path:$SCRIPT_DIR"
-
-echo "Installing/updating profile from local flake..."
-
-# Check if we need to upgrade or add
-if nix profile list | grep -q "Flake attribute:.*packages.x86_64-linux.default"; then
-  echo "Upgrading existing profile..."
-  # Get the profile name
-  PROFILE_NAME=$(nix profile list | grep "^Name:" | awk '{print $2}' | sed 's/\x1b\[[0-9;]*m//g')
-  nix profile upgrade "$PROFILE_NAME" --impure
-else
-  echo "Adding new profile..."
-  nix profile add "$FLAKE_TARGET" --impure
+# Check if host argument is provided
+if [ $# -eq 0 ]; then
+    echo "Error: Host argument is required."
+    echo "Usage: $0 <host>"
+    echo "Example: $0 framework"
+    exit 1
 fi
 
-echo "Profile history:"
-nix profile history
+host="$1"
 
-echo "Completed."
+NIXOS_DIR="${HOME}/dotfiles/nixos"
+
+# Check if nixos directory exists
+if [ ! -d "$NIXOS_DIR" ]; then
+    echo "Error: NixOS directory '$NIXOS_DIR' does not exist."
+    exit 1
+fi
+
+# Check if host directory exists
+HOST_DIR="${NIXOS_DIR}/hosts/${host}"
+if [ ! -d "$HOST_DIR" ]; then
+    echo "Error: Host directory '$HOST_DIR' does not exist."
+    exit 1
+fi
+
+echo "Using host: $host"
+echo "Rebuilding NixOS configuration..."
+
+cd "${NIXOS_DIR}"
+
+sudo nixos-rebuild switch --flake ".#${host}" "${@:2}"
 

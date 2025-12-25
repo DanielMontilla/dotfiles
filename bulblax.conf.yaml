@@ -8,8 +8,6 @@
 - clean: ['~/.config']
 
 - link:
-    ~/.config/fontconfig/fonts.conf: shared/fedora/fonts.conf
-
     ~/.gitconfig: shared/git/gitconfig
 
     ~/.config/fish/:
@@ -24,5 +22,13 @@
     ~/.config/nvim/:
       path: shared/neovim/*
 
-    ~/.config/waybar/:
-      path: bulblax/waybar/*
+    ~/.config/ghostty/:
+      path: shared/ghostty/*
+
+    ~/.config/starship.toml: shared/starship/starship.toml
+
+    ~/.config/quickshell/:
+      path: shared/quickshell/*
+
+    ~/.config/Cursor/User/:
+      path: shared/cursor/*
