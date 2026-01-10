@@ -5,9 +5,12 @@
       url = "github:Nomadcxx/sysc-greet";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    opencode-flake = {
+      url = "github:anomalyco/opencode/dev";
+    };
 	};
 
-	outputs = { self, nixpkgs, sysc-greet, ... }@inputs: {
+	outputs = { self, nixpkgs, sysc-greet, opencode-flake, ... }@inputs: {
 		nixosConfigurations.framework = nixpkgs.lib.nixosSystem {
 			system = "x86_64-linux";
 			specialArgs = { inherit inputs; };

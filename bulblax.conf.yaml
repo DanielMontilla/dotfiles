@@ -5,7 +5,10 @@
       glob: true
       relative: true
 
-- clean: ['~/.config']
+- clean:
+    ~/:
+      force: true
+      recursive: true
 
 - link:
     ~/.gitconfig: shared/git/gitconfig
@@ -20,7 +23,7 @@
       path: shared/hyprland/*
 
     ~/.config/nvim/:
-      path: shared/neovim/*
+      path: shared/neovim/lazy/*
 
     ~/.config/ghostty/:
       path: shared/ghostty/*

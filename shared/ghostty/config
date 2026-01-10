@@ -1,6 +1,6 @@
 command = fish
 window-decoration = false
-font-size = 16
+font-size = 14
 window-padding-x = 4
 window-padding-y = 4
 shell-integration = fish

@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
 
 {
   programs.hyprland.enable = true;
@@ -12,7 +12,7 @@
     neovim
     dotbot
     ghostty
-    wofi
+    kitty
     fish
     brave
     spotify
@@ -21,9 +21,16 @@
     starship
     quickshell
     obsidian
-    opencode
+    inputs.opencode-flake.packages.${pkgs.system}.default
     brightnessctl
     eza
+    yazi
+    gcc
+  ];
+
+  programs.nix-ld.enable = true;
+  programs.nix-ld.libraries = with pkgs; [
+    tree-sitter
   ];
 }
 
