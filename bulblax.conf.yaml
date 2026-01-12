@@ -6,9 +6,22 @@
       relative: true
 
 - clean:
-    ~/:
+    '~/.config/fish/':
       force: true
-      recursive: true
+    '~/.config/kitty/':
+      force: true
+    '~/.config/hypr/':
+      force: true
+    '~/.config/nvim/':
+      force: true
+    '~/.config/ghostty/':
+      force: true
+    '~/.config/quickshell/':
+      force: true
+    '~/.config/Cursor/User/':
+      force: true
+    '~/.config/zellij/':
+      force: true
 
 - link:
     ~/.gitconfig: shared/git/gitconfig
@@ -35,3 +48,6 @@
 
     ~/.config/Cursor/User/:
       path: shared/cursor/*
+
+    ~/.config/zellij/:
+      path: shared/zellij/*

@@ -26,6 +26,9 @@
     eza
     yazi
     gcc
+    slack
+    lazygit
+    zellij
   ];
 
   programs.nix-ld.enable = true;

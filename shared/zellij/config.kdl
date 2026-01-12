@@ -1,0 +1,67 @@
+theme "one-half-dark"
+
+mouse_mode true
+
+pane_frames false
+
+default_shell "fish"
+
+show_startup_tips false
+
+keybinds clear-defaults=true {
+    normal {
+        bind "Ctrl g" { SwitchToMode "Normal"; }
+        bind "Ctrl p" { SwitchToMode "Pane"; }
+        bind "Ctrl t" { SwitchToMode "Tab"; }
+        bind "Ctrl r" { SwitchToMode "Resize"; }
+        bind "Ctrl s" { SwitchToMode "Session"; }
+        bind "Ctrl q" { Quit; }
+    }
+    
+    pane {
+        bind "h" "Left" { MoveFocus "Left"; }
+        bind "l" "Right" { MoveFocus "Right"; }
+        bind "k" "Up" { MoveFocus "Up"; }
+        bind "j" "Down" { MoveFocus "Down"; }
+        bind "p" { SwitchToMode "Normal"; }
+        bind "|" { NewPane; SwitchToMode "Normal"; }
+        bind "-" { NewPane "Down"; SwitchToMode "Normal"; }
+        bind "q" { CloseFocus; SwitchToMode "Normal"; }
+    }
+    
+    tab {
+        bind "h" "Left" { GoToPreviousTab; }
+        bind "l" "Right" { GoToNextTab; }
+        bind "1" { GoToTab 1; SwitchToMode "Normal"; }
+        bind "2" { GoToTab 2; SwitchToMode "Normal"; }
+        bind "3" { GoToTab 3; SwitchToMode "Normal"; }
+        bind "4" { GoToTab 4; SwitchToMode "Normal"; }
+        bind "5" { GoToTab 5; SwitchToMode "Normal"; }
+        bind "6" { GoToTab 6; SwitchToMode "Normal"; }
+        bind "7" { GoToTab 7; SwitchToMode "Normal"; }
+        bind "8" { GoToTab 8; SwitchToMode "Normal"; }
+        bind "9" { GoToTab 9; SwitchToMode "Normal"; }
+        bind "n" { NewTab; SwitchToMode "Normal"; }
+        bind "x" { CloseTab; SwitchToMode "Normal"; }
+        bind "Enter" { SwitchToMode "Normal"; }
+    }
+    
+    resize {
+        bind "h" "Left" { Resize "Increase Left"; }
+        bind "l" "Right" { Resize "Increase Right"; }
+        bind "k" "Up" { Resize "Increase Up"; }
+        bind "j" "Down" { Resize "Increase Down"; }
+        bind "H" { Resize "Decrease Left"; }
+        bind "L" { Resize "Decrease Right"; }
+        bind "K" { Resize "Decrease Up"; }
+        bind "J" { Resize "Decrease Down"; }
+        bind "=" "+" { Resize "Increase"; }
+        bind "-" "_" { Resize "Decrease"; }
+        bind "p" { SwitchToMode "Normal"; }
+    }
+    
+    session {
+        bind "d" { Detach; }
+        bind "p" { SwitchToMode "Normal"; }
+    }
+}

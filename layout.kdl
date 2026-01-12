@@ -1,0 +1,23 @@
+layout {
+    tab name="opencode" {
+        pane command="opencode"
+    }
+    
+    tab name="neovim" {
+        pane command="nvim"
+    }
+    
+    tab name="terminal" {
+        pane command="fish"
+    }
+    
+    tab_template name="default" {
+        pane command="fish"
+    }
+}
+
+plugins {
+    tab-bar location="zellij:tab-bar"
+    status-bar location="zellij:status-bar"
+    compact-bar location="zellij:compact-bar"
+}
