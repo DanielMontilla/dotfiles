@@ -1,10 +1,10 @@
 {
   "editor.lineHeight": 1.2,
-  "editor.fontSize": 18,
+  "editor.fontSize": 16,
   "editor.fontFamily": "'Fira Code', 'Droid Sans Mono', 'monospace', monospace",
   "workbench.sideBar.location": "right",
-  "aichat.editor.chatPanelLocation": "left",
   "window.commandCenter": true,
-  "workbench.colorTheme": "Cursor Dark Midnight"
+  "workbench.colorTheme": "Cursor Dark Midnight",
+  "cursor.composer.textSizeScale": 1.1,
 }
 
