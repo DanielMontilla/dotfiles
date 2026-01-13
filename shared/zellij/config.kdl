@@ -6,6 +6,8 @@ pane_frames false
 
 default_shell "fish"
 
+default_layout "layout"
+
 show_startup_tips false
 
 keybinds clear-defaults=true {

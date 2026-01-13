@@ -1,0 +1,36 @@
+layout {
+  // Tab bar at the top
+  tab_template name="ui" {
+    pane size=1 borderless=true {
+      plugin location="tab-bar"
+    }
+    children
+    pane size=2 borderless=true {
+      plugin location="status-bar"
+    }
+  }
+
+  // Tab 1: opencode
+  ui name="opencode" focus=true {
+    pane {
+      command "fish"
+      args "-c" "opencode"
+    }
+  }
+
+  // Tab 2: nvim
+  ui name="nvim" {
+    pane {
+      command "fish"
+      args "-c" "nvim"
+    }
+  }
+
+  // Tab 3: terminal
+  ui name="term" {
+    pane {
+      command "fish"
+    }
+  }
+}
+
