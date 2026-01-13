@@ -1,0 +1,16 @@
+- defaults:
+    link:
+      relink: true
+      create: true
+      glob: true
+      relative: true
+
+- clean:
+    '~/.config/nvim/':
+      force: true
+
+- link:
+    ~/.gitconfig: shared/git/gitconfig
+
+    ~/.config/nvim/:
+      path: shared/neovim/lazy/*

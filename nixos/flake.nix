@@ -19,5 +19,12 @@
         sysc-greet.nixosModules.default
 			];
 		};
+		nixosConfigurations.homelab = nixpkgs.lib.nixosSystem {
+			system = "x86_64-linux";
+			specialArgs = { inherit inputs; };
+			modules = [
+				./hosts/homelab/configuration.nix
+			];
+		};
 	};
 }
