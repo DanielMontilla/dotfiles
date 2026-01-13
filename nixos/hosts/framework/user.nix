@@ -24,7 +24,7 @@
   users.users.daniel = {
     isNormalUser = true;
     description = "Daniel Montilla";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "networkmanager" "wheel" "docker" ];
     packages = with pkgs; [];
   };
 }

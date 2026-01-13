@@ -7,6 +7,20 @@
 
   services.upower.enable = true;
 
+  virtualisation.docker.enable = true;
+
+  # TODO: move to own "theme" file
+  programs.dconf.enable = true;
+
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+  };
+
+  environment.sessionVariables = {
+    GTK_THEME = "Adwaita:dark";
+  };
+
   environment.systemPackages = with pkgs; [
     git
     neovim
@@ -15,11 +29,13 @@
     kitty
     fish
     brave
+    firefox
     spotify
     code-cursor
     bitwarden-desktop
     starship
     quickshell
+    wofi
     obsidian
     inputs.opencode-flake.packages.${pkgs.system}.default
     brightnessctl
@@ -29,6 +45,8 @@
     slack
     lazygit
     zellij
+    networkmanagerapplet
+    bruno
   ];
 
   programs.nix-ld.enable = true;
