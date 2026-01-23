@@ -47,6 +47,8 @@
     zellij
     networkmanagerapplet
     bruno
+    fastfetch
+    lm_sensors
   ];
 
   programs.nix-ld.enable = true;
