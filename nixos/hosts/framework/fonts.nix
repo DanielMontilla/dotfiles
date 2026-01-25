@@ -1,7 +1,7 @@
 { config, pkgs, ... }:
 
 {
-  environment.systemPackages = with pkgs; [
+  fonts.packages = with pkgs; [
     nerd-fonts.zed-mono
     nerd-fonts.fira-code
     nerd-fonts.jetbrains-mono
