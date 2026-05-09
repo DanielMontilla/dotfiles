@@ -18,13 +18,28 @@
         "type": "github"
       }
     },
+    "nix-flatpak": {
+      "locked": {
+        "lastModified": 1768656715,
+        "narHash": "sha256-Sbh037scxKFm7xL0ahgSCw+X2/5ZKeOwI2clqrYr9j4=",
+        "owner": "gmodena",
+        "repo": "nix-flatpak",
+        "rev": "123fe29340a5b8671367055b75a6e7c320d6f89a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "gmodena",
+        "repo": "nix-flatpak",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1766473571,
-        "narHash": "sha256-5G1NDO2PulBx1RoaA6U1YoUDX0qZslpPxv+n5GX6Qto=",
+        "lastModified": 1770136044,
+        "narHash": "sha256-tlFqNG/uzz2++aAmn4v8J0vAkV3z7XngeIIB3rM3650=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "76701a179d3a98b07653e2b0409847499b2a07d3",
+        "rev": "e576e3c9cf9bad747afcddd9e34f51d18c855b4e",
         "type": "github"
       },
       "original": {
@@ -36,11 +51,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1767966113,
-        "narHash": "sha256-mSTsvXa4WveSRJexsmCbm9dY17B1fKp7NLpJxllpQw4=",
+        "lastModified": 1768393167,
+        "narHash": "sha256-n2063BRjHde6DqAz2zavhOOiLUwA3qXt7jQYHyETjX8=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "5f02c91314c8ba4afe83b256b023756412218535",
+        "rev": "2f594d5af95d4fdac67fba60376ec11e482041cb",
         "type": "github"
       },
       "original": {
@@ -55,11 +70,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1768064238,
-        "narHash": "sha256-4ICaC5kgTCg1+ikDOzz5upEnWNujAYQnuHs0NS1D4ag=",
+        "lastModified": 1770204905,
+        "narHash": "sha256-5uLEC/3cLcpW0dtndfdWp9jTbIE0YZYDZA+zc+Olswo=",
         "owner": "anomalyco",
         "repo": "opencode",
-        "rev": "d5738f542c222bb5832a21f54e8348db88a3f7ba",
+        "rev": "af06175b1f293ea13d4165cee56db65fbbd56c65",
         "type": "github"
       },
       "original": {
@@ -71,6 +86,7 @@
     },
     "root": {
       "inputs": {
+        "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs",
         "opencode-flake": "opencode-flake",
         "sysc-greet": "sysc-greet"
@@ -84,11 +100,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1766579411,
-        "narHash": "sha256-6sKZ3rZn6guOVCFTdvcTGeBDw7+kMMjYA5CEaGK1ciY=",
+        "lastModified": 1769534350,
+        "narHash": "sha256-d8sMZdSHOsFgaOhVmK2w0Rm+edMgGP6Mq9k19WNkfa0=",
         "owner": "Nomadcxx",
         "repo": "sysc-greet",
-        "rev": "f33cb9cd6c2fa1e97bb1d0766485a92ef13c3063",
+        "rev": "64cbe4e99c2817cf0941b1db98a49935183da1cf",
         "type": "github"
       },
       "original": {
