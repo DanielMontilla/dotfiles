@@ -8,4 +8,13 @@
   "window.commandCenter": true,
   "workbench.colorTheme": "Cursor Dark Midnight",
   "cursor.composer.textSizeScale": 1.1,
+  "svelte.enable-ts-plugin": true,
+  "editor.mouseWheelScrollSensitivity": 5,
+  "editor.smoothScrolling": true,
+  "terminal.integrated.defaultProfile.linux": "fish",
+  "terminal.integrated.profiles.linux": {
+    "fish": {
+      "path": "fish"
+    }
+  }
 }
