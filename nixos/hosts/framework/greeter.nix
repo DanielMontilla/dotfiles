@@ -1,9 +1,82 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
+  environment.etc."greetd/hyprland-greeter.conf".text = ''
+    # Minimal Hyprland greeter config for sysc-greet
+    # Compatible with Hyprland 0.52+
+
+    monitor=,preferred,auto,auto
+
+    # Start kitty with sysc-greet
+    exec-once = kitty --config /etc/greetd/kitty.conf /run/current-system/sw/bin/sysc-greet
+
+    # Basic input settings
+    input {
+        kb_layout = us
+        kb_variant =
+        kb_model =
+        kb_options =
+        kb_rules =
+
+        follow_mouse = 1
+        touchpad {
+            natural_scroll = false
+        }
+    }
+
+    # General settings
+    general {
+        gaps_in = 0
+        gaps_out = 0
+        border_size = 0
+        layout = dwindle
+        allow_tearing = false
+    }
+
+    decoration {
+        rounding = 0
+        blur {
+            enabled = false
+        }
+        shadow {
+            enabled = false
+        }
+    }
+
+    animations {
+        enabled = false
+    }
+
+    layout {
+        dwindle {
+            pseudotile = false
+            preserve_split = false
+        }
+    }
+
+    # Window rules for greeter
+    windowrulev2 = fullscreen, class:^(kitty)$
+    windowrulev2 = opacity 0.0, class:^(wallpaper)$
+
+    # No tiling for wallpaper
+    windowrulev2 = float, class:^(wallpaper)$
+    windowrulev2 = size 100% 100%, class:^(wallpaper)$
+    windowrulev2 = move 0 0, class:^(wallpaper)$
+
+    # Misc settings - removed deprecated options
+    misc {
+        force_default_wallpaper = 0
+        disable_hyprland_logo = true
+    }
+
+    # Make sure kitty is focused on startup
+    exec-once = hyprctl dispatch focuswindow class:kitty
+  '';
+
   services.sysc-greet = {
     enable = true;
     compositor = "hyprland";
   };
-}
 
+  services.greetd.settings.default_session.command = lib.mkForce "${pkgs.hyprland}/bin/Hyprland -c /etc/greetd/hyprland-greeter.conf";
+}
