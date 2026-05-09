@@ -6,21 +6,27 @@
       relative: true
 
 - clean:
-    '~/.config/fish/':
+    "~/.config/fish/":
       force: true
-    '~/.config/kitty/':
+    "~/.config/kitty/":
       force: true
-    '~/.config/hypr/':
+    "~/.config/hypr/":
       force: true
-    '~/.config/nvim/':
+    "~/.config/nvim/":
       force: true
-    '~/.config/ghostty/':
+    "~/.config/ghostty/":
       force: true
-    '~/.config/quickshell/':
+    "~/.config/quickshell/":
       force: true
-    '~/.config/Cursor/User/':
+    "~/.config/Cursor/User/":
       force: true
-    '~/.config/zellij/':
+    "~/.config/zellij/":
+      force: true
+    "~/.config/zed/":
+      force: true
+    "~/.var/app/dev.zed.Zed/config/zed/":
+      force: true
+    "~/.config/qBittorrent/":
       force: true
 
 - link:
@@ -51,3 +57,12 @@
 
     ~/.config/zellij/:
       path: shared/zellij/*
+
+    ~/.config/zed/:
+      path: shared/zed/*
+
+    ~/.var/app/dev.zed.Zed/config/zed/:
+      path: shared/zed/*
+
+    ~/.config/qBittorrent/:
+      path: shared/qbittorrent/*
