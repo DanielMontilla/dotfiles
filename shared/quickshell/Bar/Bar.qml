@@ -48,6 +48,18 @@ PanelWindow {
       Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
     }
 
+    // Brightness control
+    Brightness {
+      panelWindow: bar
+      Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+    }
+
+    // Night mode (keyboard backlight + gamma)
+    Night {
+      panelWindow: bar
+      Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+    }
+
     // Battery indicator
     Battery {
       showPercentage: true
