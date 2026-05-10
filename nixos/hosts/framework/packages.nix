@@ -19,12 +19,14 @@ in
     ];
     packages = [
       "com.usebruno.Bruno"
-      # "dev.zed.Zed"  # using nixpkgs version instead
       "org.pgadmin.pgadmin4"
     ];
   };
 
-  programs.hyprland.enable = true;
+  # Niri compositor
+  programs.niri = {
+    enable = true;
+  };
 
   nixpkgs.config.allowUnfree = true;
 
@@ -45,7 +47,6 @@ in
 
   virtualisation.docker.enable = true;
 
-  # TODO: move to own "theme" file
   programs.dconf.enable = true;
 
   xdg.portal = {
@@ -64,6 +65,7 @@ in
     zed-editor
     dotbot
     ghostty
+    alacritty
     kitty
     wl-clipboard
     fish
@@ -92,6 +94,7 @@ in
     cursor-appimage
     glances
     btop
+    xdg-desktop-portal-gnome
   ];
 
   programs.fish.enable = true;

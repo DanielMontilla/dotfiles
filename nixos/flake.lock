@@ -1,23 +1,5 @@
 {
   "nodes": {
-    "flake-utils": {
-      "inputs": {
-        "systems": "systems"
-      },
-      "locked": {
-        "lastModified": 1731533236,
-        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "type": "github"
-      }
-    },
     "nix-flatpak": {
       "locked": {
         "lastModified": 1768656715,
@@ -51,11 +33,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1768393167,
-        "narHash": "sha256-n2063BRjHde6DqAz2zavhOOiLUwA3qXt7jQYHyETjX8=",
+        "lastModified": 1776683584,
+        "narHash": "sha256-NuTLMrr10Tng72hurYG8jYQ4XKK8wnpJmOGcPiis96g=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "2f594d5af95d4fdac67fba60376ec11e482041cb",
+        "rev": "9dd5558b06dbdacbf635a3dd36dce1b1a7ee3a89",
         "type": "github"
       },
       "original": {
@@ -70,11 +52,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1770204905,
-        "narHash": "sha256-5uLEC/3cLcpW0dtndfdWp9jTbIE0YZYDZA+zc+Olswo=",
+        "lastModified": 1778434562,
+        "narHash": "sha256-rwFQF5os/88lW6q1JPMjKZI3JJ0eHzHBZdP5kBoVuy8=",
         "owner": "anomalyco",
         "repo": "opencode",
-        "rev": "af06175b1f293ea13d4165cee56db65fbbd56c65",
+        "rev": "56d818fc348f677c1f371f22a4354e815a4de866",
         "type": "github"
       },
       "original": {
@@ -88,44 +70,7 @@
       "inputs": {
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs",
-        "opencode-flake": "opencode-flake",
-        "sysc-greet": "sysc-greet"
-      }
-    },
-    "sysc-greet": {
-      "inputs": {
-        "flake-utils": "flake-utils",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1769534350,
-        "narHash": "sha256-d8sMZdSHOsFgaOhVmK2w0Rm+edMgGP6Mq9k19WNkfa0=",
-        "owner": "Nomadcxx",
-        "repo": "sysc-greet",
-        "rev": "64cbe4e99c2817cf0941b1db98a49935183da1cf",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Nomadcxx",
-        "repo": "sysc-greet",
-        "type": "github"
-      }
-    },
-    "systems": {
-      "locked": {
-        "lastModified": 1681028828,
-        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
-        "owner": "nix-systems",
-        "repo": "default",
-        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-systems",
-        "repo": "default",
-        "type": "github"
+        "opencode-flake": "opencode-flake"
       }
     }
   },

@@ -6,6 +6,8 @@
       relative: true
 
 - clean:
+    "~/.config/niri/":
+      force: true
     "~/.config/fish/":
       force: true
     "~/.config/kitty/":
@@ -15,6 +17,8 @@
     "~/.config/nvim/":
       force: true
     "~/.config/ghostty/":
+      force: true
+    "~/.config/alacritty/alacritty.toml":
       force: true
     "~/.config/quickshell/":
       force: true
@@ -41,11 +45,17 @@
     ~/.config/hypr/:
       path: shared/hyprland/*
 
+    ~/.config/niri/:
+      path: shared/niri/*
+
     ~/.config/nvim/:
       path: shared/neovim/lazy/*
 
     ~/.config/ghostty/:
       path: shared/ghostty/*
+
+    ~/.config/alacritty/alacritty.toml:
+      path: shared/alacritty/config.toml
 
     ~/.config/starship.toml: shared/starship/starship.toml
 

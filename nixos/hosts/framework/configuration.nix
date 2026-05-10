@@ -15,7 +15,6 @@
   imports = [
     ./hardware-configuration.nix
     ./bootloader.nix
-    ./greeter.nix
     ./networking.nix
     ./user.nix
     ./packages.nix
