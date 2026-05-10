@@ -1,0 +1,22 @@
+// Window rules for niri
+// Adapted from hyprland window rules
+
+// Block maximize-to-edges for all apps (use open-maximized-to-edges false)
+window-rule {
+    match app-id=".*"
+    open-maximized-to-edges false
+    geometry-corner-radius 8
+}
+
+// Fix WezTerm initial configure bug
+window-rule {
+    match app-id=r#"^org\.wezfurlong\.wezterm$"#
+    default-column-width {}
+}
+
+// Firefox picture-in-picture as floating
+window-rule {
+    match app-id=r#"firefox$"#
+    match title="^Picture-in-Picture$"
+    open-floating true
+}

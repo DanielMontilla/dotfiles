@@ -1,0 +1,31 @@
+// Input configuration for niri
+// Adapted from hyprland input.conf
+
+input {
+    keyboard {
+        xkb {
+            layout "us"
+        }
+        numlock
+    }
+
+    touchpad {
+        tap
+        drag false
+        click-method "clickfinger"
+        natural-scroll
+        // accel-speed 0.2
+        // accel-profile "flat"
+    }
+
+    mouse {
+        // natural-scroll is handled per-device
+    }
+
+    trackpoint {
+        // trackpoint settings
+    }
+
+    // Disable focus-follows-mouse for click-to-focus
+    // focus-follows-mouse
+}

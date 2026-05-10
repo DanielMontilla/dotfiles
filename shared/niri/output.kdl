@@ -1,0 +1,9 @@
+// Output configuration for niri
+// Configured for the laptop display
+
+output "eDP-1" {
+    mode "2880x1920@120"
+    scale 2
+    transform "normal"
+    background-color "#111111"
+}

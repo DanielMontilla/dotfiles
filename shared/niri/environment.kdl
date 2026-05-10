@@ -1,0 +1,14 @@
+// Environment variables for niri
+// Required for apps to know they're in a Wayland session
+
+environment {
+    XDG_CURRENT_DESKTOP "niri"
+    XDG_SESSION_TYPE "wayland"
+    XDG_SESSION_DESKTOP "niri"
+    QT_QPA_PLATFORM "wayland"
+    GDK_BACKEND "wayland"
+    CLUTTER_BACKEND "wayland"
+    SDL_VIDEODRIVER "wayland"
+    MOZ_ENABLE_WAYLAND "1"
+    GTK_USE_PORTAL "0"
+}
