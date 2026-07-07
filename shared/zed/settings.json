@@ -1,8 +1,21 @@
 {
+  "collaboration_panel": {
+    "dock": "left"
+  },
+  "agent": {
+    "dock": "right",
+    "favorite_models": [],
+    "model_parameters": []
+  },
+  "git_panel": {
+    "dock": "left"
+  },
   "outline_panel": {
+    "dock": "left",
     "indent_size": 20.0,
   },
   "project_panel": {
+    "dock": "left",
     "indent_guides": {
       "show": "always",
     },
@@ -30,8 +43,8 @@
   "ui_font_size": 16,
   "buffer_font_size": 17.0,
   "theme": {
-    "mode": "system",
+    "mode": "dark",
     "light": "One Light",
-    "dark": "One Dark Pro",
+    "dark": "Tokyo Night Storm",
   },
 }
