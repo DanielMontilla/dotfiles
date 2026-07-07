@@ -21,6 +21,7 @@ input {
         tap
         drag false
         natural-scroll
+        scroll-factor vertical=0.3 horizontal=0.5
     }
 
     mouse {
@@ -43,6 +44,7 @@ gestures {
     }
 }
 
+spawn-at-startup "/home/daniel/dotfiles/shared/niri/screencast-restart.sh"
 spawn-at-startup "/run/current-system/sw/bin/quickshell"
 
 

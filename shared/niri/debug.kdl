@@ -1,0 +1,6 @@
+// Debug options
+// Forces D-Bus interfaces (screencast, etc.) to be created
+// even when session detection thinks we're not in a session
+debug {
+    dbus-interfaces-in-non-session-instances
+}

@@ -36,8 +36,12 @@ binds {
     // === Focus Movement (HJKL) ===
     Mod+H { focus-column-left; }
     Mod+L { focus-column-right; }
-    Mod+K { focus-window-up; }
-    Mod+J { focus-window-down; }
+
+    // === Workspace Navigation ===
+    Mod+J { focus-workspace-down; }
+    Mod+K { focus-workspace-up; }
+
+    // === Workspace Navigation ===
 
     
 
