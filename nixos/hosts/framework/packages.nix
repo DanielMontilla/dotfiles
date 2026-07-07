@@ -43,6 +43,15 @@ in
     };
   };
 
+  security.rtkit.enable = true;
+
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    pulse.enable = true;
+    wireplumber.enable = true;
+  };
+
   services.upower.enable = true;
 
   virtualisation.docker.enable = true;
@@ -51,18 +60,27 @@ in
 
   xdg.portal = {
     enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+    extraPortals = with pkgs; [
+      xdg-desktop-portal-gnome
+      xdg-desktop-portal-gtk
+    ];
+    config.niri = {
+      default = [ "gnome" "gtk" ];
+      "org.freedesktop.impl.portal.ScreenCast" = [ "gnome" ];
+      "org.freedesktop.impl.portal.Screenshot" = [ "gnome" ];
+    };
   };
 
   environment.localBinInPath = true;
   environment.sessionVariables = {
     GTK_THEME = "Adwaita:dark";
+    NIXOS_OZONE_WL = "1";
   };
 
   environment.systemPackages = with pkgs; [
     git
     neovim
-    zed-editor
+    inputs.nixpkgs-unstable.legacyPackages.${pkgs.system}.zed-editor
     dotbot
     ghostty
     alacritty
@@ -94,7 +112,6 @@ in
     cursor-appimage
     glances
     btop
-    xdg-desktop-portal-gnome
   ];
 
   programs.fish.enable = true;
