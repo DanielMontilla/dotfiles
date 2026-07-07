@@ -1,11 +1,12 @@
 {
 	inputs = {
 		nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+		nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 		nix-flatpak = {
 			url = "github:gmodena/nix-flatpak";
 		};
 		opencode-flake = {
-			url = "github:anomalyco/opencode/dev";
+			url = "github:anomalyco/opencode/56d818fc348f677c1f371f22a4354e815a4de866";
 		};
 	};
 
