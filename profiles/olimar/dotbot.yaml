@@ -1,0 +1,21 @@
+- defaults:
+    link:
+      relink: true
+      create: true
+      glob: true
+      relative: true
+
+- clean:
+    "~/.config/fish/":
+      force: true
+    "~/.config/nvim/":
+      force: true
+
+- link:
+    ~/.gitconfig: profiles/shared/git/gitconfig
+
+    ~/.config/fish/:
+      path: profiles/shared/fish/*
+
+    ~/.config/nvim/:
+      path: profiles/shared/neovim/lazy/*
