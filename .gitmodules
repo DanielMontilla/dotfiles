@@ -1,3 +1,6 @@
 [submodule "vendor/niri.wiki"]
 	path = vendor/niri.wiki
 	url = https://github.com/niri-wm/niri.wiki.git
+[submodule "vendor/skills"]
+	path = vendor/skills
+	url = https://github.com/DanielMontilla/skills.git
