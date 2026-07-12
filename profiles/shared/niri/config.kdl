@@ -44,7 +44,7 @@ gestures {
     }
 }
 
-spawn-at-startup "/home/daniel/dotfiles/shared/niri/screencast-restart.sh"
+spawn-at-startup "/home/daniel/dotfiles/profiles/shared/niri/screencast-restart.sh"
 spawn-at-startup "/run/current-system/sw/bin/quickshell"
 
 

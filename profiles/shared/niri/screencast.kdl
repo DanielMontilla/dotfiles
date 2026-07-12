@@ -2,4 +2,4 @@
 // Niri exposes org.gnome.Mutter.ScreenCast on D-Bus,
 // but xdg-desktop-portal-gnome must start AFTER niri is ready
 spawn-at-startup "dbus-update-activation-environment" "--systemd" "WAYLAND_DISPLAY" "XDG_CURRENT_DESKTOP=niri"
-spawn-at-startup "/home/daniel/dotfiles/shared/niri/screencast-restart.sh"
+spawn-at-startup "/home/daniel/dotfiles/profiles/shared/niri/screencast-restart.sh"

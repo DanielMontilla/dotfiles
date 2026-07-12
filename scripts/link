@@ -12,12 +12,12 @@ fi
 
 profile="$1"
 
-BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 cd "${BASEDIR}"
 
 # Use profile-specific config file
-CONFIG="${profile}.conf.yaml"
+CONFIG="profiles/${profile}/dotbot.yaml"
 
 # Check if config file exists
 if [ ! -f "$CONFIG" ]; then

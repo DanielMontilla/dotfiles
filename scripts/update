@@ -12,7 +12,9 @@ fi
 
 host="$1"
 
-NIXOS_DIR="${HOME}/dotfiles/nixos"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+NIXOS_DIR="${REPO_ROOT}/nixos"
 
 # Check if nixos directory exists
 if [ ! -d "$NIXOS_DIR" ]; then

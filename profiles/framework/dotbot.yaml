@@ -34,45 +34,45 @@
       force: true
 
 - link:
-    ~/.gitconfig: shared/git/gitconfig
+    ~/.gitconfig: profiles/shared/git/gitconfig
 
     ~/.config/fish/:
-      path: shared/fish/*
+      path: profiles/shared/fish/*
 
     ~/.config/kitty/:
-      path: shared/kitty/*
+      path: profiles/shared/kitty/*
 
     ~/.config/hypr/:
-      path: shared/hyprland/*
+      path: profiles/shared/hyprland/*
 
     ~/.config/niri/:
-      path: shared/niri/*
+      path: profiles/shared/niri/*
 
     ~/.config/nvim/:
-      path: shared/neovim/lazy/*
+      path: profiles/shared/neovim/lazy/*
 
     ~/.config/ghostty/:
-      path: shared/ghostty/*
+      path: profiles/shared/ghostty/*
 
     ~/.config/alacritty/alacritty.toml:
-      path: shared/alacritty/config.toml
+      path: profiles/shared/alacritty/config.toml
 
-    ~/.config/starship.toml: shared/starship/starship.toml
+    ~/.config/starship.toml: profiles/shared/starship/starship.toml
 
     ~/.config/quickshell/:
-      path: shared/quickshell/*
+      path: profiles/shared/quickshell/*
 
     ~/.config/Cursor/User/:
-      path: shared/cursor/*
+      path: profiles/shared/cursor/*
 
     ~/.config/zellij/:
-      path: shared/zellij/*
+      path: profiles/shared/zellij/*
 
     ~/.config/zed/:
-      path: shared/zed/*
+      path: profiles/shared/zed/*
 
     ~/.var/app/dev.zed.Zed/config/zed/:
-      path: shared/zed/*
+      path: profiles/shared/zed/*
 
     ~/.config/qBittorrent/:
-      path: shared/qbittorrent/*
+      path: profiles/shared/qbittorrent/*

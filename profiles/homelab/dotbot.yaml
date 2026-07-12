@@ -10,7 +10,7 @@
       force: true
 
 - link:
-    ~/.gitconfig: shared/git/gitconfig
+    ~/.gitconfig: profiles/shared/git/gitconfig
 
     ~/.config/nvim/:
-      path: shared/neovim/lazy/*
+      path: profiles/shared/neovim/lazy/*
