@@ -50,6 +50,8 @@
     eza
     fastfetch
     btop
+    curl
+    ripgrep
   ];
 
   programs.fish.enable = true;
