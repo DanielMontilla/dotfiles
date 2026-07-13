@@ -1,19 +1,18 @@
 { config, pkgs, ... }:
 
 {
-  # Mesa: provides Vulkan (radv / amdvlk) + OpenGL that niri's wgpu renderer
-  # needs. Without this, even a loaded GPU kernel module leaves niri with no
-  # renderer -> black screen.
+  # Mesa: provides the Vulkan loader / GLVND that niri's wgpu renderer needs.
   hardware.graphics.enable = true;
 
-  # AMD Raphael integrated GPU (Ryzen iGPU) - very stable with niri.
-  boot.kernelModules = [ "amdgpu" ];
+  # NVIDIA's driver is unfree; must be allowed to build (loui was missing this).
+  nixpkgs.config.allowUnfree = true;
 
-  # NVIDIA RTX 5070 Ti (Blackwell) discrete GPU.
-  # Blackwell requires the open kernel modules; use the latest driver branch
-  # for 50-series support.
+  # NVIDIA RTX 5070 Ti (Blackwell) is the only GPU with a display attached.
+  # The nvidia module is activated by selecting it as the X video driver
+  # (there is no hardware.nvidia.enable option). Blackwell requires the open
+  # kernel modules, and modesetting is required for Wayland compositors (niri).
+  services.xserver.videoDrivers = [ "nvidia" ];
   hardware.nvidia = {
-    enable = true;
     open = true;
     modesetting.enable = true;
     nvidiaSettings = false;
