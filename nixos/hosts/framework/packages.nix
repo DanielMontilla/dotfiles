@@ -79,6 +79,7 @@ in
 
   environment.systemPackages = with pkgs; [
     git
+    gh
     neovim
     inputs.nixpkgs-unstable.legacyPackages.${pkgs.system}.zed-editor
     dotbot
