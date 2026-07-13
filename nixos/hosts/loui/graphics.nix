@@ -13,6 +13,7 @@
   # Blackwell requires the open kernel modules; use the latest driver branch
   # for 50-series support.
   hardware.nvidia = {
+    enable = true;
     open = true;
     modesetting.enable = true;
     nvidiaSettings = false;
