@@ -20,6 +20,7 @@
           starship
           eza
           dotbot
+          gh
         ];
       };
 
@@ -33,6 +34,7 @@
           starship
           eza
           dotbot
+          gh
         ];
       };
     };
