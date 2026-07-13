@@ -9,8 +9,10 @@
     systemd-boot = {
       enable = true;
       configurationLimit = 20;
-      extraConfig = ''
-        default @saved
+      editor = false;
+      extraInstallCommands = ''
+        sed -i '/^default /d' /boot/loader/loader.conf
+        echo 'default @saved' >> /boot/loader/loader.conf
       '';
     };
   };
