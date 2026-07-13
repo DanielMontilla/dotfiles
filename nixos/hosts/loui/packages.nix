@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, ... }:
 
 {
   # Niri compositor
@@ -50,7 +50,8 @@
     eza
     fastfetch
     btop
-    inputs.opencode-flake.packages.${pkgs.system}.default
+    curl
+    ripgrep
   ];
 
   programs.fish.enable = true;
