@@ -50,7 +50,7 @@ if [ "$MODE" = "nixos" ]; then
 
     echo "Rebuilding NixOS configuration..."
     cd "${NIXOS_DIR}"
-    sudo nixos-rebuild boot --flake ".#${profile}" "${@:2}"
+    sudo nixos-rebuild switch --flake ".#${profile}" "${@:2}"
 else
     PROFILE_FLAKE="${PROFILE_DIR}/nixos"
 
