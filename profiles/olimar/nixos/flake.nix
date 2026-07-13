@@ -19,6 +19,7 @@
           neovim
           starship
           eza
+          dotbot
         ];
       };
 
@@ -31,6 +32,7 @@
           neovim
           starship
           eza
+          dotbot
         ];
       };
     };
