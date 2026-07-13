@@ -50,6 +50,7 @@
     eza
     fastfetch
     btop
+    inputs.opencode-flake.packages.${pkgs.system}.default
   ];
 
   programs.fish.enable = true;
