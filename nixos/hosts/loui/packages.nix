@@ -43,7 +43,7 @@
     gh
     neovim
     dotbot
-    ghostty
+    alacritty
     fish
     starship
     wl-clipboard

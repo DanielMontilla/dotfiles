@@ -5,8 +5,11 @@ binds {
     Mod+Q repeat=false { close-window; }
     Mod+Shift+Q repeat=false { quit; }
 
-    // Terminal - ghostty is the terminal installed on loui
-    Mod+Return repeat=false { spawn "ghostty"; }
+    // Terminal - alacritty is the terminal installed on loui.
+    // Use spawn-sh so it runs through the shell and picks up the system PATH
+    // (/run/current-system/sw/bin); a bare `spawn "alacritty"` fails when niri
+    // is launched from a TTY because the inherited PATH lacks it.
+    Mod+Return repeat=false { spawn-sh "alacritty"; }
 
     // Application launcher
     // NOTE: no app launcher (wofi/fuzzel) is currently in loui's packages.nix.
