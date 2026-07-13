@@ -76,3 +76,4 @@
 
     ~/.config/qBittorrent/:
       path: profiles/shared/qbittorrent/*
+      force: true
