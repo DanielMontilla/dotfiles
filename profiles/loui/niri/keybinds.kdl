@@ -1,0 +1,15 @@
+// Minimal keybindings for loui
+// Enough to launch a terminal and quit safely.
+
+binds {
+    Mod+Q repeat=false { close-window; }
+    Mod+Shift+Q repeat=false { quit; }
+
+    // Terminal - ghostty is the terminal installed on loui
+    Mod+Return repeat=false { spawn "ghostty"; }
+
+    // Application launcher
+    // NOTE: no app launcher (wofi/fuzzel) is currently in loui's packages.nix.
+    // Add one there (e.g. fuzzel) and uncomment, or launch via the terminal.
+    // Mod+Space repeat=false { spawn "fuzzel"; }
+}

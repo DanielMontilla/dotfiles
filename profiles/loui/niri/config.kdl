@@ -1,0 +1,29 @@
+// Minimal niri configuration for loui
+// Kept intentionally small to isolate startup issues.
+// Add back modules (output.kdl, screencast.kdl, etc.) once niri launches cleanly.
+
+include "input.kdl"
+include "layout.kdl"
+include "keybinds.kdl"
+
+input {
+    keyboard {
+        xkb {
+            layout "us"
+        }
+    }
+
+    touchpad {
+        tap
+        natural-scroll
+    }
+}
+
+layout {
+    background-color "#111111"
+    gaps 8
+}
+
+cursor {
+    xcursor-size 24
+}
