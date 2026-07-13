@@ -4,7 +4,7 @@
   # Mesa: provides the Vulkan loader / GLVND that niri's wgpu renderer needs.
   hardware.graphics.enable = true;
 
-  # NVIDIA's driver is unfree; must be allowed to build (loui was missing this).
+  # NVIDIA's driver is unfree; must be allowed to build (louie was missing this).
   nixpkgs.config.allowUnfree = true;
 
   # NVIDIA RTX 5070 Ti (Blackwell) is the only GPU with a display attached.

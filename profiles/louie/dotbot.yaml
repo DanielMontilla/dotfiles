@@ -20,7 +20,7 @@
       path: profiles/shared/fish/*
 
     ~/.config/niri/:
-      path: profiles/loui/niri/*
+      path: profiles/louie/niri/*
 
     ~/.config/nvim/:
       path: profiles/shared/neovim/lazy/*

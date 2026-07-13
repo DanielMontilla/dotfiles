@@ -1,6 +1,6 @@
-# Windows + NixOS Dual Boot (loui) — Reference / North Star
+# Windows + NixOS Dual Boot (louie) — Reference / North Star
 
-Everything learned while getting loui (a NixOS machine) to dual-boot with Windows
+Everything learned while getting louie (a NixOS machine) to dual-boot with Windows
 and behave the way I want: pick Windows from the menu, and after a timeout boot
 whatever I last selected.
 
@@ -10,22 +10,22 @@ If you ever redo this on a new machine, follow this file top to bottom.
 
 ## TL;DR
 
-- loui boots with **systemd-boot**, not GRUB. ESP is mounted at `/boot`.
-- Windows lives on a **separate ESP** from loui's. Its `bootmgfw.efi` is copied
-  onto loui's ESP so systemd-boot can launch it.
+- louie boots with **systemd-boot**, not GRUB. ESP is mounted at `/boot`.
+- Windows lives on a **separate ESP** from louie's. Its `bootmgfw.efi` is copied
+  onto louie's ESP so systemd-boot can launch it.
 - The menu auto-boots the **last-selected entry** (`default @saved`) after 15s.
-- Rebuild with `./scripts/install loui` (a `nixos-rebuild switch --flake ".#loui"`).
+- Rebuild with `./scripts/install louie` (a `nixos-rebuild switch --flake ".#louie"`).
 
 ---
 
 ## 1. Why systemd-boot and not GRUB
 
-loui originally used GRUB (`boot.loader.grub` with `useOSProber = true`,
-`default = "saved"`). That fails on loui:
+louie originally used GRUB (`boot.loader.grub` with `useOSProber = true`,
+`default = "saved"`). That fails on louie:
 
 - During `nixos-rebuild switch`, NixOS regenerates GRUB via `update-grub`, which
   runs **os-prober**.
-- os-prober scans block devices and chokes on loui's `/dev/mapper/*` (LVM) devices
+- os-prober scans block devices and chokes on louie's `/dev/mapper/*` (LVM) devices
   (`lsblk: /dev/mapper/... not a block device`). It hangs.
 - Because it hangs, the new generation's GRUB entry is **never written**, so it
   never appears in the boot menu and the `switch` unit stays "active"/hung.
@@ -33,7 +33,7 @@ loui originally used GRUB (`boot.loader.grub` with `useOSProber = true`,
 systemd-boot does **not** run os-prober — it just copies entries — so the hang
 disappears and every new generation shows up in the menu.
 
-### `nixos/hosts/loui/bootloader.nix` (current)
+### `nixos/hosts/louie/bootloader.nix` (current)
 
 ```nix
 { config, pkgs, ... }:
@@ -82,7 +82,7 @@ last `default` line) instead of being `sed`-edited in place.
 
 systemd-boot only sees its own ESP (`/boot`). Windows' EFI files are on a
 different ESP, so a plain `efi /EFI/Microsoft/Boot/bootmgfw.efi` entry points at
-a file that doesn't exist on loui's ESP → systemd-boot silently drops the entry
+a file that doesn't exist on louie's ESP → systemd-boot silently drops the entry
 (it shows red "not reported" / "no such file or directory" in `bootctl list`).
 
 Confirm: `ls /boot/EFI/` → only `BOOT`, `Linux`, `nixos`, `Nixos-boot`, `systemd`.
@@ -101,7 +101,7 @@ sudo mount -o ro /dev/nvme0n1p1p1 /mnt/win     # use the device lsblk shows
 # 3. Verify
 ls /mnt/win/EFI/Microsoft/Boot/bootmgfw.efi
 
-# 4. Copy onto loui's ESP (writes only to /boot)
+# 4. Copy onto louie's ESP (writes only to /boot)
 sudo mkdir -p /boot/EFI/Microsoft/Boot
 sudo cp -r /mnt/win/EFI/Microsoft/Boot/. /boot/EFI/Microsoft/Boot/
 
@@ -113,7 +113,7 @@ Reboot → the **Windows** entry now resolves and boots. The copy persists acros
 `nixos-rebuild switch` (NixOS does not delete `/boot/EFI/Microsoft`).
 
 > **BitLocker caveat:** if Windows uses TPM-backed BitLocker, booting the copied
-> loader (now on loui's ESP instead of Windows' own ESP) changes the measured
+> loader (now on louie's ESP instead of Windows' own ESP) changes the measured
 > boot path and may ask for the **BitLocker recovery key**. It's recoverable.
 > To avoid it entirely, use an XBOOTLDR setup (chainload Windows' *original*
 > loader) instead of copying — see §6.
@@ -122,7 +122,7 @@ Reboot → the **Windows** entry now resolves and boots. The copy persists acros
 
 ## 4. Rebuilding and the "stuck switch" trap
 
-`scripts/install` does `sudo nixos-rebuild switch --flake ".#loui"`.
+`scripts/install` does `sudo nixos-rebuild switch --flake ".#louie"`.
 
 If a previous `switch` was interrupted, the transient unit
 `nixos-rebuild-switch-to-configuration.service` can get stuck **active**, and
@@ -142,7 +142,7 @@ sudo systemctl reset-failed
 sudo systemctl daemon-reexec     # daemon-reload is NOT enough; reexec drops in-memory transient units
 ```
 
-Then `./scripts/install loui` again. If a rebuild says `Could not acquire lock`,
+Then `./scripts/install louie` again. If a rebuild says `Could not acquire lock`,
 the unit above is still active — kill it first (same steps).
 
 ### Verifying what's actually running
@@ -151,7 +151,7 @@ the unit above is still active — kill it first (same steps).
 `/nix/var/nix/profiles/system` = the **default** generation (boot target).
 
 ```bash
-readlink -f /run/current-system          # must match the loui store path
+readlink -f /run/current-system          # must match the louie store path
 readlink -f /nix/var/nix/profiles/system # default generation
 sudo nixos-rebuild list-generations
 ```
@@ -160,22 +160,22 @@ If these differ, activation never completed (see the stuck-switch steps above).
 
 ---
 
-## 5. Other loui setup gotchas (so you don't repeat them)
+## 5. Other louie setup gotchas (so you don't repeat them)
 
-- **`hardware-configuration.nix` must exist.** `nixos/hosts/loui/configuration.nix`
+- **`hardware-configuration.nix` must exist.** `nixos/hosts/louie/configuration.nix`
   imports `./hardware-configuration.nix`, but it is **not** in git by default
   (it's machine-specific). Generate it on the target machine:
   ```bash
-  sudo nixos-generate-config --show-hardware-config > nixos/hosts/loui/hardware-configuration.nix
+  sudo nixos-generate-config --show-hardware-config > nixos/hosts/louie/hardware-configuration.nix
   ```
   A missing/untracked one makes the flake build fail with
   *"Path '.../hardware-configuration.nix' ... is not tracked by Git."*
 
 - **Flake `inputs` must be in scope in modules.** Two things are required:
   1. `nixos/flake.nix` passes them: `specialArgs = { inherit inputs; };` inside
-     the `loui` `nixosConfiguration`.
+     the `louie` `nixosConfiguration`.
   2. The module that uses `inputs` must **declare it in its function signature**,
-     e.g. `nixos/hosts/loui/packages.nix` starts with
+     e.g. `nixos/hosts/louie/packages.nix` starts with
      `{ config, pkgs, inputs, ... }:` — NOT just `{ config, pkgs, ... }:`.
      Without the `inputs` param, you get `undefined variable 'inputs'`.
      (framework's `packages.nix` declares it; that's why it worked there.)
@@ -187,7 +187,7 @@ If these differ, activation never completed (see the stuck-switch steps above).
   session predates the switch. Start a new shell (`exec bash`) or re-login.
 
 - **Locale warnings (`es_VE.UTF-8`):** generated via
-  `i18n.extraLocaleSettings` in `nixos/hosts/loui/user.nix` (mirrors framework).
+  `i18n.extraLocaleSettings` in `nixos/hosts/louie/user.nix` (mirrors framework).
 
 ---
 
@@ -213,8 +213,8 @@ recovery becomes a problem.
 ## Quick command reference
 
 ```bash
-# Rebuild loui
-cd ~/dotfiles && ./scripts/install loui
+# Rebuild louie
+cd ~/dotfiles && ./scripts/install louie
 
 # See what systemd-boot detects (incl. Windows entry status)
 sudo bootctl list

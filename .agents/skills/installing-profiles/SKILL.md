@@ -11,7 +11,7 @@ groups:
 # When To Use
 
 Use this skill as a reference when the user wants to install a profile on a
-machine (e.g. "install loui", "how do I set up this machine"). It documents the
+machine (e.g. "install louie", "how do I set up this machine"). It documents the
 `scripts/install <profile>` workflow and its gotchas.
 
 > **CRITICAL — the agent CANNOT run this.**

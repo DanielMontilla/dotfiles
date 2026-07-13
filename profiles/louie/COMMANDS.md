@@ -1,9 +1,9 @@
-# loui — Useful Commands
+# louie — Useful Commands
 
 ## Install / rebuild
 
 ```bash
-./scripts/install loui
+./scripts/install louie
 ```
 
 ## Stuck `nixos-rebuild switch` (transient unit already loaded)
@@ -30,7 +30,7 @@ sudo systemctl stop nixos-rebuild-switch-to-configuration.service 2>/dev/null
 sudo systemctl kill -s KILL nixos-rebuild-switch-to-configuration.service 2>/dev/null
 sudo systemctl reset-failed
 sudo systemctl daemon-reexec
-./scripts/install loui
+./scripts/install louie
 ```
 
 ### Fallback: activate manually
@@ -58,4 +58,4 @@ ls /etc/systemd/system/nixos-rebuild-switch-to-configuration.service
   there are uncommitted changes in the dotfiles repo. Commit them to silence
   it; it does not block the build.
 - Perl locale warnings about `es_VE.UTF-8` were fixed by adding
-  `i18n.extraLocaleSettings` to `nixos/hosts/loui/user.nix`.
+  `i18n.extraLocaleSettings` to `nixos/hosts/louie/user.nix`.
