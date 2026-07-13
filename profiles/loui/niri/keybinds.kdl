@@ -15,4 +15,7 @@ binds {
     // NOTE: no app launcher (wofi/fuzzel) is currently in loui's packages.nix.
     // Add one there (e.g. fuzzel) and uncomment, or launch via the terminal.
     // Mod+Space repeat=false { spawn "fuzzel"; }
+
+    // Web browser
+    Mod+P repeat=false { spawn-sh "brave"; }
 }

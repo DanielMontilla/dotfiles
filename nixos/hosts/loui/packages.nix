@@ -44,6 +44,7 @@
     neovim
     dotbot
     alacritty
+    brave
     fish
     starship
     wl-clipboard
