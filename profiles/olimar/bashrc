@@ -1,0 +1,22 @@
+# ~/.bashrc — managed by the olimar dotfiles profile.
+# Goal: for interactive shells, hand off to fish as the real shell.
+
+# If not running interactively, don't do anything.
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
+# Ensure the nix user profile is on PATH so fish and its tools resolve,
+# even when bash is started without sourcing /etc/profile.
+if [ -d "$HOME/.nix-profile/bin" ]; then
+    case ":$PATH:" in
+        *":$HOME/.nix-profile/bin:"*) ;;
+        *) PATH="$HOME/.nix-profile/bin:$PATH" ;;
+    esac
+fi
+
+# Hand off to fish if it is available.
+if command -v fish >/dev/null 2>&1; then
+    exec fish
+fi

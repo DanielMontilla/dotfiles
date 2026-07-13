@@ -12,7 +12,13 @@
       force: true
 
 - link:
-    ~/.gitconfig: profiles/shared/git/gitconfig
+    ~/.gitconfig:
+      path: profiles/shared/git/gitconfig
+      force: true
+
+    ~/.bashrc:
+      path: profiles/olimar/bashrc
+      force: true
 
     ~/.config/fish/:
       path: profiles/shared/fish/*
