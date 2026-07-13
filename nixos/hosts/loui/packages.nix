@@ -45,6 +45,9 @@
     dotbot
     alacritty
     brave
+    wofi
+    brightnessctl
+    playerctl
     fish
     starship
     wl-clipboard
