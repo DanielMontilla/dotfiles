@@ -59,9 +59,14 @@ else
         exit 1
     fi
 
-    if nix profile list | grep -q "${profile}"; then
-        echo "Updating existing Nix profile '${profile}'..."
-        nix profile upgrade "${profile}"
+    EXISTING_NAME="$(nix profile list 2>/dev/null | awk -v flake="${PROFILE_FLAKE}" '
+        /Name:/ { name = $2; gsub(/\033\[[0-9;]*m/, "", name) }
+        { if (index($0, flake) > 0 && name != "") { print name; exit } }
+    ')"
+
+    if [ -n "${EXISTING_NAME}" ]; then
+        echo "Updating existing Nix profile '${EXISTING_NAME}'..."
+        nix profile upgrade "${EXISTING_NAME}"
     else
         echo "Installing Nix profile '${profile}' for the first time..."
         nix profile add "path:${PROFILE_FLAKE}"
