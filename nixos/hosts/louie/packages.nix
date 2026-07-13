@@ -50,6 +50,7 @@
     neovim
     dotbot
     alacritty
+    gnome-keyring
     brave
     wofi
     brightnessctl

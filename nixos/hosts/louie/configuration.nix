@@ -16,6 +16,10 @@
     auto-optimise-store = true;
   };
 
+  # Unlock gnome-keyring at TTY login using the login password, so it acts as
+  # the system secret service (no more Brave/Chromium keyring password prompts).
+  security.pam.services.login.enableGnomeKeyring = true;
+
   nix.gc = {
     automatic = true;
     dates = "weekly";
