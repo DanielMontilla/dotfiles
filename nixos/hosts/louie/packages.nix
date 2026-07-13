@@ -1,6 +1,12 @@
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
 
 {
+
+  # Mutable Programs
+  programs.nix-ld.enable = true;
+
+  services.envfs.enable = true;
+
   # Niri compositor
   programs.niri = {
     enable = true;
@@ -56,6 +62,7 @@
     btop
     curl
     ripgrep
+    inputs.ghostty.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 
   programs.fish.enable = true;

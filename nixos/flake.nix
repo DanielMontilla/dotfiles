@@ -8,9 +8,17 @@
 		opencode-flake = {
 			url = "github:anomalyco/opencode/56d818fc348f677c1f371f22a4354e815a4de866";
 		};
+		ghostty = {
+			url = "github:ghostty-org/ghostty";
+		};
 	};
 
-	outputs = { self, nixpkgs, nix-flatpak, opencode-flake, ... }@inputs: {
+	nixConfig = {
+		extra-substituters = [ "https://ghostty.cachix.org" ];
+		extra-trusted-public-keys = [ "ghostty.cachix.org-1:QB389yTa6gTyneehvqG58y0WnHjQOqgnA+wBnpWWxns=" ];
+	};
+
+	outputs = { self, nixpkgs, nix-flatpak, opencode-flake, ghostty, ... }@inputs: {
 		nixosConfigurations.framework = nixpkgs.lib.nixosSystem {
 			system = "x86_64-linux";
 			specialArgs = { inherit inputs; };
@@ -19,11 +27,11 @@
 				./hosts/framework/configuration.nix
 			];
 		};
-		nixosConfigurations.loui = nixpkgs.lib.nixosSystem {
+		nixosConfigurations.louie = nixpkgs.lib.nixosSystem {
 			system = "x86_64-linux";
 			specialArgs = { inherit inputs; };
 			modules = [
-				./hosts/loui/configuration.nix
+				./hosts/louie/configuration.nix
 			];
 		};
 		nixosConfigurations.homelab = nixpkgs.lib.nixosSystem {

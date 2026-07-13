@@ -1,4 +1,4 @@
-// Minimal niri configuration for loui
+// Minimal niri configuration for louie
 // Kept intentionally small to isolate startup issues.
 // Add back modules (output.kdl, screencast.kdl, etc.) once niri launches cleanly.
 
@@ -27,3 +27,7 @@ layout {
 cursor {
     xcursor-size 24
 }
+
+// Warm up the Ghostty GTK/libadwaita instance once at login so opening a
+// terminal later is instant (combined with gtk-single-instance in the config).
+spawn-at-startup "ghostty" "--initial-window=false" "--gtk-single-instance=true" "--quit-after-last-window-closed=false"

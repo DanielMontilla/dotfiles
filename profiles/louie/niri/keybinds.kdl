@@ -1,5 +1,5 @@
-// Keybindings for niri (loui)
-// Based on profiles/shared/niri/keybinds.kdl, adapted for loui:
+// Keybindings for niri (louie)
+// Based on profiles/shared/niri/keybinds.kdl, adapted for louie:
 //  - uses spawn-sh so commands pick up the system PATH when niri is
 //    launched from a TTY
 //  - brave is forced onto the Wayland backend (--ozone-platform=wayland)
@@ -14,7 +14,7 @@ binds {
 
     // === Spawning Applications ===
     // Terminal - use spawn-sh for shell PATH expansion
-    Mod+Return repeat=false { spawn-sh "alacritty"; }
+    Mod+Return repeat=false { spawn-sh "ghostty"; }
     // Application launcher
     Mod+Space repeat=false { spawn-sh "wofi --show drun"; }
     // Browser (Wayland)
