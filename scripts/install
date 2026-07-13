@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Check if profile argument is provided
+if [ $# -eq 0 ]; then
+    echo "Error: Profile argument is required."
+    echo "Usage: $0 <profile>"
+    echo "Example: $0 framework"
+    exit 1
+fi
+
+profile="$1"
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+PROFILE_DIR="${REPO_ROOT}/profiles/${profile}"
+
+# Check if profile directory exists
+if [ ! -d "$PROFILE_DIR" ]; then
+    echo "Error: Profile directory '$PROFILE_DIR' does not exist."
+    exit 1
+fi
+
+# Determine profile mode from marker files
+if [ -f "${PROFILE_DIR}/.nixos" ]; then
+    MODE="nixos"
+elif [ -f "${PROFILE_DIR}/.nix-profile" ]; then
+    MODE="nix-profile"
+else
+    echo "Error: Cannot determine mode for profile '$profile' (missing .nixos or .nix-profile marker)."
+    exit 1
+fi
+
+echo "Using profile: $profile (mode: $MODE)"
+
+if [ "$MODE" = "nixos" ]; then
+    NIXOS_DIR="${REPO_ROOT}/nixos"
+
+    if [ ! -d "$NIXOS_DIR" ]; then
+        echo "Error: NixOS directory '$NIXOS_DIR' does not exist."
+        exit 1
+    fi
+
+    HOST_DIR="${NIXOS_DIR}/hosts/${profile}"
+    if [ ! -d "$HOST_DIR" ]; then
+        echo "Error: Host directory '$HOST_DIR' does not exist."
+        exit 1
+    fi
+
+    echo "Rebuilding NixOS configuration..."
+    cd "${NIXOS_DIR}"
+    sudo nixos-rebuild switch --flake ".#${profile}" "${@:2}"
+else
+    PROFILE_FLAKE="${PROFILE_DIR}/nixos"
+
+    if [ ! -f "${PROFILE_FLAKE}/flake.nix" ]; then
+        echo "Error: Nix profile flake '$PROFILE_FLAKE/flake.nix' does not exist."
+        exit 1
+    fi
+
+    EXISTING_NAME="$(nix profile list 2>/dev/null | awk -v flake="${PROFILE_FLAKE}" '
+        /Name:/ { name = $2; gsub(/\033\[[0-9;]*m/, "", name) }
+        { if (index($0, flake) > 0 && name != "") { print name; exit } }
+    ')"
+
+    if [ -n "${EXISTING_NAME}" ]; then
+        echo "Updating existing Nix profile '${EXISTING_NAME}'..."
+        nix profile upgrade "${EXISTING_NAME}"
+    else
+        echo "Installing Nix profile '${profile}' for the first time..."
+        nix profile add "path:${PROFILE_FLAKE}"
+    fi
+fi

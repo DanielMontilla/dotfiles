@@ -1,8 +1,0 @@
-[user]
-  name = Daniel Montilla
-  email = daniel@montilla.dev
-
-[init]
-  defaultBranch = main
-[credential]
-	helper = store

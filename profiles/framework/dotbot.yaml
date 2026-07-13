@@ -1,0 +1,78 @@
+- defaults:
+    link:
+      relink: true
+      create: true
+      glob: true
+      relative: true
+
+- clean:
+    "~/.config/niri/":
+      force: true
+    "~/.config/fish/":
+      force: true
+    "~/.config/kitty/":
+      force: true
+    "~/.config/hypr/":
+      force: true
+    "~/.config/nvim/":
+      force: true
+    "~/.config/ghostty/":
+      force: true
+    "~/.config/alacritty/alacritty.toml":
+      force: true
+    "~/.config/quickshell/":
+      force: true
+    "~/.config/Cursor/User/":
+      force: true
+    "~/.config/zellij/":
+      force: true
+    "~/.config/zed/":
+      force: true
+    "~/.var/app/dev.zed.Zed/config/zed/":
+      force: true
+    "~/.config/qBittorrent/":
+      force: true
+
+- link:
+    ~/.gitconfig: profiles/shared/git/gitconfig
+
+    ~/.config/fish/:
+      path: profiles/shared/fish/*
+
+    ~/.config/kitty/:
+      path: profiles/shared/kitty/*
+
+    ~/.config/hypr/:
+      path: profiles/shared/hyprland/*
+
+    ~/.config/niri/:
+      path: profiles/shared/niri/*
+
+    ~/.config/nvim/:
+      path: profiles/shared/neovim/lazy/*
+
+    ~/.config/ghostty/:
+      path: profiles/shared/ghostty/*
+
+    ~/.config/alacritty/alacritty.toml:
+      path: profiles/shared/alacritty/config.toml
+
+    ~/.config/starship.toml: profiles/shared/starship/starship.toml
+
+    ~/.config/quickshell/:
+      path: profiles/shared/quickshell/*
+
+    ~/.config/Cursor/User/:
+      path: profiles/shared/cursor/*
+
+    ~/.config/zellij/:
+      path: profiles/shared/zellij/*
+
+    ~/.config/zed/:
+      path: profiles/shared/zed/*
+
+    ~/.var/app/dev.zed.Zed/config/zed/:
+      path: profiles/shared/zed/*
+
+    ~/.config/qBittorrent/:
+      path: profiles/shared/qbittorrent/*

@@ -1,0 +1,31 @@
+- defaults:
+    link:
+      relink: true
+      create: true
+      glob: true
+      relative: true
+
+- clean:
+    "~/.config/niri/":
+      force: true
+    "~/.config/fish/":
+      force: true
+    "~/.config/nvim/":
+      force: true
+
+- link:
+    ~/.gitconfig: profiles/shared/git/gitconfig
+
+    ~/.config/fish/:
+      path: profiles/shared/fish/*
+
+    ~/.config/niri/:
+      path: profiles/shared/niri/*
+
+    ~/.config/nvim/:
+      path: profiles/shared/neovim/lazy/*
+
+    ~/.config/starship.toml: profiles/shared/starship/starship.toml
+
+    ~/.config/ghostty/:
+      path: profiles/shared/ghostty/*

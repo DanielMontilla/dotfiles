@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Check if host argument is provided
+if [ $# -eq 0 ]; then
+    echo "Error: Host argument is required."
+    echo "Usage: $0 <host>"
+    echo "Example: $0 framework"
+    exit 1
+fi
+
+host="$1"
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+NIXOS_DIR="${REPO_ROOT}/nixos"
+
+# Check if nixos directory exists
+if [ ! -d "$NIXOS_DIR" ]; then
+    echo "Error: NixOS directory '$NIXOS_DIR' does not exist."
+    exit 1
+fi
+
+# Check if host directory exists
+HOST_DIR="${NIXOS_DIR}/hosts/${host}"
+if [ ! -d "$HOST_DIR" ]; then
+    echo "Error: Host directory '$HOST_DIR' does not exist."
+    exit 1
+fi
+
+echo "Using host: $host"
+echo "Updating flake inputs..."
+
+cd "${NIXOS_DIR}"
+
+nix flake update
+
+echo "Rebuilding NixOS configuration..."
+
+sudo nixos-rebuild switch --flake ".#${host}" "${@:2}"
+
