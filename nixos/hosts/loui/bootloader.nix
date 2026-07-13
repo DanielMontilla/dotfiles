@@ -4,13 +4,14 @@
   boot.loader = {
     timeout = 15;
     efi.canTouchEfiVariables = true;
+    grub.enable = false;
 
-    grub = {
+    systemd-boot = {
       enable = true;
-      device = "nodev";
-      efiSupport = true;
-      useOSProber = true;
-      default = "saved";
+      configurationLimit = 20;
+      extraConfig = ''
+        default @saved
+      '';
     };
   };
 }
