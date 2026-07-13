@@ -13,6 +13,11 @@
       extraInstallCommands = ''
         sed -i '/^default /d' /boot/loader/loader.conf
         echo 'default @saved' >> /boot/loader/loader.conf
+
+        cat > /boot/loader/entries/windows.conf <<EOF
+title Windows
+efi /EFI/Microsoft/Boot/bootmgfw.efi
+EOF
       '';
     };
   };
