@@ -1,0 +1,16 @@
+// Minimal layout configuration for loui
+
+layout {
+    background-color "#111111"
+    gaps 8
+
+    focus-ring {
+        width 2
+        active-color "#666666"
+        inactive-color "#333333"
+    }
+
+    border {
+        off
+    }
+}
