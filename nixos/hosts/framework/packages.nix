@@ -109,6 +109,7 @@ in
     gammastep
     qbittorrent
     vlc
+    xwayland-satellite
     cursor-appimage
     glances
     btop
