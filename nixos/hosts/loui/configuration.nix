@@ -8,6 +8,7 @@
     ./user.nix
     ./packages.nix
     ./fonts.nix
+    ./graphics.nix
   ];
 
   nix.settings = {
