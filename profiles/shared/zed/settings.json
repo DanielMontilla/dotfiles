@@ -1,4 +1,5 @@
 {
+  "cli_default_open_behavior": "new_window",
   "collaboration_panel": {
     "dock": "left"
   },
@@ -45,6 +46,6 @@
   "theme": {
     "mode": "dark",
     "light": "One Light",
-    "dark": "Tokyo Night Storm",
+    "dark": "JetBrains Dark",
   },
 }
