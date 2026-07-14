@@ -14,15 +14,21 @@
       force: true
     "~/.config/quickshell/":
       force: true
+    "~/.config/herdr/":
+      force: true
+    "~/.config/zed/":
+      force: true
+    "~/.var/app/dev.zed.Zed/config/zed/":
+      force: true
 
 - link:
     ~/.gitconfig: profiles/shared/git/gitconfig
 
-    ~/.config/fish/:
-      path: profiles/shared/fish/*
+    ~/.config/fish/config.fish: profiles/louie/fish/config.fish
+    ~/.config/fish/fish_variables: profiles/louie/fish/fish_variables
 
     ~/.config/fish/conf.d/:
-      path: profiles/louie/fish/*
+      path: profiles/louie/fish/conf.d/*
 
     ~/.config/niri/:
       path: profiles/louie/niri/*
@@ -37,3 +43,11 @@
 
     ~/.config/ghostty/:
       path: profiles/shared/ghostty/*
+
+    ~/.config/herdr/:
+      path: profiles/louie/herdr/*
+
+    ~/.config/zed/:
+      path: profiles/shared/zed/*
+    ~/.var/app/dev.zed.Zed/config/zed/:
+      path: profiles/shared/zed/*
