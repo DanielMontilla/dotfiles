@@ -19,6 +19,9 @@
     ~/.config/fish/:
       path: profiles/shared/fish/*
 
+    ~/.config/fish/conf.d/:
+      path: profiles/louie/fish/*
+
     ~/.config/niri/:
       path: profiles/louie/niri/*
 
