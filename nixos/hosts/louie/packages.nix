@@ -47,6 +47,7 @@
   environment.systemPackages = with pkgs; [
     git
     gh
+    bibata-cursors
     neovim
     dotbot
     alacritty
