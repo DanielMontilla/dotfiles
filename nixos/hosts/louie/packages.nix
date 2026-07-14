@@ -4,6 +4,17 @@
 
   # Mutable Programs
   programs.nix-ld.enable = true;
+  programs.nix-ld.libraries = with pkgs; [
+    alsa-lib
+    wayland
+    libglvnd
+    mesa
+    libdrm
+    libxkbcommon
+    fontconfig
+    freetype
+    vulkan-loader
+  ];
 
   services.envfs.enable = true;
 
@@ -42,6 +53,7 @@
   environment.sessionVariables = {
     GTK_THEME = "Adwaita:dark";
     NIXOS_OZONE_WL = "1";
+    XKB_CONFIG_ROOT = "${pkgs.xkeyboard_config}/share/X11/xkb";
   };
 
   environment.systemPackages = with pkgs; [
