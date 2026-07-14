@@ -19,6 +19,7 @@ PanelWindow {
   color: "transparent"
   implicitHeight: barContainer.implicitHeight + 8
   property bool _entering: false
+  property bool _mouseActive: false
 
   mask: Region {
     item: maskItem
@@ -26,9 +27,12 @@ PanelWindow {
 
   Item {
     id: maskItem
-    y: 0
-    width: bar.width
-    height: Root.Config.barVisible ? bar.height : 2
+    anchors {
+      top: parent.top
+      right: parent.right
+    }
+    width: (Root.Config.barVisible || bar._mouseActive) ? bar.width : 4
+    height: (Root.Config.barVisible || bar._mouseActive) ? bar.height : 4
     visible: false
   }
 
@@ -41,26 +45,15 @@ PanelWindow {
     onEntered: {
       forceHideTimer.stop()
       hideTimer.stop()
-      if (!Root.Config.barVisible) {
-        showTimer.start()
+      if (!bar._mouseActive && !Root.Config.barVisible) {
+        bar._entering = true
+        bar._mouseActive = true
       }
     }
 
     onExited: {
-      showTimer.stop()
-      if (Root.Config.barVisible) {
+      if (bar._mouseActive) {
         hideTimer.start()
-      }
-    }
-  }
-
-  Timer {
-    id: showTimer
-    interval: 75
-    onTriggered: {
-      if (detectionArea.containsMouse) {
-        bar._entering = true
-        Root.Config.barVisible = true
       }
     }
   }
@@ -69,9 +62,9 @@ PanelWindow {
     id: hideTimer
     interval: 1200
     onTriggered: {
-      if (!detectionArea.containsMouse) {
+      if (!detectionArea.containsMouse && bar._mouseActive) {
         bar._entering = false
-        Root.Config.barVisible = false
+        bar._mouseActive = false
       }
     }
   }
@@ -89,11 +82,11 @@ PanelWindow {
     target: "bar"
 
     function toggle(): void {
-      if (Root.Config.barVisible) {
+      if (Root.Config.barVisible || bar._mouseActive) {
         forceHideTimer.stop()
         hideTimer.stop()
-        showTimer.stop()
         bar._entering = false
+        bar._mouseActive = false
         Root.Config.barVisible = false
       } else {
         bar._entering = true
@@ -120,7 +113,7 @@ PanelWindow {
         leftMargin: 8
         rightMargin: 8
       }
-      y: Root.Config.barVisible ? 8 : -(barContainer.implicitHeight + 8)
+      y: (Root.Config.barVisible || bar._mouseActive) ? 8 : -(barContainer.implicitHeight + 8)
 
       Behavior on y {
         NumberAnimation {
