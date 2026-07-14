@@ -18,6 +18,90 @@ PanelWindow {
   exclusiveZone: 0
   color: "transparent"
   implicitHeight: barContainer.implicitHeight + 8
+  property bool _entering: false
+
+  mask: Region {
+    item: maskItem
+  }
+
+  Item {
+    id: maskItem
+    y: 0
+    width: bar.width
+    height: Root.Config.barVisible ? bar.height : 2
+    visible: false
+  }
+
+  MouseArea {
+    id: detectionArea
+    anchors.fill: parent
+    hoverEnabled: true
+    acceptedButtons: Qt.NoButton
+
+    onEntered: {
+      forceHideTimer.stop()
+      hideTimer.stop()
+      if (!Root.Config.barVisible) {
+        showTimer.start()
+      }
+    }
+
+    onExited: {
+      showTimer.stop()
+      if (Root.Config.barVisible) {
+        hideTimer.start()
+      }
+    }
+  }
+
+  Timer {
+    id: showTimer
+    interval: 75
+    onTriggered: {
+      if (detectionArea.containsMouse) {
+        bar._entering = true
+        Root.Config.barVisible = true
+      }
+    }
+  }
+
+  Timer {
+    id: hideTimer
+    interval: 1200
+    onTriggered: {
+      if (!detectionArea.containsMouse) {
+        bar._entering = false
+        Root.Config.barVisible = false
+      }
+    }
+  }
+
+  Timer {
+    id: forceHideTimer
+    interval: 5000
+    onTriggered: {
+      bar._entering = false
+      Root.Config.barVisible = false
+    }
+  }
+
+  IpcHandler {
+    target: "bar"
+
+    function toggle(): void {
+      if (Root.Config.barVisible) {
+        forceHideTimer.stop()
+        hideTimer.stop()
+        showTimer.stop()
+        bar._entering = false
+        Root.Config.barVisible = false
+      } else {
+        bar._entering = true
+        Root.Config.barVisible = true
+        forceHideTimer.start()
+      }
+    }
+  }
 
   Item {
     anchors {
@@ -39,7 +123,10 @@ PanelWindow {
       y: Root.Config.barVisible ? 8 : -(barContainer.implicitHeight + 8)
 
       Behavior on y {
-        NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+        NumberAnimation {
+          duration: bar._entering ? 400 : 350
+          easing.type: Easing.OutQuart
+        }
       }
 
       color: Root.Theme.surface
@@ -91,14 +178,6 @@ PanelWindow {
           Time {}
         }
       }
-    }
-  }
-
-  IpcHandler {
-    target: "bar"
-
-    function toggle(): void {
-      Root.Config.barVisible = !Root.Config.barVisible
     }
   }
 }

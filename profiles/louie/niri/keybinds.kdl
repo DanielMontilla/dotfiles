@@ -19,9 +19,8 @@ binds {
     Mod+Space repeat=false { spawn-sh "wofi --show drun"; }
     // Browser (Wayland)
     Mod+P repeat=false { spawn-sh "brave --ozone-platform=wayland"; }
-    // Toggle bar
+    // Toggle bar visibility
     Mod+B repeat=false { spawn-sh "qs ipc call bar toggle"; }
-
     // === Volume Control ===
     // Using spawn-sh for shell commands with pipewire
     XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"; }
