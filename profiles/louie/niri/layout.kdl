@@ -2,7 +2,14 @@
 
 layout {
     background-color "#111111"
-    gaps 8
+    gaps 4
+
+    struts {
+        left 4
+        right 4
+        top 4
+        bottom 4
+    }
 
     focus-ring {
         width 2

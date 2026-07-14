@@ -19,6 +19,8 @@ binds {
     Mod+Space repeat=false { spawn-sh "wofi --show drun"; }
     // Browser (Wayland)
     Mod+P repeat=false { spawn-sh "brave --ozone-platform=wayland"; }
+    // Toggle bar
+    Mod+B repeat=false { spawn-sh "qs ipc call bar toggle"; }
 
     // === Volume Control ===
     // Using spawn-sh for shell commands with pipewire
@@ -96,8 +98,10 @@ binds {
     Mod+C repeat=false { center-column; }
     // Toggle fullscreen
     Mod+Shift+F repeat=false { fullscreen-window; }
-    // Toggle maximize
-    Mod+M repeat=false { maximize-window-to-edges; }
+    // Toggle maximize column
+    Mod+M repeat=false { maximize-column; }
+    // Toggle maximize edge-to-edge (old behavior)
+    Mod+Shift+M repeat=false { maximize-window-to-edges; }
     // Overview
     Mod+O repeat=false { toggle-overview; }
 

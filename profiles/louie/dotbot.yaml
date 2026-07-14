@@ -12,6 +12,8 @@
       force: true
     "~/.config/nvim/":
       force: true
+    "~/.config/quickshell/":
+      force: true
 
 - link:
     ~/.gitconfig: profiles/shared/git/gitconfig
@@ -29,6 +31,9 @@
       path: profiles/shared/neovim/lazy/*
 
     ~/.config/starship.toml: profiles/shared/starship/starship.toml
+
+    ~/.config/quickshell/:
+      path: profiles/louie/quickshell/*
 
     ~/.config/ghostty/:
       path: profiles/shared/ghostty/*

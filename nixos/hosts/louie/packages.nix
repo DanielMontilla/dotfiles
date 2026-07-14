@@ -58,6 +58,7 @@
     playerctl
     fish
     starship
+    quickshell
     wl-clipboard
     eza
     fastfetch
