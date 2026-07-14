@@ -9,6 +9,7 @@
     ./packages.nix
     ./fonts.nix
     ./graphics.nix
+    ./ssh.nix
   ];
 
   nix.settings = {
