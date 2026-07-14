@@ -4,6 +4,7 @@ import Quickshell.Widgets
 import QtQuick
 import QtQuick.Layouts
 import ".." as Root
+import "../Components" as Components
 
 PanelWindow {
   id: bar
@@ -18,6 +19,7 @@ PanelWindow {
   exclusiveZone: 0
   color: "transparent"
   implicitHeight: barContainer.implicitHeight + 8
+  property int popupOffset: 2
   property bool _entering: false
   property bool _mouseActive: false
 
@@ -31,8 +33,8 @@ PanelWindow {
       top: parent.top
       right: parent.right
     }
-    width: (Root.Config.barVisible || bar._mouseActive) ? bar.width : 4
-    height: (Root.Config.barVisible || bar._mouseActive) ? bar.height : 4
+    width: (Root.Config.barVisible || bar._mouseActive || Root.Config.popupActive) ? bar.width : 4
+    height: (Root.Config.barVisible || bar._mouseActive || Root.Config.popupActive) ? bar.height : 4
     visible: false
   }
 
@@ -63,8 +65,14 @@ PanelWindow {
     interval: 1200
     onTriggered: {
       if (!detectionArea.containsMouse && bar._mouseActive) {
+        if (Root.Config.popupActive) {
+          hideTimer.restart()
+          return
+        }
         bar._entering = false
         bar._mouseActive = false
+        Root.Config.popupActive = false
+        Root.Config.popupMouseInside = false
       }
     }
   }
@@ -73,8 +81,14 @@ PanelWindow {
     id: forceHideTimer
     interval: 5000
     onTriggered: {
+      if (Root.Config.popupActive) {
+        forceHideTimer.restart()
+        return
+      }
       bar._entering = false
       Root.Config.barVisible = false
+      Root.Config.popupActive = false
+      Root.Config.popupMouseInside = false
     }
   }
 
@@ -82,12 +96,15 @@ PanelWindow {
     target: "bar"
 
     function toggle(): void {
-      if (Root.Config.barVisible || bar._mouseActive) {
+      if (bar._mouseActive || Root.Config.popupActive) return
+      if (Root.Config.barVisible) {
         forceHideTimer.stop()
         hideTimer.stop()
         bar._entering = false
         bar._mouseActive = false
         Root.Config.barVisible = false
+        Root.Config.popupActive = false
+        Root.Config.popupMouseInside = false
       } else {
         bar._entering = true
         Root.Config.barVisible = true
@@ -105,7 +122,7 @@ PanelWindow {
     }
     clip: true
 
-    Rectangle {
+    Components.Panel {
       id: barContainer
       anchors {
         left: parent.left
@@ -113,7 +130,7 @@ PanelWindow {
         leftMargin: 8
         rightMargin: 8
       }
-      y: (Root.Config.barVisible || bar._mouseActive) ? 8 : -(barContainer.implicitHeight + 8)
+      y: (Root.Config.barVisible || bar._mouseActive || Root.Config.popupActive) ? 8 : -(barContainer.implicitHeight + 8)
 
       Behavior on y {
         NumberAnimation {
@@ -121,11 +138,6 @@ PanelWindow {
           easing.type: Easing.OutQuart
         }
       }
-
-      color: Root.Theme.surface
-      border.width: 2
-      border.color: Root.Theme.overlay
-      radius: 4
       implicitHeight: contentRow.implicitHeight + 12
 
       RowLayout {
@@ -151,6 +163,9 @@ PanelWindow {
             if (Root.Config.timeEnabled) {
               items.push({ widget: "time", position: Root.Config.timePosition });
             }
+            if (Root.Config.volumeEnabled) {
+              items.push({ widget: "volume", position: Root.Config.volumePosition });
+            }
             items.sort(function(a, b) { return a.position - b.position; });
             return items;
           }
@@ -159,16 +174,27 @@ PanelWindow {
             sourceComponent: {
               switch (modelData.widget) {
                 case "time": return timeComp;
+                case "volume": return volumeComp;
                 default: return null;
               }
             }
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+            onLoaded: {
+              if (modelData.widget === "volume") {
+                item.panelWindow = bar
+              }
+            }
           }
         }
 
         Component {
           id: timeComp
           Time {}
+        }
+
+        Component {
+          id: volumeComp
+          Volume {}
         }
       }
     }

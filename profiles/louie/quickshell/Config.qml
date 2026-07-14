@@ -6,4 +6,14 @@ QtObject {
 
   readonly property bool timeEnabled: true
   readonly property int timePosition: 0
+
+  readonly property bool volumeEnabled: true
+  readonly property int volumePosition: 1
+  readonly property real maxVolume: 1.25
+  readonly property real lowVolume: 0.25
+  readonly property real midVolume: 0.5
+  readonly property real changeInterval: 0.05
+
+  property bool popupActive: false
+  property bool popupMouseInside: false
 }
