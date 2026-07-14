@@ -13,5 +13,11 @@ input {
     }
 
     mouse {
+        // "Accel off": flat profile disables the dynamic acceleration curve,
+        // so the cursor moves at a constant, predictable rate.
+        accel-profile "flat"
+        // With flat profile, the speed multiplier is ~ (1 + accel-speed).
+        // -0.05 => 0.95x => about 5% slower than default.
+        accel-speed -0.05
     }
 }
