@@ -10,6 +10,7 @@ import "../Components" as Components
 Item {
   id: root
   property var panelWindow
+  property var bar
 
   property bool menuOpen: false
   property bool popupVisible: false
@@ -45,6 +46,7 @@ Item {
   }
 
   function showTemporarily() {
+    if (bar.screen.name != Root.Config.focusedScreenName) return
     menuOpen = true
     autoHideTimer.restart()
   }
@@ -79,8 +81,8 @@ Item {
   }
 
   onMenuOpenChanged: {
-    Root.Config.popupActive = menuOpen
-    if (!menuOpen) Root.Config.popupMouseInside = false
+    bar.popupActive = menuOpen
+    if (!menuOpen) bar.popupMouseInside = false
     if (menuOpen) {
       hideTimer.stop()
       popupVisible = true
@@ -91,9 +93,9 @@ Item {
   }
 
   Connections {
-    target: Root.Config
+    target: bar
     function onPopupActiveChanged() {
-      if (!Root.Config.popupActive && menuOpen) {
+      if (!bar.popupActive && menuOpen) {
         menuOpen = false
       }
     }
@@ -102,7 +104,10 @@ Item {
   Timer {
     id: hideTimer
     interval: animDuration + 50
-    onTriggered: popupVisible = false
+    onTriggered: {
+      popupVisible = false
+      bar.popupMouseInside = false
+    }
   }
 
   Timer {
@@ -121,7 +126,7 @@ Item {
     width: 24
     height: 24
     radius: 6
-    color: buttonArea.containsMouse ? Root.Theme.surfaceHover : (menuOpen ? Root.Theme.surface : "transparent")
+    color: buttonArea.containsMouse ? Qt.lighter(Root.Theme.primary, 1.15) : (menuOpen ? Qt.lighter(Root.Theme.primary, 1.1) : Root.Theme.primary)
 
     Behavior on color { ColorAnimation { duration: 100 } }
 
@@ -193,11 +198,11 @@ Item {
         onHoveredChanged: {
           if (hovered) {
             popup.mouseInside = true
-            Root.Config.popupMouseInside = true
+            bar.popupMouseInside = true
             autoHideTimer.stop()
           } else {
             popup.mouseInside = false
-            Root.Config.popupMouseInside = false
+            bar.popupMouseInside = false
             autoHideTimer.restart()
           }
         }

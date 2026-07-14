@@ -14,6 +14,16 @@ QtObject {
   readonly property real midVolume: 0.5
   readonly property real changeInterval: 0.05
 
-  property bool popupActive: false
-  property bool popupMouseInside: false
+  readonly property bool displayEnabled: true
+  readonly property int displayPosition: 2
+  readonly property real displayStep: 0.05
+
+  readonly property bool powerEnabled: true
+  readonly property int powerPosition: 3
+
+  readonly property int displayDim: 15
+  readonly property int displayLow: 40
+  readonly property int displayMid: 65
+
+  property string focusedScreenName: ""
 }

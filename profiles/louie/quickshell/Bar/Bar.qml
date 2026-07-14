@@ -22,6 +22,8 @@ PanelWindow {
   property int popupOffset: 2
   property bool _entering: false
   property bool _mouseActive: false
+  property bool popupActive: false
+  property bool popupMouseInside: false
 
   mask: Region {
     item: maskItem
@@ -33,8 +35,8 @@ PanelWindow {
       top: parent.top
       right: parent.right
     }
-    width: (Root.Config.barVisible || bar._mouseActive || Root.Config.popupActive) ? bar.width : 4
-    height: (Root.Config.barVisible || bar._mouseActive || Root.Config.popupActive) ? bar.height : 4
+    width: (Root.Config.barVisible || bar._mouseActive || bar.popupActive) ? bar.width : 4
+    height: (Root.Config.barVisible || bar._mouseActive || bar.popupActive) ? bar.height : 4
     visible: false
   }
 
@@ -45,6 +47,7 @@ PanelWindow {
     acceptedButtons: Qt.NoButton
 
     onEntered: {
+      Root.Config.focusedScreenName = modelData.name
       forceHideTimer.stop()
       hideTimer.stop()
       if (!bar._mouseActive && !Root.Config.barVisible) {
@@ -65,14 +68,14 @@ PanelWindow {
     interval: 1200
     onTriggered: {
       if (!detectionArea.containsMouse && bar._mouseActive) {
-        if (Root.Config.popupActive) {
+        if (bar.popupActive) {
           hideTimer.restart()
           return
         }
         bar._entering = false
         bar._mouseActive = false
-        Root.Config.popupActive = false
-        Root.Config.popupMouseInside = false
+        bar.popupActive = false
+        bar.popupMouseInside = false
       }
     }
   }
@@ -81,14 +84,14 @@ PanelWindow {
     id: forceHideTimer
     interval: 5000
     onTriggered: {
-      if (Root.Config.popupActive) {
+      if (bar.popupActive) {
         forceHideTimer.restart()
         return
       }
       bar._entering = false
       Root.Config.barVisible = false
-      Root.Config.popupActive = false
-      Root.Config.popupMouseInside = false
+      bar.popupActive = false
+      bar.popupMouseInside = false
     }
   }
 
@@ -96,15 +99,15 @@ PanelWindow {
     target: "bar"
 
     function toggle(): void {
-      if (bar._mouseActive || Root.Config.popupActive) return
+      if (bar._mouseActive || bar.popupActive) return
       if (Root.Config.barVisible) {
         forceHideTimer.stop()
         hideTimer.stop()
         bar._entering = false
         bar._mouseActive = false
         Root.Config.barVisible = false
-        Root.Config.popupActive = false
-        Root.Config.popupMouseInside = false
+        bar.popupActive = false
+        bar.popupMouseInside = false
       } else {
         bar._entering = true
         Root.Config.barVisible = true
@@ -130,7 +133,7 @@ PanelWindow {
         leftMargin: 8
         rightMargin: 8
       }
-      y: (Root.Config.barVisible || bar._mouseActive || Root.Config.popupActive) ? 8 : -(barContainer.implicitHeight + 8)
+      y: (Root.Config.barVisible || bar._mouseActive || bar.popupActive) ? 8 : -(barContainer.implicitHeight + 8)
 
       Behavior on y {
         NumberAnimation {
@@ -166,6 +169,12 @@ PanelWindow {
             if (Root.Config.volumeEnabled) {
               items.push({ widget: "volume", position: Root.Config.volumePosition });
             }
+            if (Root.Config.displayEnabled) {
+              items.push({ widget: "display", position: Root.Config.displayPosition });
+            }
+            if (Root.Config.powerEnabled) {
+              items.push({ widget: "power", position: Root.Config.powerPosition });
+            }
             items.sort(function(a, b) { return a.position - b.position; });
             return items;
           }
@@ -175,13 +184,16 @@ PanelWindow {
               switch (modelData.widget) {
                 case "time": return timeComp;
                 case "volume": return volumeComp;
+                case "display": return displayComp;
+                case "power": return powerComp;
                 default: return null;
               }
             }
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
             onLoaded: {
-              if (modelData.widget === "volume") {
+              if (modelData.widget === "volume" || modelData.widget === "display" || modelData.widget === "power") {
                 item.panelWindow = bar
+                item.bar = bar
               }
             }
           }
@@ -195,6 +207,16 @@ PanelWindow {
         Component {
           id: volumeComp
           Volume {}
+        }
+
+        Component {
+          id: displayComp
+          Display {}
+        }
+
+        Component {
+          id: powerComp
+          Power {}
         }
       }
     }
