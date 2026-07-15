@@ -15,7 +15,6 @@ Item {
   property bool menuOpen: false
   property bool popupVisible: false
 
-  readonly property int animDuration: 250
   readonly property int autoHideDelay: 2000
 
   readonly property real lowThreshold: 0.3
@@ -47,6 +46,7 @@ Item {
 
   function showTemporarily() {
     if (bar.screen.name != Root.Config.focusedScreenName) return
+    if (!menuOpen) bar.closeAllMenus()
     menuOpen = true
     autoHideTimer.restart()
   }
@@ -99,11 +99,14 @@ Item {
         menuOpen = false
       }
     }
+    function onCloseAllMenus() {
+      menuOpen = false
+    }
   }
 
   Timer {
     id: hideTimer
-    interval: animDuration + 50
+    interval: Root.Config.popupAnimDuration + 50
     onTriggered: {
       popupVisible = false
       bar.popupMouseInside = false
@@ -148,6 +151,7 @@ Item {
           toggleMute()
           if (menuOpen) autoHideTimer.restart()
         } else {
+          if (!menuOpen) bar.closeAllMenus()
           menuOpen = !menuOpen
           if (menuOpen) autoHideTimer.restart()
         }
@@ -178,21 +182,11 @@ Item {
       if (!visible) mouseInside = false
     }
 
-    Components.Panel {
+    Components.PopupPanel {
       id: popupContent
       width: 220
       height: 88
-
-      scale: menuOpen ? 1 : 0.95
-      opacity: menuOpen ? 1 : 0
-      transformOrigin: Item.TopRight
-
-      Behavior on scale {
-        NumberAnimation { duration: animDuration; easing.type: Easing.OutCubic }
-      }
-      Behavior on opacity {
-        NumberAnimation { duration: animDuration; easing.type: Easing.OutCubic }
-      }
+      open: menuOpen
 
       HoverHandler {
         onHoveredChanged: {

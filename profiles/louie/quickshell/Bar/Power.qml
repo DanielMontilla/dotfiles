@@ -13,7 +13,6 @@ Item {
   property bool menuOpen: false
   property bool popupVisible: false
 
-  readonly property int animDuration: 250
   readonly property int autoHideDelay: 2000
 
   function run(command: var) {
@@ -38,11 +37,14 @@ Item {
     function onPopupActiveChanged() {
       if (!bar.popupActive && menuOpen) menuOpen = false
     }
+    function onCloseAllMenus() {
+      menuOpen = false
+    }
   }
 
   Timer {
     id: hideTimer
-    interval: animDuration + 50
+    interval: Root.Config.popupAnimDuration + 50
     onTriggered: {
       popupVisible = false
       bar.popupMouseInside = false
@@ -83,6 +85,7 @@ Item {
       hoverEnabled: true
       cursorShape: Qt.PointingHandCursor
       onClicked: {
+        if (!menuOpen) bar.closeAllMenus()
         menuOpen = !menuOpen
         if (menuOpen) autoHideTimer.restart()
       }
@@ -109,17 +112,11 @@ Item {
       if (!visible) mouseInside = false
     }
 
-    Components.Panel {
+    Components.PopupPanel {
       id: popupContent
       width: 180
       height: actionColumn.implicitHeight + 20
-
-      scale: menuOpen ? 1 : 0.95
-      opacity: menuOpen ? 1 : 0
-      transformOrigin: Item.TopRight
-
-      Behavior on scale { NumberAnimation { duration: animDuration; easing.type: Easing.OutCubic } }
-      Behavior on opacity { NumberAnimation { duration: animDuration; easing.type: Easing.OutCubic } }
+      open: menuOpen
 
       HoverHandler {
         onHoveredChanged: {
