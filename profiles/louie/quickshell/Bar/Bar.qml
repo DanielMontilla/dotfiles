@@ -24,6 +24,7 @@ PanelWindow {
   property bool _mouseActive: false
   property bool popupActive: false
   property bool popupMouseInside: false
+  signal closeAllMenus()
 
   mask: Region {
     item: maskItem
