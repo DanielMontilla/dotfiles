@@ -2,7 +2,7 @@
 name: caveman-compression
 description: Aggressively removes stop words and grammatical scaffolding while preserving meaning. Use when user asks to compress, shorten, simplify, or caveman-style reduce text.
 author: Daniel Montilla
-version: 1.0.1
+version: 1.1.0
 license: MIT
 dependencies:
   - executing-skills
@@ -21,6 +21,8 @@ Use when asked to compress, shorten, simplify, or caveman-style reduce text whil
 ## 1. Identify Compressible Content
 
 Identify text passages that can be compressed — any text where brevity matters more than readability.
+
+> **Warning:** Do NOT apply this skill to structured operational documents — task frontmatter, or MEMORY.md `Handoff`/`Deviations` sections and TASK.md `Requirements` — where removing prepositions or auxiliary verbs can change meaning. The feature-spec skills apply it only to free-form prose for this reason.
 
 ## 2. Apply Compression Rules
 

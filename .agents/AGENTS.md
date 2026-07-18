@@ -9,6 +9,12 @@ pipeline. See `authoring-skills` for how skills are created and audited.
 
 ## Skills
 
+### authoring-rules
+- **Path**: `.agents/skills/authoring-rules/`
+- **Groups**: skills, documentation
+- **Description**: Creates and maintains agent rules and system prompts. Use when the user wants to create, improve, or audit agent rules, system prompts, or context files.
+- **Dependencies**: executing-skills
+
 ### authoring-skills
 - **Path**: `.agents/skills/authoring-skills/`
 - **Groups**: skills
@@ -45,11 +51,23 @@ pipeline. See `authoring-skills` for how skills are created and audited.
 - **Description**: Discovers and surfaces available skills matching user requests. Use when the user asks "what skills do you have", "how do I do X", or wants to find a skill for a specific task.
 - **Dependencies**: executing-skills
 
+### grilling
+- **Path**: `.agents/skills/grilling/`
+- **Groups**: planning
+- **Description**: Grill the user relentlessly about a plan or design. Use when the user wants to stress-test a plan before building, or uses any 'grill' trigger phrases.
+- **Dependencies**: none
+
 ### installing-profiles
 - **Path**: `.agents/skills/installing-profiles/`
 - **Groups**: workflow
 - **Description**: User-facing guide for installing a dotfiles profile via scripts/install. This skill describes the install workflow and gotchas; the agent must NOT run these steps itself (they require the user's sudo/tty access).
 - **Dependencies**: none
+
+### modifying-skills
+- **Path**: `.agents/skills/modifying-skills/`
+- **Groups**: skills
+- **Description**: Modifies, updates, extends, or audits existing skills in .agents/skills/. Use when the user wants to edit an existing skill, add content to a skill, audit a skill for quality, or update skill metadata.
+- **Dependencies**: executing-skills, grilling
 
 ### planning-git-commits
 - **Path**: `.agents/skills/planning-git-commits/`
@@ -57,9 +75,17 @@ pipeline. See `authoring-skills` for how skills are created and audited.
 - **Description**: Creates a commit plan with conventional commits based on file paths. Use when the user wants to push or commit changes to git.
 - **Dependencies**: executing-skills
 
+### using-git-worktrees
+- **Path**: `.agents/skills/using-git-worktrees/`
+- **Groups**: git, workflow
+- **Description**: Use starting feature work needs isolation from current workspace or before executing implementation plans - ensures isolated workspace exists via native tools or git worktree fallback
+- **Dependencies**: executing-skills
+
 ## Skills by group
 
-- **skills**: authoring-skills, caveman-compression, executing-skills, finding-skills
+- **skills**: authoring-rules, authoring-skills, caveman-compression, executing-skills, finding-skills, modifying-skills
 - **scaffolding**: creating-dotfiles-profiles, creating-quickshell-widgets
-- **workflow**: creating-dotfiles-profiles, installing-profiles, planning-git-commits
-- **git**: planning-git-commits
+- **workflow**: creating-dotfiles-profiles, installing-profiles, planning-git-commits, using-git-worktrees
+- **git**: planning-git-commits, using-git-worktrees
+- **documentation**: authoring-rules
+- **planning**: grilling

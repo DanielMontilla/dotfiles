@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2] - 2026-07-14
+
+### Changed
+
+- Updated group entries: `adding-vendor` → `adding-references`, `finding-vendors` → `finding-references`, `vendors` → `references`
+- Updated group descriptions from "vendor" to "reference" terminology
+
 ## [1.1.1] - 2026-07-09
 
 ### Fixed

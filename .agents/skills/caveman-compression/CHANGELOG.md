@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-07-14
+
+### Added
+
+- Warning that the skill must not be applied to structured operational documents (task frontmatter, MEMORY.md Handoff/Deviations/Requirements) where stop-word stripping can change meaning (REVIEW.md F3)
+
 ## [1.0.1] - 2026-07-09
 
 ### Added
