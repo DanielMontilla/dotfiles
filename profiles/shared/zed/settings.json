@@ -22,6 +22,9 @@
     },
     "indent_size": 12.0,
   },
+  "markdown_preview": {
+    "limit_content_width": false,
+  },
   "tab_size": 2,
   "terminal": {
     "shell": {

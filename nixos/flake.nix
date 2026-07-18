@@ -31,6 +31,7 @@
 			system = "x86_64-linux";
 			specialArgs = { inherit inputs; };
 			modules = [
+				nix-flatpak.nixosModules.nix-flatpak
 				./hosts/louie/configuration.nix
 			];
 		};

@@ -18,9 +18,25 @@
 
   services.envfs.enable = true;
 
+  services.flatpak = {
+    enable = true;
+    remotes = [
+      { name = "flathub"; location = "https://dl.flathub.org/repo/flathub.flatpakrepo"; }
+    ];
+    packages = [
+      "com.usebruno.Bruno"
+    ];
+  };
+
   # Niri compositor
   programs.niri = {
     enable = true;
+  };
+
+  # Docker virtualization
+  virtualisation.docker = {
+    enable = true;
+    autoPrune.enable = true;
   };
 
   security.rtkit.enable = true;
@@ -85,6 +101,7 @@
     curl
     ripgrep
     inputs.ghostty.packages.${pkgs.stdenv.hostPlatform.system}.default
+    oxker
   ];
 
   programs.fish.enable = true;
