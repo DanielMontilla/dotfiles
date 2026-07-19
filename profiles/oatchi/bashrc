@@ -126,5 +126,20 @@ fi
 
 # Hand off to fish as the interactive shell.
 if command -v fish >/dev/null 2>&1; then
+    {
+        echo "BASHRC-EXEC-PID=$$"
+        echo "BASHRC-EXEC-PPID=$PPID"
+        echo "BASHRC-EXEC-IN_NIX_SHELL=[$IN_NIX_SHELL]"
+        echo "BASHRC-EXEC-IN_NIX_SHELL_EXPORTED=$(export | grep -i IN_NIX_SHELL || true)"
+        echo "BASHRC-EXEC-NIX_SHELL_VAR=[$NIX_SHELL]"
+        echo "BASHRC-EXEC-NIX_BUILD_TOP=[$NIX_BUILD_TOP]"
+        echo "BASHRC-EXEC-buildInputs=[$buildInputs]"
+        echo "BASHRC-EXEC-PATH-FIRST200=${PATH:0:200}"
+        echo "BASHRC-EXEC-COMMAND-V-FISH=$(command -v fish)"
+        echo "BASHRC-EXEC-PS1=[${PS1:-unset}]"
+        echo "BASHRC-EXEC-0=$0"
+        echo "BASHRC-EXEC-BASH_SOURCE=${BASH_SOURCE[*]}"
+        echo "BASHRC-EXEC-PARENT-NAME=$(ps -o comm= -p $PPID 2>&1)"
+    } > /tmp/bashrc-exec-probe.log 2>&1
     exec fish
 fi

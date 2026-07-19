@@ -10,7 +10,7 @@
     in
     {
       packages.${system}.default = pkgs.buildEnv {
-        name = "olimar";
+        name = "oatchi";
         paths = with pkgs; [
           git
           curl
