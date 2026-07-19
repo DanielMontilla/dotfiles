@@ -1,8 +1,0 @@
-# KB LED
-brightnessctl --device='chromeos::kbd_backlight' set 1
-
-# Gamma Stuff
-gammastep -O 4000 -b 0.8
-
-# Fingerprint
-nix-shell -p fw-ectool --run "sudo ectool led power off"
