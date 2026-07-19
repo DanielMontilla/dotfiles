@@ -1,0 +1,59 @@
+// Minimal niri configuration for louie
+// Kept intentionally small to isolate startup issues.
+// Add back modules (output.kdl, screencast.kdl, etc.) once niri launches cleanly.
+
+include "input.kdl"
+include "layout.kdl"
+include "keybinds.kdl"
+include "output.kdl"
+include "screencast.kdl"
+
+input {
+    keyboard {
+        xkb {
+            layout "us"
+        }
+    }
+
+    touchpad {
+        tap
+        natural-scroll
+    }
+}
+
+// Rounded corners for all windows
+window-rule {
+    geometry-corner-radius 4
+    clip-to-geometry true
+}
+
+cursor {
+    // A real cursor theme must be installed (bibata-cursors) for xcursor-size
+    // to take effect; without one niri uses a built-in cursor that ignores size.
+    xcursor-theme "Bibata-Modern-Classic"
+    xcursor-size 12
+}
+
+// Disable the top-left hot corner that otherwise opens the Overview when the
+// cursor is flung into a screen corner.
+gestures {
+    hot-corners {
+        off
+    }
+}
+
+// Export niri's display environment into systemd/dbus so user services
+// (xdg-desktop-portal-*) can reach the Wayland display. Without this the GTK
+// portal fails with "cannot open display", and every GUI app (Ghostty, Brave,
+// ...) blocks on the timing-out portal.
+// Also restart the portals so they reconnect to the (new) Wayland display after
+// niri is quit and restarted -- otherwise the stale portal from the previous
+// niri session makes Ghostty launch slowly again.
+spawn-at-startup "sh" "-c" "systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP && dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP && systemctl --user restart xdg-desktop-portal xdg-desktop-portal-gtk"
+
+// Warm up the Ghostty GTK/libadwaita instance once at login so opening a
+// terminal later is instant (combined with gtk-single-instance in the config).
+spawn-at-startup "ghostty" "--initial-window=false" "--gtk-single-instance=true" "--quit-after-last-window-closed=false"
+
+// Quickshell bar (status bar, widgets, etc.)
+spawn-at-startup "qs"

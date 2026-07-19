@@ -1,0 +1,139 @@
+// Keybindings for niri (louie)
+// Based on profiles/shared/niri/keybinds.kdl, adapted for louie:
+//  - uses spawn-sh so commands pick up the system PATH when niri is
+//    launched from a TTY
+//  - brave is forced onto the Wayland backend (--ozone-platform=wayland)
+//    because on a pure-Wayland session there is no X server / $DISPLAY
+
+// "Mod" is Super on TTY, Alt in windowed mode
+
+binds {
+    // === General Actions ===
+    Mod+Q repeat=false { close-window; }
+    Mod+Shift+Q repeat=false { quit; }
+
+    // === Spawning Applications ===
+    // Terminal - use spawn-sh for shell PATH expansion
+    Mod+Return repeat=false { spawn-sh "ghostty"; }
+    // Application launcher
+    Mod+Space repeat=false { spawn-sh "wofi --show drun"; }
+    // Browser (Wayland)
+    Mod+P repeat=false { spawn-sh "brave --ozone-platform=wayland"; }
+    // Toggle bar visibility
+    Mod+B repeat=false { spawn-sh "qs ipc call bar toggle"; }
+    // === Volume Control ===
+    // Using spawn-sh for shell commands with pipewire
+    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"; }
+    XF86AudioMute        allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_SOURCE@ toggle"; }
+
+    // === Brightness Control ===
+    XF86MonBrightnessUp   allow-when-locked=true { spawn-sh "brightnessctl set 5%+"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn-sh "brightnessctl set 5%-"; }
+
+    // === Media Controls ===
+    XF86AudioNext     allow-when-locked=true { spawn-sh "playerctl next"; }
+    XF86AudioPrev     allow-when-locked=true { spawn-sh "playerctl previous"; }
+    XF86AudioPlay     allow-when-locked=true { spawn-sh "playerctl play-pause"; }
+    XF86AudioPause    allow-when-locked=true { spawn-sh "playerctl play-pause"; }
+
+    // === Focus Movement (HJKL) ===
+    Mod+H { focus-column-left; }
+    Mod+L { focus-column-right; }
+
+    // === Workspace Navigation ===
+    Mod+J { focus-workspace-down; }
+    Mod+K { focus-workspace-up; }
+
+    // === Window/Column Movement ===
+    Mod+Ctrl+H { move-column-left; }
+    Mod+Ctrl+L { move-column-right; }
+
+    // Arrow key alternatives
+    Mod+Ctrl+Left  { move-column-left; }
+    Mod+Ctrl+Right { move-column-right; }
+    Mod+Ctrl+Up    { move-window-up; }
+    Mod+Ctrl+Down  { move-window-down; }
+
+    // === Workspace Navigation ===
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+
+    // Move column to workspace
+    Mod+Ctrl+1 { move-column-to-workspace 1; }
+    Mod+Ctrl+2 { move-column-to-workspace 2; }
+    Mod+Ctrl+3 { move-column-to-workspace 3; }
+    Mod+Ctrl+4 { move-column-to-workspace 4; }
+    Mod+Ctrl+5 { move-column-to-workspace 5; }
+    Mod+Ctrl+6 { move-column-to-workspace 6; }
+    Mod+Ctrl+7 { move-column-to-workspace 7; }
+    Mod+Ctrl+8 { move-column-to-workspace 8; }
+    Mod+Ctrl+9 { move-column-to-workspace 9; }
+
+    // Move column to workspace above/below
+    Mod+Ctrl+J { move-column-to-workspace-down; }
+    Mod+Ctrl+K { move-column-to-workspace-up; }
+
+    // Workspace switching
+    Mod+Page_Down { focus-workspace-down; }
+    Mod+Page_Up   { focus-workspace-up; }
+    Mod+Down { focus-workspace-down; }
+    Mod+Up { focus-workspace-up; }
+    Mod+U { focus-workspace-down; }
+    Mod+I { focus-workspace-up; }
+
+    // === Window Layout Actions ===
+    // Toggle floating
+    Mod+S repeat=false { toggle-window-floating; }
+    // Center window
+    Mod+C repeat=false { center-column; }
+    // Toggle fullscreen
+    Mod+Shift+F repeat=false { fullscreen-window; }
+    // Toggle maximize column
+    Mod+M repeat=false { maximize-column; }
+    // Toggle maximize edge-to-edge (old behavior)
+    Mod+Shift+M repeat=false { maximize-window-to-edges; }
+    // Overview
+    Mod+O repeat=false { toggle-overview; }
+
+    // === Window Resizing ===
+    Mod+Minus { set-column-width "-10%"; }
+    Mod+Equal  { set-column-width "+10%"; }
+
+    // === Monitor Focus (with Shift) ===
+    Mod+Shift+H { focus-monitor-left; }
+    Mod+Shift+L { focus-monitor-right; }
+    Mod+Shift+K { focus-monitor-up; }
+    Mod+Shift+J { focus-monitor-down; }
+
+    // Arrow key alternatives
+    Mod+Shift+Left  { focus-monitor-left; }
+    Mod+Shift+Right { focus-monitor-right; }
+    Mod+Shift+Up    { focus-monitor-up; }
+    Mod+Shift+Down  { focus-monitor-down; }
+
+    // Move column to monitor
+    Mod+Shift+Ctrl+H { move-column-to-monitor-left; }
+    Mod+Shift+Ctrl+L { move-column-to-monitor-right; }
+    Mod+Shift+Ctrl+K { move-column-to-monitor-up; }
+    Mod+Shift+Ctrl+J { move-column-to-monitor-down; }
+
+    // === Screenshot ===
+    Print { screenshot; }
+    Ctrl+Print { screenshot-screen; }
+    Alt+Print { screenshot-window; }
+
+    // === Show Hotkeys ===
+    Mod+Shift+Slash { show-hotkey-overlay; }
+
+    // === Quit ===
+    Mod+Shift+E { quit; }
+}

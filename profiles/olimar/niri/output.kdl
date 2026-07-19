@@ -1,0 +1,21 @@
+// Output (monitor) configuration for louie.
+// Connector names and exact modes were taken from `niri msg outputs`.
+// Main display is the 144 Hz LG; the 60 Hz ASUS sits to its left.
+
+// Main monitor: 144 Hz LG ULTRAGEAR
+output "DP-4" {
+    mode "1920x1080@143.981"
+    scale 1
+    transform "normal"
+    position x=1920 y=0
+    // Receive initial focus on startup.
+    focus-at-startup
+}
+
+// Secondary monitor: 60 Hz ASUS VN247, on the left
+output "HDMI-A-2" {
+    mode "1920x1080@60.000"
+    scale 1
+    transform "normal"
+    position x=0 y=0
+}
