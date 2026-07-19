@@ -19,12 +19,12 @@
 	};
 
 	outputs = { self, nixpkgs, nix-flatpak, opencode-flake, ghostty, ... }@inputs: {
-		nixosConfigurations.framework = nixpkgs.lib.nixosSystem {
+		nixosConfigurations.olimar = nixpkgs.lib.nixosSystem {
 			system = "x86_64-linux";
 			specialArgs = { inherit inputs; };
 			modules = [
 				nix-flatpak.nixosModules.nix-flatpak
-				./hosts/framework/configuration.nix
+				./hosts/olimar/configuration.nix
 			];
 		};
 		nixosConfigurations.louie = nixpkgs.lib.nixosSystem {

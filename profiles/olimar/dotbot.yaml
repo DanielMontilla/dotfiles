@@ -6,22 +6,48 @@
       relative: true
 
 - clean:
+    "~/.config/niri/":
+      force: true
     "~/.config/fish/":
       force: true
     "~/.config/nvim/":
       force: true
+    "~/.config/quickshell/":
+      force: true
+    "~/.config/herdr/":
+      force: true
+    "~/.config/zed/":
+      force: true
+    "~/.var/app/dev.zed.Zed/config/zed/":
+      force: true
 
 - link:
-    ~/.gitconfig:
-      path: profiles/shared/git/gitconfig
-      force: true
+    ~/.gitconfig: profiles/shared/git/gitconfig
 
-    ~/.bashrc:
-      path: profiles/olimar/bashrc
-      force: true
+    ~/.config/fish/config.fish: profiles/olimar/fish/config.fish
+    ~/.config/fish/fish_variables: profiles/olimar/fish/fish_variables
 
-    ~/.config/fish/:
-      path: profiles/shared/fish/*
+    ~/.config/fish/conf.d/:
+      path: profiles/olimar/fish/conf.d/*
+
+    ~/.config/niri/:
+      path: profiles/olimar/niri/*
 
     ~/.config/nvim/:
       path: profiles/shared/neovim/lazy/*
+
+    ~/.config/starship.toml: profiles/shared/starship/starship.toml
+
+    ~/.config/quickshell/:
+      path: profiles/olimar/quickshell/*
+
+    ~/.config/ghostty/:
+      path: profiles/shared/ghostty/*
+
+    ~/.config/herdr/:
+      path: profiles/olimar/herdr/*
+
+    ~/.config/zed/:
+      path: profiles/shared/zed/*
+    ~/.var/app/dev.zed.Zed/config/zed/:
+      path: profiles/shared/zed/*
