@@ -24,6 +24,7 @@
   users.users.daniel = {
     isNormalUser = true;
     description = "Daniel Montilla";
+    shell = pkgs.fish;
     extraGroups = [ "networkmanager" "wheel" "docker" ];
     packages = with pkgs; [];
   };
