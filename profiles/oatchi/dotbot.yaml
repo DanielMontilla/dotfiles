@@ -25,3 +25,7 @@
 
     ~/.config/nvim/:
       path: profiles/shared/neovim/*
+
+    ~/.ssh/config:
+      path: profiles/oatchi/ssh/config
+      force: true
