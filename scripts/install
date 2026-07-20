@@ -59,9 +59,9 @@ else
         exit 1
     fi
 
-    EXISTING_NAME="$(nix profile list 2>/dev/null | awk -v flake="${PROFILE_FLAKE}" '
+    EXISTING_NAME="$(nix profile list 2>/dev/null | awk -v flake="${PROFILE_FLAKE}" -v pname="${profile}" '
         /Name:/ { name = $2; gsub(/\033\[[0-9;]*m/, "", name) }
-        { if (index($0, flake) > 0 && name != "") { print name; exit } }
+        name != "" && (index($0, flake) > 0 || name == pname) { print name; exit }
     ')"
 
     if [ -n "${EXISTING_NAME}" ]; then
