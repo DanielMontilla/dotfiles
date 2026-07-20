@@ -36,7 +36,7 @@
       path: profiles/olimar/niri/*
 
     ~/.config/nvim/:
-      path: profiles/shared/neovim/lazy/*
+      path: profiles/shared/neovim/*
 
     ~/.config/starship.toml: profiles/shared/starship/starship.toml
 

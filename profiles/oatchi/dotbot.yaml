@@ -24,4 +24,4 @@
       path: profiles/shared/fish/*
 
     ~/.config/nvim/:
-      path: profiles/shared/neovim/lazy/*
+      path: profiles/shared/neovim/*

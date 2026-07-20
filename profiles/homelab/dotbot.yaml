@@ -13,4 +13,4 @@
     ~/.gitconfig: profiles/shared/git/gitconfig
 
     ~/.config/nvim/:
-      path: profiles/shared/neovim/lazy/*
+      path: profiles/shared/neovim/*
