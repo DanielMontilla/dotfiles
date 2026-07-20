@@ -49,7 +49,6 @@ PanelWindow {
 
     onEntered: {
       Root.Config.focusedScreenName = modelData.name
-      forceHideTimer.stop()
       hideTimer.stop()
       if (!bar._mouseActive && !Root.Config.barVisible) {
         bar._entering = true
@@ -84,13 +83,14 @@ PanelWindow {
   Timer {
     id: forceHideTimer
     interval: 5000
+    running: Root.Config.barVisible
     onTriggered: {
-      if (bar.popupActive) {
-        forceHideTimer.restart()
+      if (bar._mouseActive || bar.popupActive || detectionArea.containsMouse) {
         return
       }
       bar._entering = false
       Root.Config.barVisible = false
+      bar._mouseActive = false
       bar.popupActive = false
       bar.popupMouseInside = false
     }
@@ -102,7 +102,6 @@ PanelWindow {
     function toggle(): void {
       if (bar._mouseActive || bar.popupActive) return
       if (Root.Config.barVisible) {
-        forceHideTimer.stop()
         hideTimer.stop()
         bar._entering = false
         bar._mouseActive = false
@@ -112,7 +111,6 @@ PanelWindow {
       } else {
         bar._entering = true
         Root.Config.barVisible = true
-        forceHideTimer.start()
       }
     }
   }
@@ -157,6 +155,30 @@ PanelWindow {
         }
         spacing: 6
 
+        Repeater {
+          model: {
+            var items = [];
+            if (Root.Config.batteryEnabled) {
+              items.push({ widget: "battery" });
+            }
+            if (Root.Config.timeEnabled) {
+              items.push({ widget: "time" });
+            }
+            return items;
+          }
+
+          Loader {
+            sourceComponent: {
+              switch (modelData.widget) {
+                case "time": return timeComp;
+                case "battery": return batteryComp;
+                default: return null;
+              }
+            }
+            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+          }
+        }
+
         Item {
           Layout.fillWidth: true
         }
@@ -164,9 +186,6 @@ PanelWindow {
         Repeater {
           model: {
             var items = [];
-            if (Root.Config.timeEnabled) {
-              items.push({ widget: "time", position: Root.Config.timePosition });
-            }
             if (Root.Config.volumeEnabled) {
               items.push({ widget: "volume", position: Root.Config.volumePosition });
             }
@@ -175,9 +194,6 @@ PanelWindow {
             }
             if (Root.Config.displayEnabled) {
               items.push({ widget: "display", position: Root.Config.displayPosition });
-            }
-            if (Root.Config.batteryEnabled) {
-              items.push({ widget: "battery", position: Root.Config.batteryPosition });
             }
             if (Root.Config.powerEnabled) {
               items.push({ widget: "power", position: Root.Config.powerPosition });
@@ -189,11 +205,9 @@ PanelWindow {
           Loader {
             sourceComponent: {
               switch (modelData.widget) {
-                case "time": return timeComp;
                 case "volume": return volumeComp;
                 case "brightness": return brightnessComp;
                 case "display": return displayComp;
-                case "battery": return batteryComp;
                 case "power": return powerComp;
                 default: return null;
               }
@@ -214,6 +228,11 @@ PanelWindow {
         }
 
         Component {
+          id: batteryComp
+          Battery {}
+        }
+
+        Component {
           id: volumeComp
           Volume {}
         }
@@ -226,11 +245,6 @@ PanelWindow {
         Component {
           id: displayComp
           Display {}
-        }
-
-        Component {
-          id: batteryComp
-          Battery {}
         }
 
         Component {

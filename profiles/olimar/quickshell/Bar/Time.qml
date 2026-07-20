@@ -99,13 +99,6 @@ Item {
     }
 
     Rectangle {
-      Layout.alignment: Qt.AlignVCenter
-      Layout.preferredWidth: 1
-      Layout.preferredHeight: row.implicitHeight - 4
-      color: Root.Theme.overlay
-    }
-
-    Rectangle {
       color: Root.Theme.primary
       radius: 6
       implicitWidth: timeRow.implicitWidth + 12
