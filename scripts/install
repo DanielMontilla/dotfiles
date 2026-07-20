@@ -72,6 +72,14 @@ else
         nix profile add "path:${PROFILE_FLAKE}"
     fi
 
+    # Install WSL config if present
+    WSL_CONF="${PROFILE_DIR}/wsl.conf"
+    if [ -f "$WSL_CONF" ]; then
+        echo "Installing wsl.conf..."
+        sudo cp "$WSL_CONF" /etc/wsl.conf
+        echo "  → wsl.conf installed. Run 'wsl --shutdown' in PowerShell, then restart this terminal to enable systemd."
+    fi
+
     # Install and enable any systemd services shipped with the profile
     SYSTEMD_DIR="${PROFILE_DIR}/systemd"
     if [ -d "$SYSTEMD_DIR" ]; then
