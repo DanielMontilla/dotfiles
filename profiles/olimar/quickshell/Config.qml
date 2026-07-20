@@ -18,6 +18,9 @@ QtObject {
   readonly property int displayPosition: 2
   readonly property real displayStep: 0.05
 
+  readonly property bool batteryEnabled: true
+  readonly property int batteryPosition: 2
+
   readonly property bool powerEnabled: true
   readonly property int powerPosition: 3
 

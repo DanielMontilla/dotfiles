@@ -9,7 +9,7 @@
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
       PermitRootLogin = "no";
-      Port = [ 2222 ];
+      Port = 2222;
     };
   };
 

@@ -173,6 +173,9 @@ PanelWindow {
             if (Root.Config.displayEnabled) {
               items.push({ widget: "display", position: Root.Config.displayPosition });
             }
+            if (Root.Config.batteryEnabled) {
+              items.push({ widget: "battery", position: Root.Config.batteryPosition });
+            }
             if (Root.Config.powerEnabled) {
               items.push({ widget: "power", position: Root.Config.powerPosition });
             }
@@ -186,6 +189,7 @@ PanelWindow {
                 case "time": return timeComp;
                 case "volume": return volumeComp;
                 case "display": return displayComp;
+                case "battery": return batteryComp;
                 case "power": return powerComp;
                 default: return null;
               }
@@ -213,6 +217,11 @@ PanelWindow {
         Component {
           id: displayComp
           Display {}
+        }
+
+        Component {
+          id: batteryComp
+          Battery {}
         }
 
         Component {
