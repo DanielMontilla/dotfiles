@@ -71,4 +71,16 @@ else
         echo "Installing Nix profile '${profile}' for the first time..."
         nix profile add "path:${PROFILE_FLAKE}"
     fi
+
+    # Install and enable any systemd services shipped with the profile
+    SYSTEMD_DIR="${PROFILE_DIR}/systemd"
+    if [ -d "$SYSTEMD_DIR" ]; then
+        echo "Installing systemd services..."
+        for service in "$SYSTEMD_DIR"/*.service; do
+            [ -f "$service" ] || continue
+            sudo cp "$service" /etc/systemd/system/
+            sudo systemctl enable "$(basename "$service")"
+            sudo systemctl start "$(basename "$service")"
+        done
+    fi
 fi
