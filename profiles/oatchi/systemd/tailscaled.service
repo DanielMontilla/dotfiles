@@ -1,18 +1,17 @@
 [Unit]
 Description=Tailscale node agent
 Documentation=https://tailscale.com/kb/
-After=network-pre.target NetworkManager.service systemd-resolved.service
-Wants=network-pre.target
-Before=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=notify
 ExecStart=/home/daniel/.nix-profile/bin/tailscaled
-ExecStartPost=/home/daniel/.nix-profile/bin/tailscale up --hostname=oatchi
 Restart=on-failure
 RestartSec=5
 StateDirectory=tailscale
 RuntimeDirectory=tailscale
+Environment=PATH=/home/daniel/.nix-profile/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 [Install]
 WantedBy=multi-user.target
