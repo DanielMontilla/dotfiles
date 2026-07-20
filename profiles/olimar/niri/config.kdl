@@ -8,19 +8,6 @@ include "keybinds.kdl"
 include "output.kdl"
 include "screencast.kdl"
 
-input {
-    keyboard {
-        xkb {
-            layout "us"
-        }
-    }
-
-    touchpad {
-        tap
-        natural-scroll
-    }
-}
-
 // Rounded corners for all windows
 window-rule {
     geometry-corner-radius 4
@@ -31,7 +18,7 @@ cursor {
     // A real cursor theme must be installed (bibata-cursors) for xcursor-size
     // to take effect; without one niri uses a built-in cursor that ignores size.
     xcursor-theme "Bibata-Modern-Classic"
-    xcursor-size 12
+    xcursor-size 20
 }
 
 // Disable the top-left hot corner that otherwise opens the Overview when the
