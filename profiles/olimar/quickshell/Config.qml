@@ -14,15 +14,19 @@ QtObject {
   readonly property real midVolume: 0.5
   readonly property real changeInterval: 0.05
 
+  readonly property bool brightnessEnabled: true
+  readonly property int brightnessPosition: 2
+  readonly property real brightnessStep: 0.05
+
   readonly property bool displayEnabled: false
-  readonly property int displayPosition: 2
+  readonly property int displayPosition: 3
   readonly property real displayStep: 0.05
 
   readonly property bool batteryEnabled: true
-  readonly property int batteryPosition: 2
+  readonly property int batteryPosition: 4
 
   readonly property bool powerEnabled: true
-  readonly property int powerPosition: 3
+  readonly property int powerPosition: 5
 
   readonly property int displayDim: 15
   readonly property int displayLow: 40

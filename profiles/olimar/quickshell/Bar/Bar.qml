@@ -170,6 +170,9 @@ PanelWindow {
             if (Root.Config.volumeEnabled) {
               items.push({ widget: "volume", position: Root.Config.volumePosition });
             }
+            if (Root.Config.brightnessEnabled) {
+              items.push({ widget: "brightness", position: Root.Config.brightnessPosition });
+            }
             if (Root.Config.displayEnabled) {
               items.push({ widget: "display", position: Root.Config.displayPosition });
             }
@@ -188,6 +191,7 @@ PanelWindow {
               switch (modelData.widget) {
                 case "time": return timeComp;
                 case "volume": return volumeComp;
+                case "brightness": return brightnessComp;
                 case "display": return displayComp;
                 case "battery": return batteryComp;
                 case "power": return powerComp;
@@ -196,7 +200,7 @@ PanelWindow {
             }
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
             onLoaded: {
-              if (modelData.widget === "volume" || modelData.widget === "display" || modelData.widget === "power") {
+              if (modelData.widget === "volume" || modelData.widget === "brightness" || modelData.widget === "display" || modelData.widget === "power") {
                 item.panelWindow = bar
                 item.bar = bar
               }
@@ -212,6 +216,11 @@ PanelWindow {
         Component {
           id: volumeComp
           Volume {}
+        }
+
+        Component {
+          id: brightnessComp
+          Brightness {}
         }
 
         Component {
