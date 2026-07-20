@@ -1,0 +1,10 @@
+# SSH over Tailscale mesh (internet, key-only, port 2222)
+# Replace <tailnet> with your Tailscale network name (see `tailscale status`).
+# Hostnames resolve to stable *.ts.net addresses — no port forwarding needed.
+
+Host olimar
+  HostName olimar.montilla.d2000.ts.net
+  User daniel
+  Port 2222
+  IdentityFile ~/.ssh/id_ed25519
+  StrictHostKeyChecking accept-new

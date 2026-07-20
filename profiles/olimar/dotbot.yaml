@@ -24,6 +24,8 @@
 - link:
     ~/.gitconfig: profiles/shared/git/gitconfig
 
+    ~/.ssh/config: profiles/olimar/ssh/config
+
     ~/.config/fish/config.fish: profiles/olimar/fish/config.fish
     ~/.config/fish/fish_variables: profiles/olimar/fish/fish_variables
 

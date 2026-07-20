@@ -24,6 +24,8 @@
 - link:
     ~/.gitconfig: profiles/shared/git/gitconfig
 
+    ~/.ssh/config: profiles/louie/ssh/config
+
     ~/.config/fish/config.fish: profiles/louie/fish/config.fish
     ~/.config/fish/fish_variables: profiles/louie/fish/fish_variables
 
