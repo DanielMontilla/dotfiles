@@ -1,7 +1,22 @@
-vim.opt.runtimepath:prepend(vim.fn.stdpath("config"))
+require("options")
+require("keybinds")
 
-require("config.options")
-require("config.keymaps")
-require("config.autocmds")
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.uv.fs_stat(lazypath) then
+  vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable",
+    lazypath,
+  })
+end
+vim.opt.rtp:prepend(lazypath)
 
-require("look.colorscheme")
+require("lazy").setup(require("plugins"), {
+  defaults = { lazy = true },
+  install = { colorscheme = { "habamax" } },
+  checker = { enabled = false },
+})
+
