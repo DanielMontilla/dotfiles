@@ -3,7 +3,7 @@
 # Hostnames resolve to stable *.ts.net addresses — no port forwarding needed.
 
 Host olimar
-  HostName olimar.montilla.d2000.ts.net
+  HostName olimar.DanielMontilla.ts.net
   User daniel
   Port 2222
   IdentityFile ~/.ssh/id_ed25519
