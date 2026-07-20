@@ -21,6 +21,8 @@
           eza
           dotbot
           gh
+          openssh
+          tailscale
         ];
       };
 
@@ -35,6 +37,8 @@
           eza
           dotbot
           gh
+          openssh
+          tailscale
         ];
       };
     };
