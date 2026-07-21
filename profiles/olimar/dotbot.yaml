@@ -20,6 +20,8 @@
       force: true
     "~/.var/app/dev.zed.Zed/config/zed/":
       force: true
+    "~/.config/qBittorrent/":
+      force: true
 
 - link:
     ~/.gitconfig: profiles/shared/git/gitconfig
@@ -53,3 +55,7 @@
       path: profiles/shared/zed/*
     ~/.var/app/dev.zed.Zed/config/zed/:
       path: profiles/shared/zed/*
+
+    ~/.config/qBittorrent/:
+      path: profiles/shared/qbittorrent/*
+      force: true
