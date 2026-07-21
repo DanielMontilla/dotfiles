@@ -71,6 +71,10 @@ map("n", "<leader>p", '"+p', opts)
 -- Open file explorer (Netrw)
 map("n", "<leader>pv", ":Ex<CR>", opts)
 
+-- Telescope find files
+map("n", "<C-p>", function() require("telescope.builtin").find_files { hidden = true } end, opts)
+map("n", "<leader>pf", function() require("telescope.builtin").find_files { hidden = true } end, opts)
+
 -- Open URL/file under cursor
 map("n", "gx", ":silent execute '!open ' . shellescape('<cfile>')<CR>", { noremap = true, silent = true })
 
