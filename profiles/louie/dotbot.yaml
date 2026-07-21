@@ -47,7 +47,7 @@
       path: profiles/shared/ghostty/*
 
     ~/.config/herdr/:
-      path: profiles/louie/herdr/*
+      path: profiles/shared/herdr/*
 
     ~/.config/zed/:
       path: profiles/shared/zed/*

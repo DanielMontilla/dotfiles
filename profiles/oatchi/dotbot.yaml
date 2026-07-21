@@ -10,6 +10,8 @@
       force: true
     "~/.config/nvim/":
       force: true
+    "~/.config/herdr/":
+      force: true
 
 - link:
     ~/.gitconfig:
@@ -25,6 +27,10 @@
 
     ~/.config/nvim/:
       path: profiles/shared/neovim/*
+
+    ~/.config/herdr/:
+      path: profiles/shared/herdr/*
+      force: true
 
     ~/.ssh/config:
       path: profiles/oatchi/ssh/config

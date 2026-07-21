@@ -1,10 +1,15 @@
 onboarding = false
+
+[keys]
+prefix = "ctrl+space"
+
 [terminal]
 default_shell = "fish"
 
 [ui]
 agent_panel_sort = "spaces"
+pane_gaps = true
 
 [theme]
-name = "terminal"
+name = "one-dark"
 auto_switch = false
