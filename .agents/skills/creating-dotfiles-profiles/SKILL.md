@@ -24,7 +24,7 @@ Use when the user wants to:
 
 The repo has two layouts living side by side:
 
-- **profiles/**: one directory per profile (`framework`, `homelab`, `olimar`, `shared`).
+- **profiles/**: one directory per profile (`framework`, `hocotate`, `olimar`, `shared`).
 - **nixos/hosts/<profile>/**: NixOS system config used only by `nixos` mode.
 - **scripts/install** and **scripts/link**: the two entrypoints.
 

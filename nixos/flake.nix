@@ -35,11 +35,11 @@
 				./hosts/louie/configuration.nix
 			];
 		};
-		nixosConfigurations.homelab = nixpkgs.lib.nixosSystem {
+		nixosConfigurations.hocotate = nixpkgs.lib.nixosSystem {
 			system = "x86_64-linux";
 			specialArgs = { inherit inputs; };
 			modules = [
-				./hosts/homelab/configuration.nix
+				./hosts/hocotate/configuration.nix
 			];
 		};
 	};
