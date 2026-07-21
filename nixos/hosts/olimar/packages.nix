@@ -28,6 +28,9 @@
     ];
   };
 
+  # Mosh mobile shell (auto-opens UDP 60000-61000 in firewall)
+  programs.mosh.enable = true;
+
   # Niri compositor
   programs.niri = {
     enable = true;

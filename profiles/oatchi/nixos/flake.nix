@@ -21,6 +21,7 @@
           eza
           dotbot
           gh
+          mosh
           openssh
           tailscale
         ];
@@ -37,6 +38,7 @@
           eza
           dotbot
           gh
+          mosh
           openssh
           tailscale
         ];
