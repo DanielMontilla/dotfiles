@@ -1,0 +1,18 @@
+- defaults:
+    link:
+      relink: true
+      create: true
+      glob: true
+      relative: true
+
+- clean:
+    '~/.config/nvim/':
+      force: true
+
+- link:
+    ~/.gitconfig: profiles/shared/git/gitconfig
+
+    ~/.ssh/config: profiles/hocotate/ssh/config
+
+    ~/.config/nvim/:
+      path: profiles/shared/neovim/*
