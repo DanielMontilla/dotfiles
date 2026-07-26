@@ -6,8 +6,11 @@ vim.opt.termguicolors = true
 -- Use dark background
 vim.opt.background = "dark"
 
+-- Rounded borders for floating windows
+vim.opt.winborder = "rounded"
+
 -- Cursor shape per mode
-vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20"
+vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:line,r-cr-o:hor20"
 
 -- Mode is shown in statusline instead
 vim.opt.showmode = false
@@ -115,8 +118,19 @@ vim.opt.undofile = true
 -- Mouse in all modes
 vim.opt.mouse = "a"
 
--- Use system clipboard
+-- Use system clipboard (OSC 52 for SSH — copies through terminal to local clipboard)
 vim.opt.clipboard = "unnamedplus"
+vim.g.clipboard = {
+  name = "OSC 52",
+  copy = {
+    ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
+    ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
+  },
+  paste = {
+    ["+"] = require("vim.ui.clipboard.osc52").paste("+"),
+    ["*"] = require("vim.ui.clipboard.osc52").paste("*"),
+  },
+}
 
 -- Popup completion menu behavior
 vim.opt.completeopt = { "menu", "menuone", "noselect" }
