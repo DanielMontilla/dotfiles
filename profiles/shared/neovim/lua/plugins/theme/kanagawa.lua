@@ -22,11 +22,12 @@ return {
   overrides = function(colors)
     local theme = colors.theme
     return {
-      NormalFloat = { bg = "none" },
-      FloatBorder = { bg = "none" },
-      Pmenu = { bg = "none" },
-      TelescopeNormal = { bg = "none" },
-      TelescopeBorder = { bg = "none" },
+      NormalFloat = { bg = theme.ui.bg_p2 },
+      FloatBorder = { fg = theme.ui.fg_dim, bg = theme.ui.bg_p2 },
+      Pmenu = { bg = theme.ui.bg_p1 },
+      PmenuSel = { bg = theme.ui.bg_p2 },
+      TelescopeNormal = { bg = theme.ui.bg_p2 },
+      TelescopeBorder = { fg = theme.ui.fg_dim, bg = theme.ui.bg_p2 },
     }
   end,
 }

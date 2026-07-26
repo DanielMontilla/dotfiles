@@ -1,4 +1,4 @@
-local config = require("plugins.theme.dragon")
+local config = require("plugins.theme.kanagawa")
 
 return {
   "rebelot/kanagawa.nvim",
