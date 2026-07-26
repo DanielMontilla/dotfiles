@@ -13,6 +13,7 @@ input {
         scroll-factor 0.25
         drag false
         click-method "clickfinger"
+        dwt
     }
 
     mouse {
