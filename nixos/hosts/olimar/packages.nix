@@ -58,6 +58,8 @@
   boot.kernelModules = [ "i2c_dev" ];
   services.udev.extraRules = ''
     KERNEL=="i2c-[0-9]*", GROUP="users", MODE="0660"
+    SUBSYSTEM=="leds", KERNEL=="chromeos::kbd_backlight", GROUP="users", MODE="0660"
+    SUBSYSTEM=="leds", KERNEL=="chromeos:white:power", GROUP="users", MODE="0660"
   '';
 
   programs.dconf.enable = true;
