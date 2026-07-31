@@ -107,7 +107,7 @@
     curl
     ripgrep
     inputs.ghostty.packages.${pkgs.stdenv.hostPlatform.system}.default
-    nodejs_22
+    nodejs_24
     oxker
     gammastep
     lm_sensors
