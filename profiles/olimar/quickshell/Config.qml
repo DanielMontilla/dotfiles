@@ -64,4 +64,11 @@ QtObject {
   property var gainBase: ({})
   property var gainMax: ({})
   property bool gainsLoaded: false
+
+  // Keyboard backlight 0-100
+  property int kbdBacklightPercent: 100
+  property int previousKbdBacklightPercent: 100
+
+  // Power LED state
+  property bool powerLedOff: false
 }

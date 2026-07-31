@@ -23,6 +23,11 @@ Item {
   property bool selfTriggered: false
   property int pendingDebouncedBrightness: -1
 
+  property bool kbdInitialized: false
+  property bool kbdSelfTriggered: false
+  property int pendingDebouncedKbd: -1
+
+  // --- Display brightness polling ---
   Process {
     id: pollProcess
     command: ["sh", "-c", "echo $(brightnessctl" + deviceFlag + " get) $(brightnessctl" + deviceFlag + " max)"]
@@ -64,6 +69,7 @@ Item {
 
   Component.onCompleted: {
     backlightDetect.running = true
+    kbdPollProcess.running = true
   }
 
   Process {
@@ -134,6 +140,105 @@ Item {
     showTemporarily()
   }
 
+  // --- Keyboard backlight ---
+  Process {
+    id: kbdPollProcess
+    command: ["cat", "/sys/class/leds/chromeos::kbd_backlight/brightness"]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        const val = parseInt(text.trim())
+        if (!isNaN(val)) {
+          if (!kbdInitialized) {
+            kbdInitialized = true
+            Root.Config.kbdBacklightPercent = val
+            Root.Config.previousKbdBacklightPercent = val
+            return
+          }
+          if (!kbdSelfTriggered && val !== Root.Config.kbdBacklightPercent) {
+            Root.Config.kbdBacklightPercent = val
+            if (val !== Root.Config.previousKbdBacklightPercent) {
+              Root.Config.previousKbdBacklightPercent = val
+              showTemporarily()
+            }
+          }
+        }
+      }
+    }
+    onExited: {
+      if (!running) kbdRestartTimer.start()
+    }
+  }
+
+  Timer {
+    id: kbdRestartTimer
+    interval: 100
+    onTriggered: kbdPollProcess.running = true
+  }
+
+  Process {
+    id: kbdSetProcess
+    onExited: {
+      kbdResyncTimer.start()
+      kbdSelfTriggerGrace.restart()
+    }
+  }
+
+  Timer {
+    id: kbdSelfTriggerGrace
+    interval: 400
+    onTriggered: kbdSelfTriggered = false
+  }
+
+  function kbdSetBrightness(percent: int) {
+    percent = Math.max(0, Math.min(100, Math.round(percent)))
+    Root.Config.kbdBacklightPercent = percent
+    Root.Config.previousKbdBacklightPercent = percent
+    kbdSelfTriggered = true
+    kbdSetProcess.command = ["sh", "-c", "echo " + percent + " > /sys/class/leds/chromeos::kbd_backlight/brightness"]
+    kbdSetProcess.running = true
+  }
+
+  function kbdScheduleBrightness(percent: int) {
+    pendingDebouncedKbd = Math.max(0, Math.min(100, Math.round(percent)))
+    kbdBrightnessDebounce.restart()
+  }
+
+  Timer {
+    id: kbdBrightnessDebounce
+    interval: 150
+    onTriggered: {
+      if (pendingDebouncedKbd >= 0) {
+        kbdSetBrightness(pendingDebouncedKbd)
+        pendingDebouncedKbd = -1
+      }
+    }
+  }
+
+  Timer {
+    id: kbdResyncTimer
+    interval: 500
+    onTriggered: {
+      if (!kbdPollProcess.running) kbdPollProcess.running = true
+    }
+  }
+
+  function kbdAdjustBrightness(normDelta: real) {
+    kbdSetBrightness(Root.Config.kbdBacklightPercent + normDelta * 100)
+    showTemporarily()
+  }
+
+  // --- Power LED ---
+  function togglePowerLed() {
+    const on = Root.Config.powerLedOff
+    if (on) {
+      kbdSetProcess.command = ["sh", "-c", "echo chromeos-auto > /sys/class/leds/chromeos:white:power/trigger"]
+    } else {
+      kbdSetProcess.command = ["sh", "-c", "echo none > /sys/class/leds/chromeos:white:power/trigger; echo 0 > /sys/class/leds/chromeos:white:power/brightness"]
+    }
+    kbdSetProcess.running = true
+    Root.Config.powerLedOff = !on
+  }
+
   onMenuOpenChanged: {
     bar.popupActive = menuOpen
     if (!menuOpen) bar.popupMouseInside = false
@@ -141,9 +246,13 @@ Item {
       hideTimer.stop()
       popupVisible = true
       pollProcess.running = true
+      kbdPollProcess.running = false
+      kbdRestartTimer.stop()
     } else {
       autoHideTimer.stop()
       hideTimer.start()
+      kbdPollProcess.running = true
+      kbdRestartTimer.stop()
     }
   }
 
@@ -239,7 +348,7 @@ Item {
     Components.PopupPanel {
       id: popupContent
       width: 220
-      height: 60
+      height: 125
       open: menuOpen
 
       HoverHandler {
@@ -256,79 +365,233 @@ Item {
         }
       }
 
-      RowLayout {
+      ColumnLayout {
         anchors.fill: parent
         anchors.margins: 10
         spacing: 6
 
-        Components.Button {
-          source: "../assets/minus.svg"
-          onClicked: { adjustBrightness(-Root.Config.brightnessStep); autoHideTimer.restart() }
-        }
-
-        Slider {
-          id: slider
+        // Row 1: Display brightness
+        RowLayout {
           Layout.fillWidth: true
-          Layout.preferredHeight: 24
-          Layout.alignment: Qt.AlignVCenter
+          spacing: 6
 
-          from: 0
-          to: 100
-          value: Root.Config.brightnessPercent
-          stepSize: 1
-
-          Behavior on value { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-
-          onMoved: {
-            scheduleBrightness(value)
-            autoHideTimer.restart()
+          Components.Button {
+            source: "../assets/minus.svg"
+            onClicked: { adjustBrightness(-Root.Config.brightnessStep); autoHideTimer.restart() }
           }
 
-          background: Rectangle {
-            x: slider.leftPadding
-            y: slider.topPadding + slider.availableHeight / 2 - height / 2
-            width: slider.availableWidth
-            height: 6
-            radius: 3
-            color: Root.Theme.overlay
+          Slider {
+            id: slider
+            Layout.fillWidth: true
+            Layout.preferredHeight: 24
+            Layout.alignment: Qt.AlignVCenter
 
-            Rectangle {
-              width: Math.min(slider.visualPosition * parent.width, parent.width)
-              height: parent.height
+            from: 0
+            to: 100
+            value: Root.Config.brightnessPercent
+            stepSize: 1
+
+            Behavior on value { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
+            onMoved: {
+              scheduleBrightness(value)
+              autoHideTimer.restart()
+            }
+
+            background: Rectangle {
+              x: slider.leftPadding
+              y: slider.topPadding + slider.availableHeight / 2 - height / 2
+              width: slider.availableWidth
+              height: 6
               radius: 3
-              color: Root.Theme.primary
+              color: Root.Theme.overlay
+
+              Rectangle {
+                width: Math.min(slider.visualPosition * parent.width, parent.width)
+                height: parent.height
+                radius: 3
+                color: Root.Theme.primary
+              }
+            }
+
+            handle: Rectangle {
+              x: slider.leftPadding + slider.visualPosition * (slider.availableWidth - width)
+              y: slider.topPadding + slider.availableHeight / 2 - height / 2
+              width: 14
+              height: 14
+              radius: 7
+              color: slider.pressed ? Root.Theme.surfaceHover : Root.Theme.text
+              border.color: Root.Theme.primary
+              border.width: 2
+              Behavior on color { ColorAnimation { duration: 100 } }
             }
           }
 
-          handle: Rectangle {
-            x: slider.leftPadding + slider.visualPosition * (slider.availableWidth - width)
-            y: slider.topPadding + slider.availableHeight / 2 - height / 2
-            width: 14
-            height: 14
-            radius: 7
-            color: slider.pressed ? Root.Theme.surfaceHover : Root.Theme.text
-            border.color: Root.Theme.primary
-            border.width: 2
-            Behavior on color { ColorAnimation { duration: 100 } }
+          Components.Button {
+            source: "../assets/plus.svg"
+            onClicked: { adjustBrightness(Root.Config.brightnessStep); autoHideTimer.restart() }
+          }
+
+          Rectangle {
+            width: 46
+            height: 28
+            radius: 6
+            color: Root.Theme.surface
+
+            Text {
+              anchors.centerIn: parent
+              text: Root.Config.brightnessPercent + "%"
+              color: Root.Theme.text
+              font.pixelSize: 14
+              font.bold: true
+              font.family: Root.Theme.fontFamily
+            }
           }
         }
 
-        Components.Button {
-          source: "../assets/plus.svg"
-          onClicked: { adjustBrightness(Root.Config.brightnessStep); autoHideTimer.restart() }
+        // Row 2: Keyboard backlight
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 6
+
+          Rectangle {
+            width: 24
+            height: 24
+            radius: 6
+            color: Root.Theme.primary
+
+            Text {
+              anchors.centerIn: parent
+              text: "KBD"
+              color: Root.Theme.primaryContent
+              font.pixelSize: 9
+              font.bold: true
+              font.family: Root.Theme.fontFamily
+            }
+          }
+
+          Components.Button {
+            source: "../assets/minus.svg"
+            onClicked: { kbdAdjustBrightness(-Root.Config.brightnessStep); autoHideTimer.restart() }
+          }
+
+          Slider {
+            id: kbdSlider
+            Layout.fillWidth: true
+            Layout.preferredHeight: 24
+            Layout.alignment: Qt.AlignVCenter
+
+            from: 0
+            to: 100
+            value: Root.Config.kbdBacklightPercent
+            stepSize: 1
+
+            Behavior on value { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
+            onMoved: {
+              kbdScheduleBrightness(value)
+              autoHideTimer.restart()
+            }
+
+            background: Rectangle {
+              x: kbdSlider.leftPadding
+              y: kbdSlider.topPadding + kbdSlider.availableHeight / 2 - height / 2
+              width: kbdSlider.availableWidth
+              height: 6
+              radius: 3
+              color: Root.Theme.overlay
+
+              Rectangle {
+                width: Math.min(kbdSlider.visualPosition * parent.width, parent.width)
+                height: parent.height
+                radius: 3
+                color: Root.Theme.accent
+              }
+            }
+
+            handle: Rectangle {
+              x: kbdSlider.leftPadding + kbdSlider.visualPosition * (kbdSlider.availableWidth - width)
+              y: kbdSlider.topPadding + kbdSlider.availableHeight / 2 - height / 2
+              width: 14
+              height: 14
+              radius: 7
+              color: kbdSlider.pressed ? Root.Theme.surfaceHover : Root.Theme.text
+              border.color: Root.Theme.accent
+              border.width: 2
+              Behavior on color { ColorAnimation { duration: 100 } }
+            }
+          }
+
+          Components.Button {
+            source: "../assets/plus.svg"
+            onClicked: { kbdAdjustBrightness(Root.Config.brightnessStep); autoHideTimer.restart() }
+          }
+
+          Rectangle {
+            width: 46
+            height: 28
+            radius: 6
+            color: Root.Theme.surface
+
+            Text {
+              anchors.centerIn: parent
+              text: Root.Config.kbdBacklightPercent + "%"
+              color: Root.Theme.text
+              font.pixelSize: 14
+              font.bold: true
+              font.family: Root.Theme.fontFamily
+            }
+          }
         }
 
-        Rectangle {
-          width: 46
-          height: 28
-          radius: 6
-          color: Root.Theme.surface
+        // Row 3: Power LED toggle
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 6
+
+          Rectangle {
+            width: 40
+            height: 20
+            radius: 10
+            color: Root.Config.powerLedOff ? Root.Theme.overlay : Root.Theme.accent
+
+            Behavior on color { ColorAnimation { duration: 150 } }
+
+            Rectangle {
+              width: 16
+              height: 16
+              radius: 8
+              color: Root.Theme.text
+              anchors.verticalCenter: parent.verticalCenter
+              anchors.left: parent.left
+              anchors.leftMargin: Root.Config.powerLedOff ? 2 : 22
+
+              Behavior on anchors.leftMargin {
+                NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+              }
+            }
+
+            MouseArea {
+              anchors.fill: parent
+              cursorShape: Qt.PointingHandCursor
+              onClicked: { togglePowerLed(); autoHideTimer.restart() }
+            }
+          }
 
           Text {
-            anchors.centerIn: parent
-            text: Root.Config.brightnessPercent + "%"
+            text: "Power LED"
             color: Root.Theme.text
-            font.pixelSize: 14
+            font.pixelSize: 13
+            font.family: Root.Theme.fontFamily
+            verticalAlignment: Text.AlignVCenter
+          }
+
+          Item { Layout.fillWidth: true }
+
+          Text {
+            text: Root.Config.powerLedOff ? "off" : "auto"
+            color: Root.Config.powerLedOff ? Root.Theme.textMuted : Root.Theme.text
+            font.pixelSize: 12
             font.bold: true
             font.family: Root.Theme.fontFamily
           }
