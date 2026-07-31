@@ -1,4 +1,21 @@
 {
+  "lsp": {
+    "vtsls": {
+      "settings": {
+        "typescript": {
+          "updateImportsOnFileMove": {
+            "enabled": "always"
+          }
+        },
+        "javascript": {
+          "updateImportsOnFileMove": {
+            "enabled": "always"
+          }
+        }
+      },
+      "enable_lsp_tasks": true
+    }
+  },
   "cli_default_open_behavior": "new_window",
   "collaboration_panel": {
     "dock": "left"
@@ -49,6 +66,6 @@
   "theme": {
     "mode": "dark",
     "light": "One Light",
-    "dark": "JetBrains Dark",
+    "dark": "JetBrains Islands Dark",
   },
 }
