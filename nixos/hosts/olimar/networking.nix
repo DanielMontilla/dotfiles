@@ -18,7 +18,7 @@
         {
           publicKey = "lLqqxZuCTtIpBjgZJYWzPQn/7st24iVpJN+/xS7jogs=";
           allowedIPs = [ "0.0.0.0/0" ];
-          endpoint = "co-bog.prod.surfshark.com:51820";
+          endpoint = "149.88.111.68:51820";
           persistentKeepalive = 25;
         }
       ];
