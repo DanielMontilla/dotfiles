@@ -38,16 +38,6 @@
     };
   };
 
-  services.transmission = {
-    enable = true;
-    package = pkgs.transmission_4;
-    settings = {
-      bind-address-ipv4 = "10.14.0.2";
-      rpc-bind-address = "127.0.0.1";
-      rpc-whitelist = "127.0.0.1";
-    };
-  };
-
   networking.firewall.allowedUDPPorts = [ 51820 ];
   networking.firewall.trustedInterfaces = [ "wg-co-bog" ];
 }

@@ -20,6 +20,7 @@
     ./packages.nix
     ./fonts.nix
     ./ssh.nix
+    ./superseedr.nix
   ];
 
   system.stateVersion = "25.05";

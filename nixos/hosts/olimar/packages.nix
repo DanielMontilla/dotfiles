@@ -111,7 +111,6 @@
     oxker
     gammastep
     lm_sensors
-    qbittorrent
     snixembed
     mpv
   ];
