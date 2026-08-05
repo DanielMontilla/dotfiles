@@ -24,6 +24,9 @@ vim.opt.signcolumn = "yes"
 -- Highlight current line
 vim.opt.cursorline = true
 
+-- Extra vertical padding between lines
+vim.opt.linespace = 2
+
 -- #endregion
 
 -- #region Line numbers
