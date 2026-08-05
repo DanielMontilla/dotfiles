@@ -4,6 +4,7 @@ return {
   require("plugins.theme.plugin"),
   require("plugins.mini-icons.plugin"),
   require("plugins.render-markdown.plugin"),
+  require("plugins.mermaid.plugin"),
   require("plugins.telescope.plugin"),
   require("plugins.lsp.plugin"),
   require("plugins.autocomplete.plugin"),
