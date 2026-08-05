@@ -36,6 +36,13 @@ map("n", "<C-l>", "<C-w>l", opts)
 -- Exit terminal mode
 map("t", "<Esc>", "<C-\\><C-n>", opts)
 
+-- Resize windows
+map("n", "<C-Left>", ":vertical resize -2<CR>", opts)
+map("n", "<C-Right>", ":vertical resize +2<CR>", opts)
+map("n", "<C-Up>", ":resize +2<CR>", opts)
+map("n", "<C-Down>", ":resize -2<CR>", opts)
+map("n", "<leader>w=", "<C-w>=", opts)
+
 -- #endregion
 
 -- #region Editor
