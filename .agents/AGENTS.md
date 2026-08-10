@@ -30,7 +30,7 @@ pipeline. See `authoring-skills` for how skills are created and audited.
 ### creating-dotfiles-profiles
 - **Path**: `.agents/skills/creating-dotfiles-profiles/`
 - **Groups**: scaffolding, workflow
-- **Description**: Creates a new machine/user profile in this dotfiles repository (nixos or nix-profile mode), wiring up packages via Nix and symlinking config files via dotbot. Use when adding a host, creating a profile, or setting up dotfiles for a new machine.
+- **Description**: Creates a new machine/user profile in this dotfiles repository (nixos, nix-profile, or windows mode), wiring up packages via Nix or symlinking config files via dotbot. Use when adding a host, creating a profile, or setting up dotfiles for a new machine.
 - **Dependencies**: executing-skills
 
 ### creating-quickshell-widgets
