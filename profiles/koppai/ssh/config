@@ -1,0 +1,10 @@
+# SSH over Tailscale mesh (internet, key-only, port 2222)
+# olimar: NixOS box that runs the Zed remote server.
+# Hostname resolves to a stable *.ts.net address — no port forwarding needed.
+
+Host olimar
+  HostName olimar.tail5c357b.ts.net
+  User daniel
+  Port 2222
+  IdentityFile ~/.ssh/id_ed25519
+  StrictHostKeyChecking accept-new

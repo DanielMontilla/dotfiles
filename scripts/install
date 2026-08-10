@@ -27,12 +27,53 @@ if [ -f "${PROFILE_DIR}/.nixos" ]; then
     MODE="nixos"
 elif [ -f "${PROFILE_DIR}/.nix-profile" ]; then
     MODE="nix-profile"
+elif [ -f "${PROFILE_DIR}/.windows" ]; then
+    MODE="windows"
 else
-    echo "Error: Cannot determine mode for profile '$profile' (missing .nixos or .nix-profile marker)."
+    echo "Error: Cannot determine mode for profile '$profile' (missing .nixos, .nix-profile, or .windows marker)."
     exit 1
 fi
 
 echo "Using profile: $profile (mode: $MODE)"
+
+if [ "$MODE" = "windows" ]; then
+    echo "Profile '$profile' is a Windows profile (no nix)."
+    echo "Checking prerequisites (dotbot needs Python 3.7+)..."
+
+    # Locate a Python interpreter (python3 preferred, python as fallback)
+    PYTHON_CMD=""
+    if command -v python3 >/dev/null 2>&1; then
+        PYTHON_CMD="python3"
+    elif command -v python >/dev/null 2>&1; then
+        PYTHON_CMD="python"
+    fi
+
+    if [ -z "$PYTHON_CMD" ]; then
+        echo "Error: Python 3.7+ is required for dotbot but was not found."
+        echo "Install it from https://www.python.org/downloads/ and check 'Add python.exe to PATH'."
+        exit 1
+    fi
+
+    PY_VERSION="$("$PYTHON_CMD" -c 'import sys; print("{}.{}".format(sys.version_info.major, sys.version_info.minor))')"
+    PY_MAJOR="${PY_VERSION%%.*}"
+    PY_MINOR="${PY_VERSION#*.}"; PY_MINOR="${PY_MINOR%%.*}"
+
+    if [ "$PY_MAJOR" -lt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -lt 7 ]; }; then
+        echo "Error: Found Python ${PY_VERSION}, but dotbot requires Python 3.7 or newer."
+        exit 1
+    fi
+    echo "  Python ${PY_VERSION} found."
+
+    if command -v dotbot >/dev/null 2>&1 || "$PYTHON_CMD" -c 'import dotbot' >/dev/null 2>&1; then
+        echo "  dotbot already available."
+    else
+        echo "  dotbot not found — installing it with pip..."
+        "$PYTHON_CMD" -m pip install --user dotbot
+    fi
+
+    echo "Done. Link config files with: ./scripts/link $profile"
+    exit 0
+fi
 
 if [ "$MODE" = "nixos" ]; then
     NIXOS_DIR="${REPO_ROOT}/nixos"

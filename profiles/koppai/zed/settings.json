@@ -1,0 +1,74 @@
+{
+  "lsp": {
+    "vtsls": {
+      "settings": {
+        "typescript": {
+          "updateImportsOnFileMove": {
+            "enabled": "always"
+          }
+        },
+        "javascript": {
+          "updateImportsOnFileMove": {
+            "enabled": "always"
+          }
+        }
+      },
+      "enable_lsp_tasks": true
+    }
+  },
+  "cli_default_open_behavior": "new_window",
+  "collaboration_panel": {
+    "dock": "left"
+  },
+  "agent": {
+    "dock": "right",
+    "favorite_models": [],
+    "model_parameters": []
+  },
+  "git_panel": {
+    "dock": "left"
+  },
+  "outline_panel": {
+    "dock": "left",
+    "indent_size": 20.0,
+  },
+  "project_panel": {
+    "dock": "left",
+    "indent_guides": {
+      "show": "always",
+    },
+    "indent_size": 12.0,
+  },
+  "markdown_preview": {
+    "limit_content_width": false,
+  },
+  "tab_size": 2,
+  "base_keymap": "Cursor",
+  "agent_servers": {
+    "OpenCode": {
+      "command": "opencode",
+      "type": "custom",
+      "args": ["acp"],
+    },
+  },
+  "ssh_connections": [
+    {
+      "host": "olimar",
+      "projects": [
+        { "paths": ["~/dotfiles"] }
+      ],
+    },
+  ],
+  "vim_mode": true,
+  "buffer_font_weight": 500.0,
+  "session": {
+    "trust_all_worktrees": true,
+  },
+  "ui_font_size": 16,
+  "buffer_font_size": 17.0,
+  "theme": {
+    "mode": "dark",
+    "light": "One Light",
+    "dark": "JetBrains Islands Dark",
+  },
+}
