@@ -74,8 +74,18 @@ foreach ($cand in $candidates) {
 
     $out = Invoke-Native $cmd.Source @($candArgs + @("-c", "import dotbot"))
     if ($LASTEXITCODE -eq 0 -and -not $out) {
-        Write-Host "dotbot binary not found on PATH - using '$($cand.Name) -m dotbot'"
-        Invoke-Native $cmd.Source @($candArgs + @("-m", "dotbot", "-d", $RepoRoot, "-c", $Config) + $args) | Out-Host
+        Write-Host "dotbot binary not found on PATH - using '$($cand.Name) -c ...'"
+        # dotbot has no __main__.py, so '-m dotbot' does not work;
+        # the console script entry point is dotbot.cli:main
+        $dotbotCode = @'
+import sys
+try:
+    from dotbot.cli import main
+except ImportError:
+    from dotbot import main
+sys.exit(main())
+'@
+        Invoke-Native $cmd.Source @($candArgs + @("-c", $dotbotCode, "-d", $RepoRoot, "-c", $Config) + $args) | Out-Host
         exit $LASTEXITCODE
     }
 }

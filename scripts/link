@@ -28,16 +28,24 @@ fi
 echo "Using profile: $profile"
 echo "Using config: $CONFIG"
 
-# Prefer the dotbot binary; fall back to 'python -m dotbot'
-# (on Windows, pip --user installs dotbot to a Scripts dir that
-# may not be on PATH, so the module form is more reliable)
+# Prefer the dotbot binary; fall back to python -c 'from dotbot.cli import main'
+# (dotbot has no __main__.py, so 'python -m dotbot' does not work;
+# the console script entry point is dotbot.cli:main. On Windows, pip --user
+# installs dotbot to a Scripts dir that may not be on PATH.)
 if command -v dotbot >/dev/null 2>&1; then
     dotbot -d "${BASEDIR}" -c "${CONFIG}" "${@:2}"
 else
     for py in python3 python; do
         if command -v "$py" >/dev/null 2>&1 && "$py" -c 'import dotbot' >/dev/null 2>&1; then
-            echo "dotbot binary not found on PATH — using '$py -m dotbot'"
-            "$py" -m dotbot -d "${BASEDIR}" -c "${CONFIG}" "${@:2}"
+            echo "dotbot binary not found on PATH — using '$py -c ...'"
+            "$py" -c '
+import sys
+try:
+    from dotbot.cli import main
+except ImportError:
+    from dotbot import main
+sys.exit(main())
+' -d "${BASEDIR}" -c "${CONFIG}" "${@:2}"
             exit $?
         fi
     done
