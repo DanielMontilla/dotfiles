@@ -31,17 +31,24 @@ Write-Host "Using config: $Config"
 # Prefer the dotbot binary; fall back to 'python -m dotbot'
 $dotbot = Get-Command dotbot -ErrorAction SilentlyContinue
 if ($dotbot) {
-    & $dotbot.Source -d $RepoRoot -c $Config @args
+    & $dotbot.Source -d $RepoRoot -c $Config @args 2>&1 | Out-Host
     exit $LASTEXITCODE
 }
 
-foreach ($pyName in @("python", "python3")) {
-    $py = Get-Command $pyName -ErrorAction SilentlyContinue
-    if (-not $py) { continue }
-    & $py.Source -c "import dotbot" 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "dotbot binary not found on PATH - using '$pyName -m dotbot'"
-        & $py.Source -m dotbot -d $RepoRoot -c $Config @args
+# Find a working Python (same logic as install.ps1: 'py -3' first, because
+# 'python' may be the Microsoft Store stub / install manager)
+foreach ($cand in @(@{ Name = "py"; Args = @("-3") }, @{ Name = "python"; Args = @() }, @{ Name = "python3"; Args = @() })) {
+    $cmd = Get-Command $cand.Name -ErrorAction SilentlyContinue
+    if (-not $cmd) { continue }
+    $candArgs = $cand.Args
+    $out = & $cmd.Source @candArgs -c "import sys;print(sys.version_info[0],sys.version_info[1])" 2>&1
+    $line = ($out | Select-Object -Last 1)
+    if ($null -eq $line -or $line.ToString().Trim() -notmatch "^\d+ \d+$") { continue }
+
+    $out = & $cmd.Source @candArgs -c "import dotbot" 2>&1
+    if ($LASTEXITCODE -eq 0 -and -not $out) {
+        Write-Host "dotbot binary not found on PATH - using '$($cand.Name) -m dotbot'"
+        & $cmd.Source @candArgs -m dotbot -d $RepoRoot -c $Config @args 2>&1 | Out-Host
         exit $LASTEXITCODE
     }
 }
