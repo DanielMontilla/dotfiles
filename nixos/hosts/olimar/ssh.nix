@@ -17,6 +17,7 @@
   users.users.daniel.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN/nUf7c2Sekdov5CZspz7GslJacskM2MA8mrnwKdbhO daniel@louie"
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPRA9twrCHL///CFOBc0ZYqKFIpQVaPjUflyHVaCZnni daniel@oatchi"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIcj44HxZhWg7Yf7aa7FKCeeGCI0eRHg6xZc2UdYKSVJ daniel@koppai"
   ];
 
   # Tailscale mesh VPN for internet reachability (free personal plan)
