@@ -1,13 +1,13 @@
-<#
+﻿<#
 .SYNOPSIS
-Installs a profile. PowerShell counterpart of scripts/install — the Windows
+Installs a profile. PowerShell counterpart of scripts/install - the Windows
 entrypoint (no bash needed).
 
 .DESCRIPTION
 Usage (PowerShell):
     .\scripts\install.ps1 <profile>
 
-Windows profiles (no nix) have nothing to install — this checks that Python
+Windows profiles (no nix) have nothing to install - this checks that Python
 3.7+ is available and that dotbot is installed (pip-installing it if missing).
 Nix profiles are rejected with a pointer to the bash scripts, since they need
 Nix on a Linux/WSL machine.
@@ -40,7 +40,7 @@ else {
 Write-Host "Using profile: $Profile (mode: $Mode)"
 
 if ($Mode -ne "windows") {
-    Write-Error "Profile '$Profile' is a $Mode profile — it needs Nix on a Linux/WSL machine. Use the bash scripts (./scripts/install $Profile) there."
+    Write-Error "Profile '$Profile' is a $Mode profile - it needs Nix on a Linux/WSL machine. Use the bash scripts (./scripts/install $Profile) there."
     exit 1
 }
 
@@ -55,21 +55,21 @@ if (-not $py) {
     exit 1
 }
 
-$verOut = & $py.Source -c "import sys; print('{}.{}'.format(sys.version_info.major, sys.version_info.minor))" 2>$null
+$verOut = & $py.Source -c "import sys;print(sys.version_info[0],sys.version_info[1])" 2>$null
 if ($LASTEXITCODE -ne 0 -or -not $verOut) {
-    Write-Error "Could not determine the Python version — is Python on PATH and working?"
+    Write-Error "Could not determine the Python version - is Python on PATH and working?"
     exit 1
 }
 $verOut = ($verOut | Select-Object -Last 1).Trim()
-$verParts = $verOut -split "\."
+$verParts = $verOut -split "\s+"
 $major = [int]$verParts[0]
 $minor = [int]$verParts[1]
 
 if ($major -lt 3 -or ($major -eq 3 -and $minor -lt 7)) {
-    Write-Error "Found Python $verOut, but dotbot requires Python 3.7 or newer."
+    Write-Error "Found Python $major.$minor, but dotbot requires Python 3.7 or newer."
     exit 1
 }
-Write-Host "  Python $verOut found."
+Write-Host "  Python $major.$minor found."
 
 # Check dotbot: binary on PATH, or importable as a module
 $hasDotbot = $false
@@ -83,7 +83,7 @@ if (Get-Command dotbot -ErrorAction SilentlyContinue) {
 if ($hasDotbot) {
     Write-Host "  dotbot already available."
 } else {
-    Write-Host "  dotbot not found — installing it with pip..."
+    Write-Host "  dotbot not found - installing it with pip..."
     & $py.Source -m pip install --user dotbot
 }
 

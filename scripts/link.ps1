@@ -1,13 +1,13 @@
-<#
+﻿<#
 .SYNOPSIS
 Links config files for a profile using dotbot. PowerShell counterpart of
-scripts/link — the Windows entrypoint (no bash needed).
+scripts/link - the Windows entrypoint (no bash needed).
 
 .DESCRIPTION
 Usage (PowerShell):
     .\scripts\link.ps1 <profile>
 
-If the dotbot binary isn't on PATH (common on Windows — pip --user installs to
+If the dotbot binary isn't on PATH (common on Windows - pip --user installs to
 a Scripts dir that's often not on PATH), falls back to 'python -m dotbot'.
 #>
 param(
@@ -40,7 +40,7 @@ foreach ($pyName in @("python", "python3")) {
     if (-not $py) { continue }
     & $py.Source -c "import dotbot" 2>$null
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "dotbot binary not found on PATH — using '$pyName -m dotbot'"
+        Write-Host "dotbot binary not found on PATH - using '$pyName -m dotbot'"
         & $py.Source -m dotbot -d $RepoRoot -c $Config @args
         exit $LASTEXITCODE
     }
