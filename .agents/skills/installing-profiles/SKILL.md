@@ -31,7 +31,8 @@ machine (e.g. "install louie", "how do I set up this machine"). It documents the
 2. From the repo root, run:
 
    ```bash
-   ./scripts/install <name>
+   ./scripts/install <name>          # Linux/WSL (bash)
+   .\scripts\install.ps1 <name>     # Windows (PowerShell, no bash needed)
    ```
 
    For `windows` profiles this checks Python 3.7+ and dotbot (pip-installing
@@ -40,12 +41,13 @@ machine (e.g. "install louie", "how do I set up this machine"). It documents the
 3. Then link config files:
 
    ```bash
-   ./scripts/link <name>
+   ./scripts/link <name>             # Linux/WSL (bash)
+   .\scripts\link.ps1 <name>        # Windows (PowerShell)
    ```
 
-   Runs dotbot for every mode. On Windows you need Git Bash (Git for Windows),
-   Python 3.7+, and Developer Mode for symlinks — see
-   `profiles/koppai/README.md`.
+   Runs dotbot for every mode. On Windows you need Python 3.7+, Developer Mode
+   for symlinks, and (if PowerShell blocks scripts) `Set-ExecutionPolicy
+   -Scope CurrentUser RemoteSigned` — see `profiles/koppai/README.md`.
 
 # Gotchas (MUST READ)
 
@@ -68,12 +70,12 @@ machine (e.g. "install louie", "how do I set up this machine"). It documents the
 - **Order matters:** install (packages) before link (config), because link
   needs the `dotbot` binary from the profile (nix modes only).
 
-- **Windows profiles never run nix.** `scripts/install koppai` only checks
-  Python 3.7+ and dotbot (`python -m pip install --user dotbot` if missing).
-  Linking is plain dotbot against `~/AppData/Roaming/...` destinations;
-  symlinks require Developer Mode (Settings → Privacy & security → For
-  developers) or an elevated shell. If dotbot's binary isn't on PATH,
-  `scripts/link` falls back to `python -m dotbot`.
+- **Windows profiles never run nix.** `scripts/install.ps1 koppai` only
+  checks Python 3.7+ and dotbot (`python -m pip install --user dotbot` if
+  missing). Linking is plain dotbot against `~/AppData/Roaming/...`
+  destinations; symlinks require Developer Mode (Settings → Privacy & security
+  → For developers) or an elevated shell. If dotbot's binary isn't on PATH,
+  `scripts/link.ps1` falls back to `python -m dotbot`.
 
 - **Preserve machine-specific values** in shared configs (e.g. GitHub CLI
   `credential.helper`). Back up originals and merge back after linking.

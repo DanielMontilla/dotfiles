@@ -120,7 +120,9 @@ See [templates/dotbot.yaml](templates/dotbot.yaml) for the full template.
 ./scripts/link <name>
 ```
 
-Runs `dotbot -d <repo> -c profiles/<name>/dotbot.yaml` for **every** mode (nix and windows alike) — no dispatcher, no per-OS scripts. Requires `dotbot`: nix modes get it from the profile install; windows mode from `pip`. If the `dotbot` binary isn't on PATH (common on Windows — pip --user installs to a `Scripts` dir off PATH), the script falls back to `python -m dotbot`.
+Runs `dotbot -d <repo> -c profiles/<name>/dotbot.yaml` for **every** mode (nix and windows alike) — no dispatcher, no per-OS linking logic. Requires `dotbot`: nix modes get it from the profile install; windows mode from `pip`. If the `dotbot` binary isn't on PATH (common on Windows — pip --user installs to a `Scripts` dir off PATH), the scripts fall back to `python -m dotbot`.
+
+On Windows, run the PowerShell counterparts instead of bash (Windows has no bash): `scripts/install.ps1` and `scripts/link.ps1` — same interface, and the only scripts that know about the windows mode.
 
 > **Do NOT run `scripts/install` / `scripts/link` yourself** for nix modes — they need the user's sudo/tty access and interactive approval. The windows linker only touches the user's own `%APPDATA%`-style dirs, but still let the user run it rather than executing on their behalf.
 
@@ -135,7 +137,7 @@ Runs `dotbot -d <repo> -c profiles/<name>/dotbot.yaml` for **every** mode (nix a
 - **Order matters:** install (packages) before link (config), because link needs the `dotbot` binary from the profile.
 - **`nix profile add` updates the manifest, not always the live symlink.** If `nix profile list` shows the profile but `~/.nix-profile/bin/<tool>` is missing (e.g. `nvim` — note neovim's binary is `nvim`, not `neovim`), the profile symlink is stale. Fix with a clean `nix profile remove <entry>` + `nix profile add path:profiles/<name>/nixos`, or delete `~/.nix-profile` and `~/.local/state/nix/profiles` entirely and reinstall. If nix errors with "reading symbolic link ... Invalid argument", the symlink is corrupt — nuke and reinstall.
 - **Profile location:** the `nix profile` default lives at `~/.local/state/nix/profiles/profile`; `~/.nix-profile` is a symlink to it. Keep PATH relying on `~/.nix-profile/bin` so it always tracks the current generation.
-- **Windows has no bash by default — Git for Windows gives you Git Bash.** Everything runs from there (`./scripts/install koppai`, `./scripts/link koppai`); no PowerShell needed.
+- **Windows has no bash — use the PowerShell scripts.** `scripts/install.ps1` and `scripts/link.ps1` are the Windows entrypoints (same interface as the bash `./scripts/*`, which stay for nix machines). If PowerShell blocks them, the user may need `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 - **dotbot needs Python 3.7+ on Windows.** `scripts/install` checks the interpreter and pip-installs dotbot (`python -m pip install --user dotbot`) if missing. The pip entrypoint lands in a `Scripts` dir often off PATH, so `scripts/link` falls back to `python -m dotbot`.
 - **Symlinks need Developer Mode (or an elevated shell) on Windows.** *Settings → Privacy & security → For developers → Developer Mode*. Without it, dotbot fails with permission errors.
 - **Existing regular files block links.** Same gotcha as nix: if `~/AppData/Roaming/Zed/settings.json` already exists as a real file, dotbot aborts — move the whole dir aside first (`mv ~/AppData/Roaming/Zed ~/AppData/Roaming/Zed.bak`).
@@ -145,8 +147,8 @@ Runs `dotbot -d <repo> -c profiles/<name>/dotbot.yaml` for **every** mode (nix a
 
 # Reference
 
-- **Install script**: `scripts/install` (mode detection by marker; windows mode checks Python 3.7+ / dotbot and pip-installs dotbot)
-- **Link script**: `scripts/link` (runs `dotbot` for all modes; falls back to `python -m dotbot` if the binary is off PATH)
+- **Install script**: `scripts/install` (bash, nix machines) / `scripts/install.ps1` (PowerShell, Windows; checks Python 3.7+ / dotbot and pip-installs dotbot for windows mode)
+- **Link script**: `scripts/link` (bash) / `scripts/link.ps1` (PowerShell) — run `dotbot` for all modes; fall back to `python -m dotbot` if the binary is off PATH
 - **nix-profile flake template**: [templates/flake.nix](templates/flake.nix) (MUST READ)
 - **dotbot yaml template**: [templates/dotbot.yaml](templates/dotbot.yaml) (MUST READ)
 - **Existing nix-profile example**: `profiles/olimar/` (`.nix-profile`, `nixos/flake.nix`, `dotbot.yaml`)
