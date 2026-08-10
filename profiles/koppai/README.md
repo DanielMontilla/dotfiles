@@ -20,22 +20,30 @@ profiles/koppai/
 
 - **Python 3.7+** — required by dotbot. Install from
   <https://www.python.org/downloads/> and tick *"Add python.exe to PATH"*.
-- **dotbot** — installed automatically by `scripts/install koppai` via
+- **dotbot** — installed automatically by `scripts/install.ps1 koppai` via
   `python -m pip install --user dotbot`.
 - **Developer Mode** (or an elevated shell) — dotbot creates real symlinks,
   and on Windows those need Developer Mode or admin rights:
   *Settings → Privacy & security → For developers → Developer Mode*.
 
-You'll also want **Git for Windows** (gives you Git Bash so `./scripts/*`
-work as-is).
+No bash needed on Windows — the PowerShell scripts are the entrypoint here
+(`scripts/install.ps1` / `scripts/link.ps1`). The bash `./scripts/*` are for
+the nix machines, which always have bash.
+
+If PowerShell blocks the scripts with a "running scripts is disabled" error,
+allow local scripts once:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
 
 ## Setup
 
-From a Git Bash terminal at the repo root, **on the Windows machine**:
+From a PowerShell terminal at the repo root, **on the Windows machine**:
 
-```bash
-./scripts/install koppai   # checks Python 3.7+, installs dotbot if missing
-./scripts/link koppai      # runs dotbot against profiles/koppai/dotbot.yaml
+```powershell
+.\scripts\install.ps1 koppai   # checks Python 3.7+, installs dotbot if missing
+.\scripts\link.ps1 koppai      # runs dotbot against profiles/koppai/dotbot.yaml
 ```
 
 Nothing else — there are no packages to install on Windows.
@@ -121,7 +129,7 @@ passwords. koppai's `zed/settings.json` already declares the connection
 
 ## Gotchas
 
-- **Symlinks need Developer Mode.** If `scripts/link koppai` fails with
+- **Symlinks need Developer Mode.** If `scripts/link.ps1 koppai` fails with
   permission errors, enable Developer Mode (see above) and re-run.
 - **Existing regular files block links.** If `settings.json` already exists
   as a real file (you've used Zed before), dotbot aborts with *"already
@@ -131,7 +139,7 @@ passwords. koppai's `zed/settings.json` already declares the connection
   relative symlinks (`relative: true`, repo default); relative links can't
   cross drives. If the repo lives on `D:\`, set `relative: false` in
   `dotbot.yaml` to get absolute links.
-- **Re-running** `./scripts/link koppai` re-syncs (relinks) everything.
+- **Re-running** `\scripts\link.ps1 koppai` re-syncs (relinks) everything.
 
 ## Adding more apps
 

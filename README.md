@@ -28,10 +28,19 @@ live in `profiles/shared/<app>/` and are referenced by each profile's
 
 ## Scripts
 
+On **Linux/WSL** (bash):
+
 ```bash
 ./scripts/install <name>   # install packages / check prerequisites
 ./scripts/link <name>      # link config files with dotbot
 ./scripts/update <host>    # nix flake update + rebuild (NixOS hosts only)
+```
+
+On **Windows** (PowerShell, no bash needed):
+
+```powershell
+.\scripts\install.ps1 <name>   # windows profiles: check Python 3.7+ + dotbot, pip-install dotbot
+.\scripts\link.ps1 <name>      # run dotbot against the profile's dotbot.yaml
 ```
 
 - `install` picks the mode from the marker file in `profiles/<name>/`.
@@ -42,9 +51,9 @@ live in `profiles/shared/<app>/` and are referenced by each profile's
 
 ## Windows profiles (koppai)
 
-No nix at all. `scripts/install koppai` only verifies Python 3.7+ and
-installs dotbot via pip; `scripts/link koppai` then symlinks configs into the
-Windows user profile (`~/AppData/Roaming/...`). Symlinks on Windows require
+No nix at all. `scripts/install.ps1 koppai` only verifies Python 3.7+ and
+installs dotbot via pip; `scripts/link.ps1 koppai` then symlinks configs into
+the Windows user profile (`~/AppData/Roaming/...`). Symlinks on Windows require
 Developer Mode or an elevated shell. Details in
 [`profiles/koppai/README.md`](profiles/koppai/README.md).
 
