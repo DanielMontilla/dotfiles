@@ -12,6 +12,12 @@
     },
   },
   {
+    "context": "Editor && vim_mode == visual",
+    "bindings": {
+      "ctrl-a": "editor::SelectAll",
+    },
+  },
+  {
     "context": "Workspace || Editor",
     "bindings": {
       "ctrl-l": "agent::ToggleFocus",

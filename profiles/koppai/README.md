@@ -10,9 +10,6 @@ profiles/koppai/
 ├── .windows        # mode marker: "windows, no nix" (read by scripts/install)
 ├── dotbot.yaml     # dotbot config (same format as every other profile)
 ├── ssh/config      # SSH config for the mesh (olimar over Tailscale)
-├── zed/            # profile-specific Zed config (see note below)
-│   ├── settings.json
-│   └── keymap.json
 └── README.md
 ```
 
@@ -52,24 +49,17 @@ Nothing else — there are no packages to install on Windows.
 
 | Repo source | Windows destination |
 |---|---|
-| `profiles/koppai/zed/*` | `~/AppData/Roaming/Zed/` (i.e. `%APPDATA%\Zed`) |
+| `profiles/shared/zed/*` | `~/AppData/Roaming/Zed/` (i.e. `%APPDATA%\Zed`) |
 | `profiles/koppai/ssh/config` | `~/.ssh/config` |
 
 Because it's a symlink, edits you make in Zed write straight back into the
 repo (commit them like any other change).
 
-> **Why profile-specific `zed/` and not `profiles/shared/zed/`?**
-> The shared `settings.json` sets `terminal.shell.program` to a NixOS path
-> (`/run/current-system/sw/bin/fish`) that doesn't exist on Windows. The
-> koppai copy drops that block so Zed uses the Windows default shell.
-> If the shared config ever loses its NixOS-isms, you can point the link
-> straight at `profiles/shared/zed/*` instead.
-
 ## Remote development: SSH from koppai to olimar
 
 The mesh: koppai (Windows, Zed UI) connects over **Tailscale** to olimar
 (NixOS, runs the Zed headless server). Key-only SSH on port 2222 — no
-passwords. koppai's `zed/settings.json` already declares the connection
+passwords. The shared `zed/settings.json` already declares the connection
 (`ssh_connections` → host `olimar`, project `~/dotfiles`), and
 `~/.ssh/config` is linked from `profiles/koppai/ssh/config`.
 
@@ -149,7 +139,7 @@ Windows user profile dir). Examples:
 ```yaml
 - link:
     "~/AppData/Roaming/Zed/":
-      path: profiles/koppai/zed/*
+      path: profiles/shared/zed/*
     "~/.gitconfig":
       path: profiles/shared/git/gitconfig
     "~/AppData/Roaming/Code/User/settings.json":

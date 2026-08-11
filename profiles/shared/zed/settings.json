@@ -43,11 +43,6 @@
     "limit_content_width": false,
   },
   "tab_size": 2,
-  "terminal": {
-    "shell": {
-      "program": "/run/current-system/sw/bin/fish",
-    },
-  },
   "base_keymap": "Cursor",
   "agent_servers": {
     "OpenCode": {
@@ -56,6 +51,14 @@
       "args": ["acp"],
     },
   },
+  "ssh_connections": [
+    {
+      "host": "olimar",
+      "projects": [
+        { "paths": ["~/dotfiles"] }
+      ],
+    },
+  ],
   "vim_mode": true,
   "buffer_font_weight": 500.0,
   "session": {

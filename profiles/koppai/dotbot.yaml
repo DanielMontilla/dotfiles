@@ -9,7 +9,7 @@
     # Zed on Windows stores its config in %APPDATA%\Zed
     # (dotbot expands ~ to the Windows user profile dir)
     "~/AppData/Roaming/Zed/":
-      path: profiles/koppai/zed/*
+      path: profiles/shared/zed/*
 
     # OpenSSH on Windows reads ~/.ssh/config from the user profile dir
     "~/.ssh/config":
