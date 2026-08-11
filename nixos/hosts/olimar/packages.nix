@@ -113,6 +113,7 @@
     lm_sensors
     snixembed
     mpv
+    direnv
   ];
 
   programs.fish.enable = true;

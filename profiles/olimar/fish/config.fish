@@ -1,5 +1,7 @@
 # louie-specific fish configuration
 
+direnv hook fish | source
+
 starship init fish | source
 
 fish_add_path $HOME/.local/bin
