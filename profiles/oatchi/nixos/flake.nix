@@ -24,6 +24,8 @@
           mosh
           openssh
           tailscale
+          sshfs
+          fuse3
         ];
       };
 
@@ -41,6 +43,8 @@
           mosh
           openssh
           tailscale
+          sshfs
+          fuse3
         ];
       };
     };

@@ -1,0 +1,31 @@
+# SSHFS mount of olimar's home for oatchi (WSL).
+#
+# SYSTEM service toggled manually with `scripts/sshfs-mount on|off` — NOT
+# auto-enabled, off by default, no autostart at boot.
+#
+# Runs as root because nix's fusermount3 is not setuid, so unprivileged FUSE
+# mounts fail with EPERM in WSL2. Files are shown owned by uid/gid 1000
+# (daniel). The actual sshfs command lives in sshfs-mount.sh (a wrapper) so
+# the ssh_command argument with spaces survives systemd's ExecStart parsing.
+# Nothing Windows here: mounts a Linux NixOS box (olimar, 100.90.98.83:2222)
+# over Tailscale into the WSL ext4 fs.
+#
+# To change what's mounted, edit sshfs-mount.sh and re-run
+# `scripts/sshfs-mount install`.
+
+[Unit]
+Description=SSHFS mount of olimar home
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=HOME=/home/daniel
+Environment=PATH=/home/daniel/.nix-profile/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStartPre=/bin/mkdir -p /home/daniel/olimar
+ExecStart=/home/daniel/dotfiles/profiles/oatchi/sshfs/sshfs-mount.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

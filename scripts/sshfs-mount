@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+#
+# Toggle the oatchi (WSL) sshfs mount of olimar's home.
+#
+#   ./scripts/sshfs-mount install   # install the unit + clean stale state (once)
+#   ./scripts/sshfs-mount on        # mount (off by default)
+#   ./scripts/sshfs-mount off       # unmount
+#   ./scripts/sshfs-mount status    # show service state
+#
+# The mount runs as a root systemd service (unprivileged FUSE mount fails with
+# EPERM in WSL2), toggled manually — off by default, no autostart at boot.
+# Files appear owned by daniel (uid/gid 1000).
+# Mount point: /home/daniel/olimar (WSL ext4, nothing Windows).
+
+set -euo pipefail
+
+UNIT="sshfs-mount.service"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SRC="${REPO_ROOT}/profiles/oatchi/sshfs/${UNIT}"
+
+case "${1:-}" in
+    install)
+        sudo cp "$SRC" "/etc/systemd/system/${UNIT}"
+        sudo systemctl daemon-reload
+        if [ -f "$HOME/.config/systemd/user/${UNIT}" ]; then
+            echo "Removing stale user-level unit from the earlier design..."
+            systemctl --user stop "$UNIT" 2>/dev/null || true
+            rm -f "$HOME/.config/systemd/user/${UNIT}"
+            systemctl --user daemon-reload
+        fi
+        echo "Installed. Toggle with: $0 on | off | status"
+        ;;
+    on)
+        sudo systemctl start "$UNIT"
+        echo "Mounted at /home/daniel/olimar. Toggle off with: $0 off"
+        ;;
+    off)
+        sudo systemctl stop "$UNIT"
+        echo "Unmounted."
+        ;;
+    status)
+        systemctl status "$UNIT"
+        ;;
+    *)
+        echo "Usage: $0 {install|on|off|status}" >&2
+        exit 1
+        ;;
+esac
