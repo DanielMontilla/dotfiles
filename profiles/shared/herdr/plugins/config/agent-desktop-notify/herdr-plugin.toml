@@ -1,0 +1,10 @@
+id = "agent-desktop-notify"
+name = "Agent Desktop Notify"
+version = "0.1.0"
+min_herdr_version = "0.7.0"
+description = "Show Windows desktop toast notifications when an agent finishes or gets blocked."
+platforms = ["windows"]
+
+[[events]]
+on = "pane.agent_status_changed"
+command = ["powershell.exe", "-NoProfile", "-File", "notify.ps1"]
