@@ -136,6 +136,22 @@
         "type": "github"
       }
     },
+    "nixpkgs_4": {
+      "locked": {
+        "lastModified": 1776434932,
+        "narHash": "sha256-gyqXNMgk3sh+ogY5svd2eNLJ6oEwzbAeaoBrrxD0lKk=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "c7f47036d3df2add644c46d712d14262b7d86c0c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-25.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "opencode-flake": {
       "inputs": {
         "nixpkgs": "nixpkgs_3"
@@ -161,7 +177,8 @@
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "opencode-flake": "opencode-flake"
+        "opencode-flake": "opencode-flake",
+        "wlctl": "wlctl"
       }
     },
     "systems": {
@@ -177,6 +194,24 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "wlctl": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_4"
+      },
+      "locked": {
+        "lastModified": 1787245917,
+        "narHash": "sha256-ecjh4pYRLb0Ic/gWmfvEakzeQXhTfBe+zCFtqCsGeKw=",
+        "owner": "aashish-thapa",
+        "repo": "wlctl",
+        "rev": "d08033112918388fab1c44ac54fcf5b53cfcc504",
+        "type": "github"
+      },
+      "original": {
+        "owner": "aashish-thapa",
+        "repo": "wlctl",
         "type": "github"
       }
     },

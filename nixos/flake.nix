@@ -11,6 +11,9 @@
 		ghostty = {
 			url = "github:ghostty-org/ghostty";
 		};
+		wlctl = {
+			url = "github:aashish-thapa/wlctl";
+		};
 	};
 
 	nixConfig = {
@@ -18,7 +21,7 @@
 		extra-trusted-public-keys = [ "ghostty.cachix.org-1:QB389yTa6gTyneehvqG58y0WnHjQOqgnA+wBnpWWxns=" ];
 	};
 
-	outputs = { self, nixpkgs, nix-flatpak, opencode-flake, ghostty, ... }@inputs: {
+	outputs = { self, nixpkgs, nix-flatpak, opencode-flake, ghostty, wlctl, ... }@inputs: {
 		nixosConfigurations.olimar = nixpkgs.lib.nixosSystem {
 			system = "x86_64-linux";
 			specialArgs = { inherit inputs; };

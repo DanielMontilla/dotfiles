@@ -113,7 +113,10 @@
     lm_sensors
     snixembed
     mpv
+    obs-studio
     direnv
+    wireguard-tools
+    inputs.wlctl.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 
   programs.fish.enable = true;
