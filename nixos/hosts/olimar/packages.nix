@@ -58,8 +58,12 @@
   boot.kernelModules = [ "i2c_dev" ];
   services.udev.extraRules = ''
     KERNEL=="i2c-[0-9]*", GROUP="users", MODE="0660"
-    SUBSYSTEM=="leds", KERNEL=="chromeos::kbd_backlight", GROUP="users", MODE="0660"
-    SUBSYSTEM=="leds", KERNEL=="chromeos:white:power", GROUP="users", MODE="0660"
+
+    # sysfs attribute files under /sys/class/leds have no devnode, so GROUP/MODE
+    # keys do not apply to them. Grant group-write via RUN=+ chmod/chgrp (the
+    # NixOS udev rules builder requires absolute store paths for RUN programs).
+    SUBSYSTEM=="leds", KERNEL=="chromeos::kbd_backlight", RUN+="${pkgs.coreutils}/bin/chgrp users /sys/class/leds/chromeos::kbd_backlight/brightness", RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/leds/chromeos::kbd_backlight/brightness"
+    SUBSYSTEM=="leds", KERNEL=="chromeos:white:power", RUN+="${pkgs.coreutils}/bin/chgrp users /sys/class/leds/chromeos:white:power/brightness /sys/class/leds/chromeos:white:power/trigger", RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/leds/chromeos:white:power/brightness /sys/class/leds/chromeos:white:power/trigger"
   '';
 
   programs.dconf.enable = true;
