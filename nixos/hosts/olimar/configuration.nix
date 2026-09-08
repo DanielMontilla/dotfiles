@@ -18,6 +18,7 @@
     ./networking.nix
     ./user.nix
     ./packages.nix
+    ./bluetooth.nix
     ./fonts.nix
     ./ssh.nix
     ./superseedr.nix
