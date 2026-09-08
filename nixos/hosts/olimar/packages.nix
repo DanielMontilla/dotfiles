@@ -5,6 +5,18 @@
   # Mutable Programs
   programs.nix-ld.enable = true;
   programs.nix-ld.libraries = with pkgs; [
+    # C/C++ runtime + compression/crypto (also needed by Zed-downloaded LSP servers)
+    stdenv.cc.cc.lib
+    zlib
+    zstd
+    openssl
+    curl
+    # D-Bus / GNOME stack: libgio-2.0.so.0 lives here (fixes `zed .` exit 127)
+    glib
+    dbus
+    gdk-pixbuf
+    libsecret
+    # Audio / graphics / Wayland (manually-installed Zed via https://zed.dev/install.sh)
     alsa-lib
     wayland
     libglvnd
@@ -14,6 +26,13 @@
     fontconfig
     freetype
     vulkan-loader
+    vulkan-validation-layers
+    xorg.libX11
+    xorg.libxcb
+    xorg.libXext
+    # Zed build inputs that its runtime/dlopen can expect
+    sqlite
+    libgit2
   ];
 
   services.envfs.enable = true;
