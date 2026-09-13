@@ -12,4 +12,12 @@ ShellRoot {
       modelData: modelData
     }
   }
+
+  Variants {
+    model: Quickshell.screens
+
+    HandyToast {
+      modelData: modelData
+    }
+  }
 }
