@@ -22,10 +22,40 @@ signal_handy() {
   pkill -USR2 -x .handy-wrapped
 }
 
-# After "stop", Handy spends a moment transcribing; flip back to idle once done.
+# After "stop", Handy spends a variable amount of time transcribing. Instead of
+# a fixed delay, detect when it's actually done:
+#   - if Handy saved no WAV (empty recording), it skips persistence entirely;
+#   - otherwise it writes a history entry to history.db when transcription ends.
 reset_thinking() {
   (
-    sleep 3
+    rec="$HOME/.local/share/com.pais.handy/recordings"
+    db="$HOME/.local/share/com.pais.handy/history.db"
+    stop_epoch="$(date +%s)"
+
+    # Give Handy a moment to write the recording WAV (if there was audio).
+    sleep 1
+
+    # No audio -> Handy skips persistence; nothing will be transcribed.
+    newest="$(ls -t "$rec"/*.wav 2>/dev/null | head -n1)"
+    if [ -z "$newest" ] || [ "$(stat -c %Y "$newest" 2>/dev/null)" -lt "$stop_epoch" ]; then
+      if [ "$(cat "$marker" 2>/dev/null)" = "2" ]; then
+        printf '0\n' > "$marker"
+      fi
+      exit 0
+    fi
+
+    # Real transcription: done when a history entry is saved (history.db
+    # mtime changes). Watch it; bail early if a new recording starts.
+    before="$(stat -c %y "$db" 2>/dev/null)" || before=""
+    i=0
+    while [ "$i" -lt 100 ]; do # ~20s safety net for very long clips
+      sleep 0.2
+      [ "$(cat "$marker" 2>/dev/null)" != "2" ] && exit 0
+      if [ -n "$before" ] && [ "$(stat -c %y "$db" 2>/dev/null)" != "$before" ]; then
+        break
+      fi
+      i=$((i + 1))
+    done
     if [ "$(cat "$marker" 2>/dev/null)" = "2" ]; then
       printf '0\n' > "$marker"
     fi
