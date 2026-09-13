@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Control Handy speech-to-text transcription and mirror its state to a marker
+# file that the Quickshell toast reads.
+#
+#   marker values: 0 = idle, 1 = recording, 2 = thinking (transcribing)
+#   handy-toggle start   -> begin recording (idempotent)
+#   handy-toggle stop    -> end recording, show "thinking" then back to idle
+#   handy-toggle toggle  -> flip between recording and idle
+#
+# Sends SIGUSR2 to Handy (the Nix package wraps the binary as .handy-wrapped).
+set -u
+
+marker="${XDG_CACHE_HOME:-$HOME/.cache}/handy-recording"
+mode="${1:-toggle}"
+
+state=0
+if [ -f "$marker" ]; then
+  state=$(cat "$marker")
+fi
+
+signal_handy() {
+  pkill -USR2 -x .handy-wrapped
+}
+
+# After "stop", Handy spends a moment transcribing; flip back to idle once done.
+reset_thinking() {
+  (
+    sleep 3
+    if [ "$(cat "$marker" 2>/dev/null)" = "2" ]; then
+      printf '0\n' > "$marker"
+    fi
+  ) & disown
+}
+
+case "$mode" in
+  start)
+    if [ "$state" != "1" ]; then
+      if signal_handy; then
+        printf '1\n' > "$marker"
+      fi
+    fi
+    ;;
+  stop)
+    if [ "$state" = "1" ]; then
+      if signal_handy; then
+        printf '2\n' > "$marker"
+        reset_thinking
+      fi
+    fi
+    ;;
+  toggle|*)
+    if [ "$state" = "1" ]; then
+      if signal_handy; then
+        printf '2\n' > "$marker"
+        reset_thinking
+      fi
+    elif [ "$state" = "0" ]; then
+      if signal_handy; then
+        printf '1\n' > "$marker"
+      fi
+    fi
+    ;;
+esac

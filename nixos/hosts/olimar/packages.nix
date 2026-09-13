@@ -124,12 +124,15 @@
     starship
     quickshell
     wl-clipboard
+    wtype
+    evtest
     eza
     fastfetch
     btop
     curl
     ripgrep
     inputs.ghostty.packages.${pkgs.stdenv.hostPlatform.system}.default
+    inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.handy
     nodejs_24
     oxker
     gammastep
