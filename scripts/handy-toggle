@@ -2,12 +2,17 @@
 # Control Handy speech-to-text transcription and mirror its state to a marker
 # file that the Quickshell toast reads.
 #
-#   marker values: 0 = idle, 1 = recording, 2 = thinking (transcribing)
+#   marker values: 0 = idle, 1 = recording, 2 = transcribing
 #   handy-toggle start   -> begin recording (idempotent)
-#   handy-toggle stop    -> end recording, show "thinking" then back to idle
+#   handy-toggle stop    -> end recording, show "transcribing" then back to idle
 #   handy-toggle toggle  -> flip between recording and idle
 #
-# Sends SIGUSR2 to Handy (the Nix package wraps the binary as .handy-wrapped).
+# Handy's SIGUSR2 is a pure toggle, so state can silently drift out of phase
+# (the daemon ends up starting Handy instead of stopping it, and vice versa).
+# Instead we drive it deterministically through Handy's CLI: "cancel" forces it
+# back to idle, then "toggle-transcription" is guaranteed to begin a fresh
+# recording. Stopping just toggles, which is correct because a start always
+# left Handy recording.
 set -u
 
 marker="${XDG_CACHE_HOME:-$HOME/.cache}/handy-recording"
@@ -18,8 +23,15 @@ if [ -f "$marker" ]; then
   state=$(cat "$marker")
 fi
 
-signal_handy() {
-  pkill -USR2 -x .handy-wrapped
+# Deterministic start: cancel any in-flight operation, then begin recording.
+start_recording() {
+  handy --cancel >/dev/null 2>&1 || true
+  handy --toggle-transcription
+}
+
+# Stop and transcribe.
+stop_recording() {
+  handy --toggle-transcription
 }
 
 # After "stop", Handy spends a variable amount of time transcribing. Instead of
@@ -31,6 +43,10 @@ reset_thinking() {
     rec="$HOME/.local/share/com.pais.handy/recordings"
     db="$HOME/.local/share/com.pais.handy/history.db"
     stop_epoch="$(date +%s)"
+
+    # Capture history.db mtime immediately, at stop time, before Handy's
+    # transcription writes its entry (fast transcriptions land within ~1s).
+    before="$(stat -c %y "$db" 2>/dev/null)" || before=""
 
     # Give Handy a moment to write the recording WAV (if there was audio).
     sleep 1
@@ -44,11 +60,10 @@ reset_thinking() {
       exit 0
     fi
 
-    # Real transcription: done when a history entry is saved (history.db
-    # mtime changes). Watch it; bail early if a new recording starts.
-    before="$(stat -c %y "$db" 2>/dev/null)" || before=""
+    # Real transcription: done when a history entry is saved (history.db mtime
+    # changes from what it was at stop). Bail early if a new recording starts.
     i=0
-    while [ "$i" -lt 100 ]; do # ~20s safety net for very long clips
+    while [ "$i" -lt 30 ]; do # ~6s safety net (only hit if no history entry)
       sleep 0.2
       [ "$(cat "$marker" 2>/dev/null)" != "2" ] && exit 0
       if [ -n "$before" ] && [ "$(stat -c %y "$db" 2>/dev/null)" != "$before" ]; then
@@ -65,14 +80,14 @@ reset_thinking() {
 case "$mode" in
   start)
     if [ "$state" != "1" ]; then
-      if signal_handy; then
+      if start_recording; then
         printf '1\n' > "$marker"
       fi
     fi
     ;;
   stop)
     if [ "$state" = "1" ]; then
-      if signal_handy; then
+      if stop_recording; then
         printf '2\n' > "$marker"
         reset_thinking
       fi
@@ -80,12 +95,12 @@ case "$mode" in
     ;;
   toggle|*)
     if [ "$state" = "1" ]; then
-      if signal_handy; then
+      if stop_recording; then
         printf '2\n' > "$marker"
         reset_thinking
       fi
     elif [ "$state" = "0" ]; then
-      if signal_handy; then
+      if start_recording; then
         printf '1\n' > "$marker"
       fi
     fi

@@ -3,8 +3,9 @@
 #
 # Reads keyboard events directly from evdev (via evtest) so it works on niri,
 # which has no key-release binds. Hold Super+Shift+R to talk; release to stop
-# and transcribe. Also keeps ~/.cache/handy-recording in sync so the
-# Quickshell toast knows when to show the mic.
+# and transcribe. Drives Handy through the handy-toggle script (deterministic
+# CLI-based control, not the drift-prone SIGUSR2 toggle). Also keeps
+# ~/.cache/handy-recording in sync so the Quickshell toast knows the state.
 #
 # Requires: membership in the `input` group (to read /dev/input/event*),
 # the `evtest` package, and the `handy-toggle` script.
