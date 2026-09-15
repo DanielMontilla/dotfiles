@@ -37,6 +37,23 @@ QtObject {
   readonly property int popupAnimDuration: 300
   readonly property real popupScaleClosed: 0.85
 
+  // --- Notifications ---
+
+  readonly property bool notificationsEnabled: true
+  readonly property int notificationWidth: 360
+  readonly property int notificationMaxHeight: 600
+  readonly property int notificationMargin: 12
+  readonly property int notificationGap: 8
+  readonly property int notificationAnimDuration: 200
+  readonly property int notificationDuration: 6000
+  readonly property int notificationMaxDuration: 10000
+
+  // Notification center (bell button in the bar)
+  readonly property bool notificationCenterEnabled: true
+  readonly property int notificationCenterPosition: 2
+  readonly property int notificationListWidth: 340
+  readonly property int notificationListHeight: 460
+
   // --- Display / brightness shared state (populated by the Display.qml instances) ---
 
   // Detected DDC bus numbers

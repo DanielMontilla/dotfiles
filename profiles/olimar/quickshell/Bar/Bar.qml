@@ -195,6 +195,9 @@ PanelWindow {
             if (Root.Config.displayEnabled) {
               items.push({ widget: "display", position: Root.Config.displayPosition });
             }
+            if (Root.Config.notificationCenterEnabled) {
+              items.push({ widget: "notifications", position: Root.Config.notificationCenterPosition });
+            }
             if (Root.Config.powerEnabled) {
               items.push({ widget: "power", position: Root.Config.powerPosition });
             }
@@ -208,13 +211,14 @@ PanelWindow {
                 case "volume": return volumeComp;
                 case "brightness": return brightnessComp;
                 case "display": return displayComp;
+                case "notifications": return notificationsComp;
                 case "power": return powerComp;
                 default: return null;
               }
             }
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
             onLoaded: {
-              if (modelData.widget === "volume" || modelData.widget === "brightness" || modelData.widget === "display" || modelData.widget === "power") {
+              if (modelData.widget === "volume" || modelData.widget === "brightness" || modelData.widget === "display" || modelData.widget === "notifications" || modelData.widget === "power") {
                 item.panelWindow = bar
                 item.bar = bar
               }
@@ -245,6 +249,11 @@ PanelWindow {
         Component {
           id: displayComp
           Display {}
+        }
+
+        Component {
+          id: notificationsComp
+          NotificationList {}
         }
 
         Component {

@@ -145,6 +145,40 @@ Rules observed in the existing widgets:
 Each widget exposes `panelWindow: bar` and `Layout.alignment: Qt.AlignRight |
 Qt.AlignVCenter`. Add a leading `Item { Layout.fillWidth: true }` as a left spacer.
 
+### Notification popup (louie/olimar)
+
+`NotificationCenter.qml` (a `pragma Singleton`) owns the `NotificationServer`,
+which registers `org.freedesktop.Notifications` on the session bus once per config.
+`Bar/Notifications.qml` is a per-screen `PanelWindow` (anchored bottom-right,
+`exclusiveZone: 0`, `aboveWindows`, `focusable: false`) and `Bar/NotificationCard.qml`
+is a single toast.
+
+Non-obvious gotchas (verified against quickshell 0.2.1):
+
+- **Claim every notification**: the server discards notifications unless the
+  `notification` signal handler sets `notification.tracked = true` synchronously.
+  Transient notifications are simply never claimed.
+- **Expiry is the UI's job**: the server never auto-expires; each card runs its own
+  `Timer` and calls `notification.expire()`/`dismiss()`.
+- **Bind `model: server.trackedNotifications.values`**, not the model itself, and wrap
+  the card in an inline `Item` delegate. A custom type used directly as a
+  `Repeater` delegate loses the `modelData` model context in this version.
+- **`Variants` only injects `modelData` into the first delegate child**, so put the
+  bar and notification window inside a container `Item { id: variant }` and pass
+  `variant.modelData` to both.
+- `expireTimeout` is raw milliseconds from apps (`-1`/`0` = no explicit timeout); cap
+  it with `Config.notificationMaxDuration` and use `Config.notificationDuration` as
+  the default.
+- Toast stacking uses a `ListView` over `trackedNotifications` with
+  `add`/`addDisplaced`/`removeDisplaced` transitions so cards glide instead of
+  jumping (plain `ColumnLayout` reflows flicker every card on add/remove). Do **not**
+  add a `remove` transition — the delegate's `modelData` goes null during the fade and
+  card timers crash on it; keep `NotificationCard` null-guarded anyway.
+- `Bar/NotificationList.qml` is the bar's bell button + popup notification center
+  (fixed-size scrollable list, per-item dismiss, "clear" via
+  `NotificationCenter.clearAll()`, which loops `values[0].dismiss()` while any remain).
+  Shared icon helpers live on the singleton (`iconSource`/`iconLetter`), null-safe.
+
 ### Services available (Quickshell modules)
 
 - `Quickshell.Services.UPower` — `UPower.displayDevice`, `UPowerDeviceState.Charging`,

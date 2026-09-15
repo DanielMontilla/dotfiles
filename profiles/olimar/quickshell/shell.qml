@@ -8,8 +8,17 @@ ShellRoot {
   Variants {
     model: Quickshell.screens
 
-    Bar.Bar {
-      modelData: modelData
+    Item {
+      id: variant
+      property var modelData
+
+      Bar.Bar {
+        modelData: variant.modelData
+      }
+
+      Bar.Notifications {
+        screenRef: variant.modelData
+      }
     }
   }
 }
