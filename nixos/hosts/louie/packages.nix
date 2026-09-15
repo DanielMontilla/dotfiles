@@ -2,7 +2,7 @@
 
 {
 
-  # Mutable Programs
+  # Mutable Programs — Zed upstream (hourly, nixpkgs lags) needs FHS via nix-ld
   programs.nix-ld.enable = true;
   programs.nix-ld.libraries = with pkgs; [
     alsa-lib
@@ -14,6 +14,7 @@
     fontconfig
     freetype
     vulkan-loader
+    glib # <- fix for Zed 1.18 (2026-09-02): libgio-2.0.so.0
   ];
 
   services.envfs.enable = true;
@@ -86,6 +87,7 @@
     dotbot
     alacritty
     gnome-keyring
+    libnotify
     brave
     wofi
     brightnessctl
@@ -103,6 +105,8 @@
     inputs.ghostty.packages.${pkgs.stdenv.hostPlatform.system}.default
     nodejs_22
     oxker
+    wireguard-tools
+    inputs.wlctl.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 
   programs.fish.enable = true;
