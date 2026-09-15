@@ -49,3 +49,10 @@ spawn-at-startup "snixembed" "--fork"
 
 // Quickshell bar (status bar, widgets, etc.)
 spawn-at-startup "qs"
+
+// Handy push-to-talk watcher: reads keyboard events from evdev so holding
+// Super+Shift+R records and releasing stops (niri can't do key-release binds).
+spawn-at-startup "sh" "-c" "/home/daniel/dotfiles/scripts/handy-ptt"
+
+// Handy speech-to-text app (needs to be running for push-to-talk + the toast).
+spawn-at-startup "handy"

@@ -25,7 +25,7 @@
     isNormalUser = true;
     description = "Daniel Montilla";
     shell = pkgs.fish;
-    extraGroups = [ "networkmanager" "wheel" "docker" ];
+    extraGroups = [ "networkmanager" "wheel" "docker" "input" ];
     packages = with pkgs; [];
   };
 }

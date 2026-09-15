@@ -194,7 +194,7 @@ Item {
     Root.Config.kbdBacklightPercent = percent
     Root.Config.previousKbdBacklightPercent = percent
     kbdSelfTriggered = true
-    kbdSetProcess.command = ["sh", "-c", "echo " + percent + " > /sys/class/leds/chromeos::kbd_backlight/brightness"]
+    kbdSetProcess.command = ["brightnessctl", "-d", "chromeos::kbd_backlight", "set", percent + "%"]
     kbdSetProcess.running = true
   }
 
@@ -233,7 +233,7 @@ Item {
     if (on) {
       kbdSetProcess.command = ["sh", "-c", "echo chromeos-auto > /sys/class/leds/chromeos:white:power/trigger"]
     } else {
-      kbdSetProcess.command = ["sh", "-c", "echo none > /sys/class/leds/chromeos:white:power/trigger; echo 0 > /sys/class/leds/chromeos:white:power/brightness"]
+      kbdSetProcess.command = ["sh", "-c", "echo none > /sys/class/leds/chromeos:white:power/trigger; brightnessctl -d chromeos:white:power set 0"]
     }
     kbdSetProcess.running = true
     Root.Config.powerLedOff = !on

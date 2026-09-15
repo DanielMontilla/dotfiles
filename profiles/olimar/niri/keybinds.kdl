@@ -21,6 +21,13 @@ binds {
     Mod+P repeat=false { spawn-sh "brave --ozone-platform=wayland"; }
     // Toggle bar visibility
     Mod+B repeat=false { spawn-sh "qs ipc call bar toggle"; }
+    // === Speech-to-Text (Handy) ===
+    // Push-to-talk: hold Super+Shift+R to talk, release to stop. The
+    // scripts/handy-ptt daemon (started in config.kdl) reads the keys from
+    // evdev and drives Handy via the handy-toggle script. This bind just
+    // consumes the combo so the R key isn't typed into the focused app while
+    // talking. Manual fallback: handy-toggle (start|stop|toggle).
+    Mod+Shift+R repeat=false { spawn "true"; }
     // === Volume Control ===
     // Using spawn-sh for shell commands with pipewire
     XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"; }

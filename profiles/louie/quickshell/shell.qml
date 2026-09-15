@@ -21,4 +21,12 @@ ShellRoot {
       }
     }
   }
+
+  Variants {
+    model: Quickshell.screens
+
+    HandyToast {
+      modelData: modelData
+    }
+  }
 }

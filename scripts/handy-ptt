@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+# Passive push-to-talk watcher for Handy.
+#
+# Reads keyboard events directly from evdev (via evtest) so it works on niri,
+# which has no key-release binds. Hold Super+Shift+R to talk; release to stop
+# and transcribe. Drives Handy through the handy-toggle script (deterministic
+# CLI-based control, not the drift-prone SIGUSR2 toggle). Also keeps
+# ~/.cache/handy-recording in sync so the Quickshell toast knows the state.
+#
+# Requires: membership in the `input` group (to read /dev/input/event*),
+# the `evtest` package, and the `handy-toggle` script.
+set -u
+
+TOGGLE="/home/daniel/dotfiles/scripts/handy-toggle"
+LOG="${XDG_RUNTIME_DIR:-/tmp}/handy-ptt.log"
+
+# evdev key codes.
+# Super: KEY_LEFTMETA / KEY_RIGHTMETA.
+# Shift: KEY_LEFTSHIFT / KEY_RIGHTSHIFT.
+# Talk key: KEY_R.
+SUPER_CODES=(125 126)
+SHIFT_CODES=(42 54)
+TALK_CODES=(19)
+
+declare -A held
+super_down=0
+shift_down=0
+talk_down=0
+recording=0
+
+log() {
+  printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" >> "$LOG"
+}
+
+handle_event() {
+  local code="$1" value="$2"
+  local v=0 c s=0 h=0 t=0
+  [ "$value" != "0" ] && v=1
+  held[$code]=$v
+
+  for c in "${SUPER_CODES[@]}"; do
+    [ "${held[$c]:-0}" = "1" ] && s=1
+  done
+  for c in "${SHIFT_CODES[@]}"; do
+    [ "${held[$c]:-0}" = "1" ] && h=1
+  done
+  for c in "${TALK_CODES[@]}"; do
+    [ "${held[$c]:-0}" = "1" ] && t=1
+  done
+  super_down=$s
+  shift_down=$h
+  talk_down=$t
+
+  if [ "$super_down" = "1" ] && [ "$shift_down" = "1" ] && [ "$talk_down" = "1" ]; then
+    if [ "$recording" = "0" ]; then
+      recording=1
+      log "START (super=$super_down shift=$shift_down talk=$talk_down)"
+      "$TOGGLE" start
+    fi
+  elif [ "$super_down" = "0" ] || [ "$shift_down" = "0" ] || [ "$talk_down" = "0" ]; then
+    if [ "$recording" = "1" ]; then
+      recording=0
+      log "STOP (super=$super_down shift=$shift_down talk=$talk_down)"
+      "$TOGGLE" stop
+    fi
+  fi
+}
+
+find_keyboards() {
+  local name="" handlers="" line
+  while IFS= read -r line; do
+    case "$line" in
+      'N: Name='*) name="${line#N: Name=\"}"; name="${name%\"}" ;;
+      'H: Handlers='*) handlers="$line" ;;
+    esac
+    if [ -z "$line" ]; then
+      if [ -n "$name" ] && [[ "${name,,}" =~ keyboard|kbd ]] && [[ "$handlers" =~ event([0-9]+) ]]; then
+        echo "/dev/input/event${BASH_REMATCH[1]}"
+      fi
+      name=""
+      handlers=""
+    fi
+  done < /proc/bus/input/devices
+  if [ -n "$name" ] && [[ "${name,,}" =~ keyboard|kbd ]] && [[ "$handlers" =~ event([0-9]+) ]]; then
+    echo "/dev/input/event${BASH_REMATCH[1]}"
+  fi
+}
+
+devices=$(find_keyboards)
+if [ -z "$devices" ]; then
+  printf 'handy-ptt: no keyboard devices found\n' >> "$LOG"
+  exit 1
+fi
+
+FIFO="${XDG_RUNTIME_DIR:-/tmp}/handy-ptt-events.fifo"
+rm -f "$FIFO"
+mkfifo "$FIFO"
+
+for dev in $devices; do
+  evtest "$dev" >> "$FIFO" 2>/dev/null &
+done
+
+printf '[%s] watching: %s\n' "$(date +%H:%M:%S)" "$(echo "$devices" | tr '\n' ' ')" >> "$LOG"
+
+exec 3<> "$FIFO"
+while IFS= read -r line <&3; do
+  case "$line" in
+    *"type 1"*) ;;
+    *) continue ;;
+  esac
+  code=$(printf '%s' "$line" | sed -nE 's/.*code ([0-9]+).*/\1/p')
+  value=$(printf '%s' "$line" | sed -nE 's/.*value (-?[0-9]+).*/\1/p')
+  [ -n "$code" ] && [ -n "$value" ] && handle_event "$code" "$value"
+done

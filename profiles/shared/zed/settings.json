@@ -54,10 +54,26 @@
   "ssh_connections": [
     {
       "host": "olimar",
+      "args": [],
       "projects": [
-        { "paths": ["~/dotfiles"] }
-      ],
+        {
+          "paths": [
+            "~/dotfiles"
+          ]
+        }
+      ]
     },
+    {
+      "host": "louie",
+      "args": [],
+      "projects": [
+        {
+          "paths": [
+            "/home/daniel/dev/milo/feat-admin-dashboard/./"
+          ]
+        }
+      ]
+    }
   ],
   "vim_mode": true,
   "buffer_font_weight": 500.0,
