@@ -92,6 +92,7 @@
     dotbot
     alacritty
     gnome-keyring
+    libnotify
     brave
     wofi
     brightnessctl
