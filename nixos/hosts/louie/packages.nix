@@ -24,9 +24,13 @@
     remotes = [
       { name = "flathub"; location = "https://dl.flathub.org/repo/flathub.flatpakrepo"; }
     ];
-    packages = [
-      "com.usebruno.Bruno"
-    ];
+    # Bruno is installed natively (see environment.systemPackages) instead of
+    # as a Flatpak. Inside the Flatpak sandbox Chromium enumerates DRM devices
+    # and renders on the idle AMD iGPU (which has no outputs attached), causing
+    # cross-GPU copies plus amdgpu ring-timeout/GPU-reset that hangs the whole
+    # session. The native build uses the host GL stack exactly like Brave and
+    # lands on the NVIDIA GPU that drives the displays.
+    packages = [ ];
   };
 
   # Niri compositor
@@ -106,11 +110,21 @@
     ripgrep
     inputs.ghostty.packages.${pkgs.stdenv.hostPlatform.system}.default
     inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.handy
+    # Bruno: native Electron build. The Flatpak's sandbox mis-selects the idle
+    # AMD iGPU on this hybrid NVIDIA box (see the flatpak comment above).
+    inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.bruno
     nodejs_22
     oxker
     wireguard-tools
     inputs.wlctl.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
+
+  # Auto-load the flake's devShell for any project that has an `.envrc` with
+  # `use flake`. `nix-direnv` is enabled by default alongside this: it caches
+  # the evaluated environment and roots it against GC, so entering a directory
+  # is cheap and only re-evaluates when flake.nix / flake.lock / .envrc change.
+  # The fish shell hook is installed because programs.fish.enable is set below.
+  programs.direnv.enable = true;
 
   programs.fish.enable = true;
 }
