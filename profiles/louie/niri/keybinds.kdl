@@ -44,6 +44,10 @@ binds {
     XF86AudioPrev     allow-when-locked=true { spawn-sh "playerctl previous"; }
     XF86AudioPlay     allow-when-locked=true { spawn-sh "playerctl play-pause"; }
     XF86AudioPause    allow-when-locked=true { spawn-sh "playerctl play-pause"; }
+    // Numpad 5 as a play/pause button. niri matches the level-0 XKB keysym,
+    // so this is KP_Begin, not KP_5 (which is the NumLock level). This works
+    // whether or not NumLock is on. Numpad 5 alone still types 5.
+    Mod+KP_Begin      allow-when-locked=true { spawn-sh "playerctl play-pause"; }
 
     // === Focus Movement (HJKL) ===
     Mod+H { focus-column-left; }
