@@ -58,6 +58,11 @@
       "projects": [
         {
           "paths": [
+            "/home/daniel/dev/asap/main"
+          ]
+        },
+        {
+          "paths": [
             "~/dotfiles"
           ]
         }
