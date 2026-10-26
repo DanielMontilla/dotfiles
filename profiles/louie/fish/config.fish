@@ -13,6 +13,14 @@ starship init fish | source
 
 fish_add_path $HOME/.local/bin
 
+# direnv: auto-load each directory's .envrc on cd. Repos with a
+# .envrc (e.g. montflow's `use flake`) get their environment injected
+# into this shell instead of a nested `nix develop` shell.
+# Sourced after starship so starship's prompt wiring stays intact.
+if type -q direnv
+    direnv hook fish | source
+end
+
 # eza: modern, maintained replacement for ls
 # Defined in the user config.fish (sourced last) so it overrides the
 # NixOS-generated `alias ls 'ls --color=tty'` in /etc/fish/config.fish,
