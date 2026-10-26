@@ -13,6 +13,10 @@ starship init fish | source
 
 fish_add_path $HOME/.local/bin
 
+# nd: `nix develop` that drops into the current shell ($SHELL) instead of the
+# default bash, so aliases, prompt, and direnv carry into the dev shell.
+alias nd='nix develop -c $SHELL'
+
 # direnv: auto-load each directory's .envrc on cd. Repos with a
 # .envrc (e.g. montflow's `use flake`) get their environment injected
 # into this shell instead of a nested `nix develop` shell.

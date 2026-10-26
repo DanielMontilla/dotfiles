@@ -15,6 +15,10 @@ starship init fish | source
 
 fish_add_path $HOME/.local/bin
 
+# nd: `nix develop` that drops into the current shell ($SHELL) instead of the
+# default bash, so aliases, prompt, and direnv carry into the dev shell.
+alias nd='nix develop -c $SHELL'
+
 # eza: modern, maintained replacement for ls
 # Defined in the user config.fish (sourced last) so it overrides the
 # NixOS-generated `alias ls 'ls --color=tty'` in /etc/fish/config.fish,

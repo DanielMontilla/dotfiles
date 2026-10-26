@@ -16,6 +16,10 @@ starship init fish | source
 
 fish_add_path $HOME/.local/bin
 
+# nd: `nix develop` that drops into the current shell ($SHELL) instead of the
+# default bash, so aliases, prompt, and direnv carry into the dev shell.
+alias nd='nix develop -c $SHELL'
+
 # Warm the persistent Herdr server from the first graphical terminal, so
 # `herdr --remote` attaches to a running server with the desktop session
 # environment instead of cold-bootstrapping one over SSH (which inherits
