@@ -1,0 +1,1088 @@
+#!/usr/bin/env node
+//
+// Space Topic -- name each herdr Space after the work happening inside it.
+//
+// herdr labels a Space after its directory, so five worktrees of one repo all
+// read "api-server" in the sidebar and you have to open each to remember what
+// it is doing. Agents already publish what they are working on: Claude Code,
+// Codex and friends set the terminal title, and herdr exposes it per pane as
+// `terminal_title_stripped`. This walks the session, picks the pane that leads
+// each Space, and writes that pane's topic onto the Space. When the branch it
+// has checked out has an open pull request, the Space is named after the PR.
+//
+// Nothing here is a daemon: herdr runs this script on the events declared in
+// herdr-plugin.toml, it does its walk, and exits.
+//
+//   node sync-space-labels.js              sync every space
+//   node sync-space-labels.js --dry-run    print the plan, write nothing
+//   node sync-space-labels.js --restore    put the original labels back
+//   node sync-space-labels.js --adopt      re-manage the space you are in
+//
+// Requires: node >= 18, herdr >= 0.9.0. No npm dependencies. PR names need the
+// GitHub CLI (`gh`), logged in; without it Spaces simply keep their topics.
+
+"use strict";
+
+const { spawnSync } = require("node:child_process");
+const fs = require("node:fs");
+const { readFileSync, writeFileSync, renameSync, rmSync, mkdirSync } = fs;
+const { homedir } = require("node:os");
+const { dirname, join } = require("node:path");
+
+const HERDR = process.env.HERDR_BIN_PATH || "herdr";
+const SOURCE_ID = "plugin.space-topic"; // our reporter identity for workspace tokens
+const CONFIG_DIR = process.env.HERDR_PLUGIN_CONFIG_DIR || ".";
+const STATE_DIR = process.env.HERDR_PLUGIN_STATE_DIR || ".";
+const STATE_PATH = join(STATE_DIR, "space-topic-state.json");
+const CLAUDE_DIR = process.env.CLAUDE_CONFIG_DIR || join(homedir(), ".claude");
+const PR_CACHE_PATH = join(STATE_DIR, "space-topic-prs.json");
+const LOCK_PATH = join(STATE_DIR, "space-topic.lock");
+const RERUN_PATH = join(STATE_DIR, "space-topic.rerun");
+
+const argv = process.argv.slice(2);
+const DRY_RUN = argv.includes("--dry-run");
+const RESTORE = argv.includes("--restore");
+const ADOPT = argv.includes("--adopt");
+// Switching to a Space re-checks its pull request on the spot. A run names
+// the Space to re-check: herdr's id for it, or FOCUSED ("whichever is
+// focused") when herdr gives none. A run that has to leave its work to one
+// already in progress hands the name on (see "Taking turns").
+const FOCUSED = "@focused";
+const REFRESH = process.env.HERDR_PLUGIN_EVENT === "workspace.focused" ? [process.env.HERDR_WORKSPACE_ID || FOCUSED] : [];
+
+// ---------------------------------------------------------------------------
+// Config
+//
+// A deliberately small TOML subset: flat `key = value` pairs, where a value is
+// a quoted string, a bare number, a bool, or an array of strings. That is the
+// whole config surface, so pulling in a TOML parser would cost a build step
+// and an npm tree for nothing.
+// ---------------------------------------------------------------------------
+
+const DEFAULTS = {
+  enabled: true,
+  // "rename" overwrites the Space label. "token" leaves the label alone and
+  // publishes the topic as a workspace token you place in a Space sidebar row
+  // as `$topic`. "both" does the two.
+  mode: "rename",
+  token_name: "topic",
+  // Which pane speaks for the Space: "first" (reading order) or "active"
+  // (the pane herdr has focused inside that Space).
+  source: "first",
+  // What a Space reads when no agent topic is available:
+  // "original" (the label herdr gave it), "branch", "cwd", or "keep".
+  fallback: "original",
+  // Tokens: {topic} {agent} {original} {repo} {branch} {branch_short}
+  // {branch_icon} {cwd} {number} {status}
+  format: "{topic}",
+  // Used instead of `format` when the lead pane's branch has an open or merged
+  // pull request. Takes the same tokens plus {pr}, {pr_title}, {review} (a
+  // mark when the PR is approved), {ci} (a mark for its checks, merge
+  // conflicts, or 🟣 once merged) and {comments} (a mark for unresolved
+  // review threads). "" turns PR lookups off.
+  pr_format: "{review} {ci} {comments} PR#{pr}: {pr_title}",
+  max_label_length: 40,
+  // Once you rename a Space by hand, it is yours -- we stop writing to it.
+  respect_manual_names: true,
+  // Only manage Spaces that actually host an agent.
+  require_agent: true,
+  // Workspace ids or exact labels this plugin must never touch.
+  skip: [],
+};
+
+// Branch-type prefixes become a single glyph so `feat/` and friends do not
+// eat sidebar width. Keys are matched case-insensitively against the first
+// path segment; unknown prefixes are kept in the sanitized name.
+const BRANCH_PREFIX_ICONS = {
+  feat: "✨",
+  feature: "✨",
+  fix: "🐛",
+  bugfix: "🐛",
+  hotfix: "🚑",
+  refactor: "♻️",
+  perf: "⚡",
+  docs: "📝",
+  doc: "📝",
+  test: "🧪",
+  tests: "🧪",
+  chore: "🔧",
+  ci: "👷",
+  build: "📦",
+  deps: "📦",
+  style: "💄",
+  revert: "⏪",
+  security: "🔒",
+  release: "🚀",
+  deploy: "🚀",
+  wip: "🚧",
+  cursor: "🤖",
+  dependabot: "🤖",
+  renovate: "🤖",
+  cherry: "🍒",
+  cherrypick: "🍒",
+  archive: "🗄️",
+  experiment: "🧪",
+};
+
+// {branch_icon} and {branch_short}: "feat/foo/bar" -> "✨" + "foo-bar".
+// Slashes and underscores in the rest of the branch become hyphens so the
+// label stays a single compact token.
+function branchLabels(branch) {
+  const value = String(branch ?? "");
+  if (!value) return { icon: "", short: "" };
+  const slash = value.indexOf("/");
+  const type = slash > 0 ? value.slice(0, slash).toLowerCase() : "";
+  const icon = BRANCH_PREFIX_ICONS[type] || "";
+  const rest = icon ? value.slice(slash + 1) : value;
+  const short = rest
+    .replace(/[-_/]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return { icon, short };
+}
+
+
+// Drop a trailing `# comment`, but not a `#` inside a quoted value:
+// `pr_format = "PR #{pr}"` is a format, not a comment.
+function stripComment(line) {
+  let quote = "";
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quote) {
+      if (c === quote) quote = "";
+    } else if (c === '"' || c === "'") {
+      quote = c;
+    } else if (c === "#") {
+      return line.slice(0, i);
+    }
+  }
+  return line;
+}
+
+function parseToml(text) {
+  const out = {};
+  for (const raw of text.split(/\r?\n/)) {
+    const line = stripComment(raw).trim();
+    if (!line || line.startsWith("[")) continue;
+    const eq = line.indexOf("=");
+    if (eq < 0) continue;
+    const key = line.slice(0, eq).trim();
+    const val = line.slice(eq + 1).trim();
+    if (!key) continue;
+    if (val.startsWith("[")) {
+      out[key] = [...val.matchAll(/"([^"]*)"|'([^']*)'/g)].map((m) => m[1] ?? m[2]);
+    } else if (/^"(.*)"$|^'(.*)'$/.test(val)) {
+      out[key] = val.slice(1, -1);
+    } else if (val === "true" || val === "false") {
+      out[key] = val === "true";
+    } else if (/^-?\d+$/.test(val)) {
+      out[key] = Number(val);
+    } else {
+      out[key] = val;
+    }
+  }
+  return out;
+}
+
+function loadConfig() {
+  let user = {};
+  try {
+    user = parseToml(readFileSync(join(CONFIG_DIR, "config.toml"), "utf8"));
+  } catch {
+    // No config file is the normal case; every key has a default.
+  }
+  const cfg = { ...DEFAULTS, ...user };
+  if (!["rename", "token", "both"].includes(cfg.mode)) cfg.mode = DEFAULTS.mode;
+  if (!["first", "active"].includes(cfg.source)) cfg.source = DEFAULTS.source;
+  if (!["original", "branch", "cwd", "keep"].includes(cfg.fallback)) cfg.fallback = DEFAULTS.fallback;
+  if (!Array.isArray(cfg.skip)) cfg.skip = [];
+  if (typeof cfg.pr_format !== "string") cfg.pr_format = "";
+  cfg.max_label_length = Math.max(8, Math.min(80, Number(cfg.max_label_length) || DEFAULTS.max_label_length));
+  return cfg;
+}
+
+// ---------------------------------------------------------------------------
+// herdr CLI
+// ---------------------------------------------------------------------------
+
+function herdr(args) {
+  const r = spawnSync(HERDR, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  if (r.error) throw new Error(`cannot run ${HERDR}: ${r.error.message}`);
+  if (r.status !== 0) {
+    throw new Error(`herdr ${args.join(" ")} exited ${r.status}: ${(r.stderr || r.stdout || "").trim()}`);
+  }
+  return r.stdout;
+}
+
+function herdrJson(args) {
+  const out = herdr(args);
+  try {
+    return JSON.parse(out);
+  } catch {
+    throw new Error(`herdr ${args.join(" ")} did not return JSON: ${out.slice(0, 200)}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Text
+// ---------------------------------------------------------------------------
+
+// Status glyphs an agent may paint at the head of its terminal title. herdr
+// hands us `terminal_title_stripped` with the known ones already removed; this
+// catches a raw title, or an agent herdr does not yet strip for.
+const STATUS_GLYPHS =
+  /^(?:[>›✓-✘⏰-⏸○-◗⚠✢-✿⠀-⣿][︎️]?\s*)+/u;
+
+function clean(value) {
+  return String(value ?? "")
+    .replace(/[\x00-\x1f\x7f]/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Terminal titles get status glyphs stripped, label text must not: a label may
+// legitimately begin with one of our branch icons (✨, 🐛, ...).
+function normalize(value) {
+  return clean(value).replace(STATUS_GLYPHS, "").trim();
+}
+
+// By code point, not UTF-16 unit: an emoji mark is two units, and cutting
+// between them leaves a broken character in the sidebar.
+function cap(str, max) {
+  const chars = Array.from(str);
+  return chars.length > max ? `${chars.slice(0, max - 1).join("").trimEnd()}…` : str;
+}
+
+// Substitute {token}s. Unknown tokens are left literal so a typo is visible in
+// the sidebar rather than silently eaten.
+function applyFormat(fmt, tokens) {
+  return String(fmt).replace(/\{(\w+)\}/g, (m, k) => (k in tokens ? String(tokens[k] ?? "") : m));
+}
+
+// The checkout `cwd` is in: its root, repository name, and branch ("" when
+// detached or not a repo). The root keys the PR cache, so panes in
+// subdirectories of one worktree share a lookup.
+//
+// The repository name comes from the common git dir's parent so bare-repo
+// worktree layouts (`<repo>/.bare/worktrees/<branch>`) and ordinary
+// `<repo>/.git` checkouts both report `<repo>` rather than the branch
+// directory's basename.
+//
+// HEAD is detached for the length of a rebase -- which is exactly when an
+// agent is fixing a PR's merge conflicts -- but git still records the branch
+// being rebased, so we report that one, flagged `rebasing`.
+function gitHead(cwd) {
+  const none = { root: "", repo: "", branch: "", rebasing: false };
+  if (!cwd) return none;
+  const r = spawnSync(
+    "git",
+    [
+      "-C",
+      cwd,
+      "rev-parse",
+      "--show-toplevel",
+      "--absolute-git-dir",
+      "--path-format=absolute",
+      "--git-common-dir",
+      "--abbrev-ref",
+      "HEAD",
+    ],
+    {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    },
+  );
+  if (r.status !== 0) return none;
+  const [root = "", gitDir = "", commonDir = "", b = ""] = (r.stdout || "").trim().split(/\r?\n/);
+  const repoFromCommon = (() => {
+    const name = baseName(commonDir);
+    return name === ".git" || name === ".bare" ? baseName(dirname(commonDir)) : "";
+  })();
+  const repo = repoFromCommon || baseName(root);
+  if (b !== "HEAD") return { root, repo, branch: b, rebasing: false };
+  for (const f of ["rebase-merge/head-name", "rebase-apply/head-name"]) {
+    try {
+      const ref = readFileSync(join(gitDir, f), "utf8").trim();
+      if (ref.startsWith("refs/heads/")) return { root, repo, branch: ref.slice("refs/heads/".length), rebasing: true };
+    } catch {
+      // Not this kind of rebase, or none at all.
+    }
+  }
+  return { ...none, root, repo };
+}
+
+// Where a Claude Code agent is really working. Claude Code moves a session
+// into a worktree (`claude --worktree`, or its EnterWorktree tool) without
+// changing its process's directory, so herdr keeps reporting the directory it
+// was launched from -- usually the main checkout, on main, which has no PR.
+// The session transcript records the truth: every entry carries the
+// session's cwd. herdr hands us the session id; the newest entry with a cwd
+// wins. "" when that cannot be read, and the caller falls back to herdr's.
+const TRANSCRIPT_TAIL_BYTES = 256 * 1024;
+
+function claudeCwd(pane) {
+  const id = pane.agent === "claude" ? pane.agent_session?.value : "";
+  if (!id || !/^[\w-]+$/.test(id)) return "";
+  const projects = join(CLAUDE_DIR, "projects");
+  let file = "";
+  try {
+    // Transcripts are filed under the directory the session is in, which is
+    // exactly what we do not know yet -- so look the id up across all of them.
+    for (const dir of fs.readdirSync(projects)) {
+      const f = join(projects, dir, `${id}.jsonl`);
+      if (fs.existsSync(f)) {
+        file = f;
+        break;
+      }
+    }
+  } catch {
+    return "";
+  }
+  if (!file) return "";
+
+  let fd;
+  try {
+    fd = fs.openSync(file, "r");
+    const size = fs.fstatSync(fd).size;
+    const len = Math.min(size, TRANSCRIPT_TAIL_BYTES);
+    const buf = Buffer.alloc(len);
+    fs.readSync(fd, buf, 0, len, size - len);
+    const lines = buf.toString("utf8").split("\n");
+    if (len < size) lines.shift(); // we started mid-line
+    for (let i = lines.length - 1; i >= 0; i--) {
+      if (!lines[i].includes('"cwd"')) continue;
+      try {
+        const cwd = JSON.parse(lines[i]).cwd;
+        // A worktree removed since is no place to look for a branch.
+        if (typeof cwd === "string" && cwd && fs.existsSync(cwd)) return cwd;
+      } catch {
+        // A line still being written; try the one before.
+      }
+    }
+  } catch {
+    // Unreadable transcript: fall back to herdr's view.
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
+  }
+  return "";
+}
+
+// The labels herdr itself gives a Space it has not been told to call anything
+// else: the names of the directories its panes are in.
+function paneDirs(id, panes) {
+  const names = new Set();
+  for (const p of panes) {
+    if (p.workspace_id !== id) continue;
+    for (const dir of [p.cwd, p.foreground_cwd]) if (dir) names.add(clean(baseName(dir)));
+  }
+  return names;
+}
+
+function baseName(p) {
+  if (!p) return "";
+  const parts = String(p).split(/[\\/]/).filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : "";
+}
+
+// ---------------------------------------------------------------------------
+// State
+//
+// Per workspace we keep `original` (the label the Space had the first time we
+// saw it -- what `--restore` puts back) and `history`, the recent labels we
+// wrote. A live label found in that history is ours to overwrite; anything
+// else is a name a human typed.
+//
+// It is a history rather than one string because herdr fires several of our
+// events at once, so concurrent copies of this script legitimately disagree
+// about the newest label. Histories merge; a single string clobbers, and a
+// clobbered entry makes the plugin mistake its own label for a manual rename
+// and freeze that Space on a stale topic forever.
+// ---------------------------------------------------------------------------
+
+const STATE_VERSION = 1;
+const HISTORY_LIMIT = 6;
+
+function emptyState() {
+  return { version: STATE_VERSION, spaces: {} };
+}
+
+function loadState() {
+  try {
+    const s = JSON.parse(readFileSync(STATE_PATH, "utf8"));
+    if (!s || s.version !== STATE_VERSION || typeof s.spaces !== "object") return emptyState();
+    const spaces = {};
+    for (const [id, rec] of Object.entries(s.spaces)) {
+      if (!rec || typeof rec !== "object") continue;
+      spaces[id] = {
+        original: typeof rec.original === "string" ? rec.original : "",
+        history: Array.isArray(rec.history) ? rec.history.filter((x) => typeof x === "string") : [],
+      };
+    }
+    return { version: STATE_VERSION, spaces };
+  } catch {
+    return emptyState();
+  }
+}
+
+// Re-read from disk and merge, so a concurrent run's labels survive ours.
+function saveState(next, liveIds) {
+  const disk = loadState();
+  const merged = emptyState();
+  const ids = new Set([...Object.keys(disk.spaces), ...Object.keys(next.spaces)]);
+  for (const id of ids) {
+    if (liveIds && !liveIds.has(id)) continue; // prune closed spaces
+    const a = next.spaces[id] || { original: "", history: [] };
+    const b = disk.spaces[id] || { original: "", history: [] };
+    const history = [];
+    for (const label of [...a.history, ...b.history]) {
+      if (label && !history.includes(label)) history.push(label);
+      if (history.length >= HISTORY_LIMIT) break;
+    }
+    // Ours wins: runs take turns, so what we hold is newer than the disk.
+    merged.spaces[id] = { original: a.original || b.original || "", history };
+  }
+  try {
+    mkdirSync(STATE_DIR, { recursive: true });
+    const tmp = `${STATE_PATH}.${process.pid}.tmp`;
+    writeFileSync(tmp, JSON.stringify(merged, null, 2));
+    renameSync(tmp, STATE_PATH); // atomic: a torn read can never be observed
+  } catch (err) {
+    process.stderr.write(`space-topic: cannot write state: ${err.message}\n`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Pull requests
+//
+// A lookup is a GitHub round trip (most of a second), and this script runs on
+// nearly every focus change, often as several copies at once. So answers are
+// cached per checkout and branch -- Spaces sharing a checkout share one
+// lookup -- and a run claims a stale entry, stamping it fresh while keeping
+// the old answer, before it asks GitHub. A concurrent run that finds the
+// claim reuses the old answer and moves on instead of asking again.
+//
+// How long an answer lasts depends on what it was. A branch with no PR yet,
+// a PR whose checks are still running, or one GitHub has not finished
+// checking for conflicts is about to change, so it is asked again after
+// PR_TTL_MS. A settled PR is asked again after PR_SETTLED_TTL_MS, or as soon
+// as you switch to its Space. A merged PR is final and never asked again.
+// ---------------------------------------------------------------------------
+
+// Bumped whenever an entry gains a field; entries of another version are
+// treated as never looked up, so an upgrade does not trust half an answer.
+const PR_CACHE_VERSION = 3;
+const PR_TTL_MS = 2 * 60 * 1000;
+const PR_SETTLED_TTL_MS = 20 * 60 * 1000;
+// A focus switch skips the cache unless the answer is younger than this, so a
+// burst of focus events costs one lookup, not one each.
+const PR_FOCUS_MIN_AGE_MS = 10 * 1000;
+const PR_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+function loadPrCache() {
+  try {
+    const c = JSON.parse(readFileSync(PR_CACHE_PATH, "utf8"));
+    return c && typeof c === "object" && !Array.isArray(c) ? c : {};
+  } catch {
+    return {};
+  }
+}
+
+// Read-merge-write a single entry, so a concurrent run's other entries survive.
+function savePrEntry(key, entry) {
+  if (DRY_RUN) return; // a preview writes nothing, the cache included
+  const cache = loadPrCache();
+  if ((cache[key]?.at ?? 0) > entry.at) return;
+  cache[key] = entry;
+  for (const [k, e] of Object.entries(cache)) {
+    // A merged answer is kept for as long as its checkout exists, so it is
+    // never looked up again; anything else old is dropped.
+    let keep;
+    if (e?.pr?.state === "MERGED") keep = fs.existsSync(k.slice(0, k.lastIndexOf("::")));
+    else keep = Boolean(e) && entry.at - (e.at ?? 0) <= PR_CACHE_MAX_AGE_MS;
+    if (!keep) delete cache[k];
+  }
+  try {
+    mkdirSync(STATE_DIR, { recursive: true });
+    const tmp = `${PR_CACHE_PATH}.${process.pid}.tmp`;
+    writeFileSync(tmp, JSON.stringify(cache, null, 2));
+    renameSync(tmp, PR_CACHE_PATH);
+  } catch (err) {
+    process.stderr.write(`space-topic: cannot write PR cache: ${err.message}\n`);
+  }
+}
+
+// The {ci} mark for each verdict. Emoji, because a Space label is plain text
+// and these carry their own colour. A PR with no checks gets no mark. Not ⏳
+// for pending: STATUS_GLYPHS would strip it from the head of the label.
+const CI_MARKS = { pass: "✅", fail: "❌", pending: "🟡" };
+// Shown instead of the CI mark when the PR has merge conflicts: it cannot be
+// merged whatever its checks say, so that is the thing to know.
+const CONFLICT_MARK = "🔀";
+// The {review} mark, from GitHub's reviewDecision. Only approval has one.
+const REVIEW_MARKS = { APPROVED: "📝" };
+// The {comments} mark: the PR has review threads nobody has resolved.
+const COMMENTS_MARK = "💬";
+// A merged PR's only mark, in GitHub's merged purple: its checks, conflicts
+// and reviews no longer matter.
+const MERGED_MARK = "🟣";
+
+// The {review}, {ci} and {comments} marks for a PR (or for no PR: none).
+function prMarks(pr) {
+  if (!pr) return { review: "", ci: "", comments: "" };
+  if (pr.state === "MERGED") return { review: "", ci: MERGED_MARK, comments: "" };
+  return {
+    review: REVIEW_MARKS[pr.review] || "",
+    ci: pr.mergeable === "CONFLICTING" ? CONFLICT_MARK : CI_MARKS[pr.ci] || "",
+    comments: pr.comments > 0 ? COMMENTS_MARK : "",
+  };
+}
+
+// Conclusions and commit-status states that mean a check did not pass.
+const CI_FAILED = new Set(["FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE"]);
+
+// Roll a PR's checks up into one verdict, as GitHub's own badge does: any
+// failure fails (a red cross will not turn green by waiting), anything still
+// running is pending, otherwise it passes. "" when the PR has no checks.
+function ciState(checks) {
+  if (!Array.isArray(checks) || !checks.length) return "";
+  let pending = false;
+  for (const c of checks) {
+    // A CheckRun (Actions) has status + conclusion; a legacy commit
+    // StatusContext has only state.
+    const verdict = c.conclusion || c.state || "";
+    if (CI_FAILED.has(verdict)) return "fail";
+    if ((c.status && c.status !== "COMPLETED") || verdict === "PENDING" || verdict === "EXPECTED") pending = true;
+  }
+  return pending ? "pending" : "pass";
+}
+
+// The open or merged PR for the branch checked out at `root`. `gh pr view`
+// with no argument finds the branch's newest PR the way gh always does --
+// tracking remote, forks included. A PR closed without merging counts as none,
+// so that Space keeps its topic. Mid-rebase gh cannot tell which branch that
+// is, so then we name it (`branch`), at the cost of matching it by name alone;
+// likewise for a branch pushed under another name (see upstreamBranch).
+//
+// Returns null for "no PR" and undefined for "could not tell" (no gh, not
+// logged in, offline), so a network blip keeps the last answer instead of
+// flipping the Space back to its topic.
+function gh(args, cwd) {
+  return spawnSync("gh", args, {
+    cwd,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+    timeout: 10000,
+    env: { ...process.env, GH_PROMPT_DISABLED: "1", GH_NO_UPDATE_NOTIFIER: "1" },
+  });
+}
+
+function fetchPr(root, branch) {
+  const fields = "id,url,number,title,state,mergeable,reviewDecision,statusCheckRollup";
+  const r = gh(["pr", "view", ...(branch ? [branch] : []), "--json", fields], root);
+  if (r.error) return undefined;
+  if (r.status !== 0) return /no pull requests found/i.test(r.stderr || "") ? null : undefined;
+  try {
+    const pr = JSON.parse(r.stdout);
+    if (pr.state === "MERGED") return { number: pr.number, title: normalize(pr.title), state: "MERGED" };
+    if (pr.state !== "OPEN") return null;
+    const comments = openThreads(pr.id, pr.url);
+    if (comments === undefined) return undefined; // half an answer is no answer
+    // mergeable: MERGEABLE, CONFLICTING, or UNKNOWN while GitHub works it out
+    // in the background (after a push, or after the base branch moves).
+    return {
+      number: pr.number,
+      title: normalize(pr.title),
+      state: "OPEN",
+      ci: ciState(pr.statusCheckRollup),
+      mergeable: pr.mergeable || "UNKNOWN",
+      // APPROVED, CHANGES_REQUESTED, REVIEW_REQUIRED, or "" with no rules.
+      review: pr.reviewDecision || "",
+      comments,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+// How many review threads on a PR nobody has resolved. `gh pr view` cannot
+// tell resolved from unresolved, so this is a GraphQL query of its own -- by
+// the PR's node id, on the host its URL names (GitHub Enterprise included).
+// Only the first 100 threads are counted. undefined when gh fails.
+const THREADS_QUERY = "query($id: ID!) { node(id: $id) { ... on PullRequest { reviewThreads(first: 100) { nodes { isResolved } } } } }";
+
+function openThreads(id, url) {
+  let host = "github.com";
+  try {
+    host = new URL(url).host;
+  } catch {
+    // No URL: assume github.com.
+  }
+  const r = gh(["api", "graphql", "--hostname", host, "-f", `query=${THREADS_QUERY}`, "-f", `id=${id}`]);
+  if (r.error || r.status !== 0) return undefined;
+  try {
+    const threads = JSON.parse(r.stdout)?.data?.node?.reviewThreads?.nodes;
+    return Array.isArray(threads) ? threads.filter((t) => !t.isResolved).length : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// The name a branch was pushed under, when that differs from its own. Agents
+// often push a local `worktree/fix-auth` as `fix/flaky-auth`, and gh, unable to
+// resolve where a differently named branch pushes to, looks for a PR from
+// `worktree/fix-auth` and finds none. Never the remote's default branch: a
+// feature branch started from origin/main tracks main, and a PR someone opened
+// from their fork's main is not this one. "" when there is no such name, or
+// git does not know the default (origin/HEAD unset), so cannot rule it out.
+function upstreamBranch(root, branch) {
+  const git = (args) => spawnSync("git", ["-C", root, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+  const r = git(["for-each-ref", "--format=%(upstream:remotename)%00%(upstream:remoteref)", `refs/heads/${branch}`]);
+  if (r.status !== 0) return "";
+  const [remote = "", ref = ""] = (r.stdout || "").split(/\r?\n/)[0].split("\0");
+  if (!remote || remote === "." || !ref.startsWith("refs/heads/")) return "";
+  const name = ref.slice("refs/heads/".length);
+  if (name === branch) return "";
+  const d = git(["symbolic-ref", "--quiet", `refs/remotes/${remote}/HEAD`]);
+  const defaultRef = d.status === 0 ? (d.stdout || "").trim() : "";
+  return defaultRef && defaultRef !== `refs/remotes/${remote}/${name}` ? name : "";
+}
+
+function prFor(head, refresh) {
+  if (!head.root || !head.branch) return null;
+  const key = `${head.root}::${head.branch}`;
+  // Fresh from disk, not a copy read at startup: a concurrent run may have
+  // claimed this entry a moment ago.
+  const cached = loadPrCache()[key];
+  const hit = cached?.v === PR_CACHE_VERSION ? cached : undefined;
+  // A claim on a branch never looked up before has no answer to lend (no `pr`
+  // key at all), so that one we look up ourselves rather than guess "no PR".
+  const age = hit ? Date.now() - hit.at : Infinity;
+  const settled = hit?.pr && hit.pr.ci !== "pending" && hit.pr.mergeable !== "UNKNOWN";
+  const merged = hit?.pr?.state === "MERGED"; // final: not even a focus re-checks it
+  const ttl = merged ? Infinity : refresh ? PR_FOCUS_MIN_AGE_MS : settled ? PR_SETTLED_TTL_MS : PR_TTL_MS;
+  if (hit && "pr" in hit && age < ttl) return hit.pr;
+  const previous = hit?.pr;
+  savePrEntry(key, { v: PR_CACHE_VERSION, at: Date.now(), pr: previous });
+  let fetched = fetchPr(head.root, head.rebasing ? head.branch : "");
+  // None under the branch's own name: ask again under the name it was pushed as.
+  const upstream = fetched === null ? upstreamBranch(head.root, head.branch) : "";
+  if (upstream) fetched = fetchPr(head.root, upstream);
+  const pr = fetched === undefined ? previous ?? null : fetched;
+  savePrEntry(key, { v: PR_CACHE_VERSION, at: Date.now(), pr });
+  return pr;
+}
+
+// ---------------------------------------------------------------------------
+// Session walk
+// ---------------------------------------------------------------------------
+
+function readSession() {
+  const workspaces = herdrJson(["workspace", "list"])?.result?.workspaces ?? [];
+  const tabs = herdrJson(["tab", "list"])?.result?.tabs ?? [];
+  const panes = herdrJson(["pane", "list"])?.result?.panes ?? [];
+  return { workspaces, tabs, panes };
+}
+
+// The pane that speaks for a Space.
+//
+//   source = "first"   reading order: lowest tab number, then pane list order
+//   source = "active"  the Space's active tab, its focused pane if it has one
+//
+// Within the candidates we prefer a pane that is both an agent and has a topic
+// to show, then any agent, then anything -- so a Space whose lead pane is a
+// plain shell still reports the agent working beside it.
+function pickPane(ws, tabs, panes, cfg) {
+  const order = new Map(tabs.map((t) => [t.tab_id, t.number ?? 0]));
+  let candidates = panes.filter((p) => p.workspace_id === ws.workspace_id);
+  if (!candidates.length) return null;
+
+  if (cfg.source === "active" && ws.active_tab_id) {
+    const inTab = candidates.filter((p) => p.tab_id === ws.active_tab_id);
+    if (inTab.length) {
+      const focused = inTab.find((p) => p.focused);
+      candidates = focused ? [focused, ...inTab.filter((p) => p !== focused)] : inTab;
+    }
+  } else {
+    candidates = candidates
+      .map((p, i) => ({ p, i }))
+      .sort((a, b) => (order.get(a.p.tab_id) ?? 0) - (order.get(b.p.tab_id) ?? 0) || a.i - b.i)
+      .map((x) => x.p);
+  }
+
+  const withTopic = candidates.find((p) => p.agent && normalize(p.terminal_title_stripped));
+  if (withTopic) return withTopic;
+  const withAgent = candidates.find((p) => p.agent);
+  if (withAgent) return withAgent;
+  return cfg.require_agent ? null : candidates[0];
+}
+
+function plan(cfg, session, state, refresh = new Set()) {
+  const { workspaces, tabs, panes } = session;
+  const items = [];
+
+  for (const ws of workspaces) {
+    const id = ws.workspace_id;
+    const live = clean(ws.label);
+    const rec = state.spaces[id] || { original: live, history: [] };
+    state.spaces[id] = rec;
+    if (!rec.original) rec.original = live;
+    // Until a Space is renamed, herdr keeps re-deriving its label from its
+    // panes' directory: open one while in nexus-monorepo, cd into
+    // prism-agent, and it goes from "nexus-monorepo" to "prism-agent". That
+    // is herdr, not you, so it becomes the Space's original label rather than
+    // looking like a rename that locks the plugin out.
+    if (live !== rec.original && !rec.history.includes(live) && paneDirs(id, panes).has(live)) {
+      rec.original = live;
+    }
+
+    if (cfg.skip.includes(id) || cfg.skip.includes(ws.label)) {
+      items.push({ ws, rec, skip: "configured skip" });
+      continue;
+    }
+
+    const pane = pickPane(ws, tabs, panes, cfg);
+    if (!pane) {
+      items.push({ ws, rec, skip: "no agent pane" });
+      continue;
+    }
+
+    const topic = normalize(pane.terminal_title_stripped);
+    const cwd = claudeCwd(pane) || pane.foreground_cwd || pane.cwd || "";
+    // Only shell out to git (and gh) when something actually asks for it.
+    const wantsPr = Boolean(cfg.pr_format);
+    const wantsBranch =
+      wantsPr ||
+      cfg.fallback === "branch" ||
+      /\{(branch|branch_short|branch_icon|repo)\}/.test(String(cfg.format) + cfg.pr_format);
+    const head = wantsBranch ? gitHead(cwd) : { root: "", repo: "", branch: "" };
+    const branch = head.branch;
+    const repo = head.repo || baseName(cwd);
+    const branchLabel = branchLabels(branch);
+    const recheck = refresh.has(id) || (refresh.has(FOCUSED) && ws.focused);
+    const pr = wantsPr ? prFor(head, recheck) : null;
+
+    let body = topic;
+    if (!body) {
+      // An open PR is a name in its own right; it does not wait for a topic.
+      if (cfg.fallback === "keep" && !pr) {
+        items.push({ ws, rec, skip: "no topic yet" });
+        continue;
+      }
+      if (cfg.fallback === "branch") body = branch;
+      else if (cfg.fallback === "cwd") body = baseName(cwd);
+      if (!body) body = rec.original;
+    }
+
+    const label = cap(
+      clean(
+        applyFormat(pr ? cfg.pr_format : cfg.format, {
+          pr: pr ? pr.number : "",
+          pr_title: pr ? pr.title : "",
+          ...prMarks(pr),
+          topic: body,
+          agent: pane.agent || "",
+          original: rec.original,
+          repo,
+          branch,
+          branch_short: branchLabel.short,
+          branch_icon: branchLabel.icon,
+          cwd: baseName(cwd),
+          number: ws.number ?? "",
+          status: pane.agent_status || ws.agent_status || "",
+        }).replace(/:\s*$/, ""),
+      ),
+      cfg.max_label_length,
+    );
+
+    if (!label) {
+      items.push({ ws, rec, skip: "empty label" });
+      continue;
+    }
+
+    // Ownership. A Space we have never written to is adoptable: its live label
+    // is still the original one herdr derived from the directory.
+    const ours = rec.history.includes(live) || live === rec.original;
+    if (cfg.respect_manual_names && !ours) {
+      items.push({ ws, rec, label, skip: "renamed by hand" });
+      continue;
+    }
+
+    items.push({ ws, rec, pane, label, live, changed: label !== live });
+  }
+
+  return items;
+}
+
+// ---------------------------------------------------------------------------
+// Writes
+// ---------------------------------------------------------------------------
+
+function writeLabel(cfg, item) {
+  const id = item.ws.workspace_id;
+  if (cfg.mode === "rename" || cfg.mode === "both") {
+    herdr(["workspace", "rename", id, item.label]);
+  }
+  if (cfg.mode === "token" || cfg.mode === "both") {
+    // Date.now() as the sequence: monotonic across concurrent runs without a
+    // shared counter, so herdr drops a slow run's stale report on its own.
+    herdr([
+      "workspace",
+      "report-metadata",
+      id,
+      "--source",
+      SOURCE_ID,
+      "--token",
+      `${cfg.token_name}=${item.label}`,
+      "--seq",
+      String(Date.now()),
+    ]);
+  }
+  const hist = item.rec.history;
+  if (!hist.includes(item.label)) hist.unshift(item.label);
+  item.rec.history = hist.slice(0, HISTORY_LIMIT);
+}
+
+function doRestore(cfg, session, state) {
+  let n = 0;
+  for (const ws of session.workspaces) {
+    const rec = state.spaces[ws.workspace_id];
+    if (!rec) continue;
+    const live = clean(ws.label);
+    if (rec.original && rec.original !== live && (rec.history.includes(live) || !cfg.respect_manual_names)) {
+      herdr(["workspace", "rename", ws.workspace_id, rec.original]);
+      n += 1;
+    }
+    // Unconditionally, not just in token mode: someone who switches mode to
+    // "rename" and then restores should not be left with a stale token.
+    try {
+      herdr([
+        "workspace",
+        "report-metadata",
+        ws.workspace_id,
+        "--source",
+        SOURCE_ID,
+        "--clear-token",
+        cfg.token_name,
+      ]);
+    } catch {
+      // A Space that never carried our token is not an error.
+    }
+  }
+  try {
+    rmSync(STATE_PATH, { force: true });
+  } catch {
+    // Nothing to forget.
+  }
+  process.stdout.write(`space-topic: restored ${n} space label(s), state cleared\n`);
+}
+
+// Re-own the Space this action was invoked from, by filing its current label
+// as one of ours. The next sync then overwrites it.
+function doAdopt(session, state) {
+  const id = process.env.HERDR_WORKSPACE_ID;
+  if (!id) {
+    process.stderr.write("space-topic: adopt needs a workspace context\n");
+    process.exitCode = 1;
+    return;
+  }
+  const ws = session.workspaces.find((w) => w.workspace_id === id);
+  if (!ws) {
+    process.stderr.write(`space-topic: no such workspace ${id}\n`);
+    process.exitCode = 1;
+    return;
+  }
+  const rec = state.spaces[id] || { original: clean(ws.label), history: [] };
+  state.spaces[id] = rec;
+  const live = normalize(ws.label);
+  if (live && !rec.history.includes(live)) rec.history.unshift(live);
+  rec.history = rec.history.slice(0, HISTORY_LIMIT);
+  saveState(state, new Set(session.workspaces.map((w) => w.workspace_id)));
+  process.stdout.write(`space-topic: adopted ${id} ("${live}")\n`);
+}
+
+// ---------------------------------------------------------------------------
+// Taking turns
+//
+// herdr fires several of our events at once, and copies of this script used
+// to run side by side. They undid each other: one would write a fresh PR mark
+// and a slower one, holding the answer from a moment before, would write the
+// old label back; one that read the Space list before a Space existed would
+// drop that Space's record as closed. So runs now take turns. A run that
+// finds another in progress leaves a note in RERUN_PATH -- with any Space it
+// was asked to re-check -- and exits; the run in progress does one more pass
+// for every note it finds, reading the session afresh each time.
+// ---------------------------------------------------------------------------
+
+const LOCK_WAIT_MS = 30 * 1000;
+let lockHeld = false;
+
+function sleep(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+// A lock whose process is gone (killed mid-run) must not block us forever.
+function lockIsStale() {
+  try {
+    const pid = Number(readFileSync(LOCK_PATH, "utf8"));
+    if (!pid) return Date.now() - fs.statSync(LOCK_PATH).mtimeMs > 10 * 1000; // still being written?
+    process.kill(pid, 0); // throws ESRCH once the process is gone
+    return false;
+  } catch (err) {
+    return err.code === "ESRCH" || err.code === "ENOENT";
+  }
+}
+
+function tryLock() {
+  try {
+    mkdirSync(STATE_DIR, { recursive: true });
+  } catch {
+    // Reported by the open below.
+  }
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const fd = fs.openSync(LOCK_PATH, "wx");
+      fs.writeSync(fd, String(process.pid));
+      fs.closeSync(fd);
+      lockHeld = true;
+      return true;
+    } catch (err) {
+      if (err.code !== "EEXIST") return true; // cannot lock at all: run unguarded, as before
+      if (!lockIsStale()) return false;
+      // Rename rather than delete, so of two runs clearing the same stale lock
+      // only one succeeds, and neither removes the other's fresh one.
+      try {
+        const stale = `${LOCK_PATH}.${process.pid}.stale`;
+        renameSync(LOCK_PATH, stale);
+        rmSync(stale, { force: true });
+      } catch {
+        // Someone else cleared it first; try again.
+      }
+    }
+  }
+  return false;
+}
+
+function unlock() {
+  if (lockHeld) rmSync(LOCK_PATH, { force: true });
+  lockHeld = false;
+}
+
+function askForRerun(refresh) {
+  try {
+    fs.appendFileSync(RERUN_PATH, `${refresh.join("\n")}\n`);
+  } catch (err) {
+    process.stderr.write(`space-topic: cannot leave a rerun note: ${err.message}\n`);
+  }
+}
+
+// Take every pending note at once -- renamed first, so a note added while we
+// read lands in a fresh file -- and return the Spaces they ask to re-check.
+function takeRerun() {
+  const taken = `${RERUN_PATH}.${process.pid}`;
+  try {
+    renameSync(RERUN_PATH, taken);
+  } catch {
+    return [];
+  }
+  let ids = [];
+  try {
+    ids = readFileSync(taken, "utf8").split("\n").filter(Boolean);
+  } catch {
+    // An empty note still meant "run again", which this pass does.
+  }
+  rmSync(taken, { force: true });
+  return ids;
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+function syncOnce(cfg, refresh) {
+  const state = loadState();
+  const session = readSession();
+  const items = plan(cfg, session, state, refresh);
+
+  let wrote = 0;
+  for (const it of items) {
+    if (it.skip || !it.changed) continue;
+    try {
+      writeLabel(cfg, it);
+      wrote += 1;
+    } catch (err) {
+      process.stderr.write(`space-topic: ${it.ws.workspace_id}: ${err.message}\n`);
+    }
+  }
+
+  saveState(state, new Set(session.workspaces.map((w) => w.workspace_id)));
+  if (wrote) process.stdout.write(`space-topic: renamed ${wrote} space(s)\n`);
+}
+
+function sync(cfg) {
+  let refresh = REFRESH;
+  for (;;) {
+    if (!tryLock()) {
+      askForRerun(refresh);
+      // The run in progress may have finished between our attempt and the
+      // note; if the lock is free now, the note is ours to act on.
+      if (!tryLock()) return;
+    }
+    try {
+      let pending = refresh;
+      do {
+        syncOnce(cfg, new Set([...pending, ...takeRerun()]));
+        pending = [];
+      } while (fs.existsSync(RERUN_PATH));
+    } finally {
+      unlock();
+    }
+    refresh = [];
+    // A note left after our last look but before we let go: go round again.
+    if (!fs.existsSync(RERUN_PATH)) return;
+  }
+}
+
+// --adopt and --restore must run, not hand off, so they wait their turn.
+function withLock(fn) {
+  const deadline = Date.now() + LOCK_WAIT_MS;
+  while (!tryLock() && Date.now() < deadline) sleep(100);
+  try {
+    fn();
+  } finally {
+    unlock();
+  }
+}
+
+function main() {
+  const cfg = loadConfig();
+
+  if (ADOPT || RESTORE) {
+    return withLock(() => {
+      const state = loadState();
+      const session = readSession();
+      if (ADOPT) doAdopt(session, state);
+      else doRestore(cfg, session, state);
+    });
+  }
+  if (!cfg.enabled) return;
+
+  if (DRY_RUN) {
+    // Read-only, so it neither waits nor takes a turn.
+    for (const it of plan(cfg, readSession(), loadState(), new Set(REFRESH))) {
+      const id = it.ws.workspace_id;
+      if (it.skip) process.stdout.write(`${id}  "${it.ws.label}"  --  skipped: ${it.skip}\n`);
+      else if (!it.changed) process.stdout.write(`${id}  "${it.ws.label}"  --  already current\n`);
+      else process.stdout.write(`${id}  "${it.ws.label}"  ->  "${it.label}"\n`);
+    }
+    return;
+  }
+
+  sync(cfg);
+}
+
+try {
+  main();
+} catch (err) {
+  process.stderr.write(`space-topic: ${err.message}\n`);
+  process.exitCode = 1;
+}
