@@ -1,0 +1,23 @@
+# Vendored herdr-space-topic config shared by every host.
+#
+# The local plugin copy adds a {repo} token, taken from the git common dir, so
+# bare-repo worktree layouts like <repo>/<branch> name Spaces "<repo>:<branch>".
+
+enabled = true
+mode = "rename"
+source = "first"
+fallback = "original"
+
+# e.g. dotfiles:main, ✨ montflow:reference-plugin, 🐛 modulo:portrait-menu-offset
+format = "{branch_icon} {repo}:{branch_short}"
+
+# Keep branch names even when a branch has a GitHub PR.
+pr_format = ""
+
+max_label_length = 60
+respect_manual_names = true
+
+# Name every Space, not just the ones currently hosting an agent.
+require_agent = false
+
+skip = []
