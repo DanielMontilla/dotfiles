@@ -1,6 +1,9 @@
-# use nixpkgs zed (not flatpak)
-function zed --description 'Zed editor'
-    command zeditor $argv & 
+# Use nixpkgs/prebuilt Zed (not flatpak). Guarded because macOS profiles may
+# provide Zed as an .app whose CLI is `zed`, not `zeditor`.
+if type -q zeditor
+    function zed --description 'Zed editor'
+        command zeditor $argv &
+    end
 end
 
 # Herdr starts the remote server over SSH, so panes inherit SSH_CONNECTION from
