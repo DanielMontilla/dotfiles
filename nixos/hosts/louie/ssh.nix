@@ -16,6 +16,9 @@
   # louie trusts olimar's key (per-machine: only peer public keys go here)
   users.users.daniel.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIZ+ZZJOYG8B7Rn5ZQdBAXsBgBQygJ7Vk6zlTfogMwyJ daniel@olimar"
+    # daniel@pikpik (macOS): paste `cat ~/.ssh/id_ed25519.pub` from pikpik
+    # here, then rebuild: sudo nixos-rebuild switch --flake ".#louie"
+    # "ssh-ed25519 AAAA... daniel@pikpik"
   ];
 
   # Tailscale mesh VPN for internet reachability (free personal plan)
