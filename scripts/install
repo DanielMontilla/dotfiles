@@ -133,3 +133,11 @@ else
         done
     fi
 fi
+
+# Optional per-profile imperative installers (vendor curl apps, etc.).
+# Skipped for windows profiles, which exit earlier.
+VENDOR_APPS="${PROFILE_DIR}/vendor-apps.sh"
+if [ -f "$VENDOR_APPS" ]; then
+    echo "Running profile-specific app installers..."
+    bash "$VENDOR_APPS"
+fi
