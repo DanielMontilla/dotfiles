@@ -1,0 +1,13 @@
+# Public keys allowed to SSH *into* pikpik (macOS Remote Login, port 22).
+#
+# This file is a source of truth in the repo; it is NOT dotbot-linked over
+# ~/.ssh/authorized_keys (that could clobber existing access on a work Mac).
+# Append it on the Mac instead:
+#
+#   cat profiles/pikpik/ssh/authorized_keys >> ~/.ssh/authorized_keys
+#   chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys
+#
+# Never commit private keys.
+
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIZ+ZZJOYG8B7Rn5ZQdBAXsBgBQygJ7Vk6zlTfogMwyJ daniel@olimar
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN/nUf7c2Sekdov5CZspz7GslJacskM2MA8mrnwKdbhO daniel@louie

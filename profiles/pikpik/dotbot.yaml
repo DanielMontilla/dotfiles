@@ -1,0 +1,27 @@
+- defaults:
+    link:
+      relink: true
+      create: true
+      glob: true
+      relative: true
+
+# No `clean:` on a work Mac: ~/.config may already hold managed/user state.
+- link:
+    ~/.ssh/config:
+      path: profiles/pikpik/ssh/config
+      force: true
+
+    ~/.config/fish/:
+      path: profiles/shared/fish/*
+
+    ~/.config/nvim/:
+      path: profiles/shared/neovim/*
+
+    ~/.config/starship.toml: profiles/shared/starship/starship.toml
+
+# Deliberately not linked on a work machine:
+#   ~/.gitconfig  — the shared one uses a personal identity. Create
+#                   profiles/pikpik/gitconfig with your work name/email and
+#                   link that instead.
+#   ~/.config/zed — profiles/shared/zed/settings.json hardcodes a NixOS fish
+#                   path; a macOS Zed config needs its own copy.
