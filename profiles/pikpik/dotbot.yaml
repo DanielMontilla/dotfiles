@@ -7,12 +7,14 @@
 
 # No `clean:` on a work Mac: ~/.config may already hold managed/user state.
 - link:
-    ~/.ssh/config:
+    # Not ~/.ssh/config: a work Mac may already have a corporate SSH config.
+    # Link into config.d and add one `Include config.d/*` line (README §5).
+    ~/.ssh/config.d/pikpik.conf:
       path: profiles/pikpik/ssh/config
-      force: true
 
-    ~/.config/fish/:
-      path: profiles/shared/fish/*
+    # Only config.fish: fish_variables is per-machine state that fish rewrites,
+    # so linking it would dirty the repo and carry Linux paths onto macOS.
+    ~/.config/fish/config.fish: profiles/shared/fish/config.fish
 
     ~/.config/nvim/:
       path: profiles/shared/neovim/*

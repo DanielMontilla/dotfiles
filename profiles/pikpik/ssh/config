@@ -1,5 +1,11 @@
 # SSH over the Tailscale mesh (internet, key-only, port 2222).
 #
+# Linked to ~/.ssh/config.d/pikpik.conf, not ~/.ssh/config: a work Mac may
+# already have a corporate SSH config. Add one line at the top of
+# ~/.ssh/config (see profiles/pikpik/README.md §5):
+#
+#   Include config.d/*
+#
 # This profile uses macOS's /usr/bin/ssh, not nixpkgs openssh: the Apple
 # client understands `UseKeychain` and stores the key passphrase in the
 # login Keychain. That is why `openssh` is not in nixos/flake.nix.
@@ -12,6 +18,7 @@ Host olimar
   User daniel
   Port 2222
   IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
   AddKeysToAgent yes
   UseKeychain yes
   StrictHostKeyChecking accept-new
@@ -23,6 +30,7 @@ Host louie
   User daniel
   Port 2222
   IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
   AddKeysToAgent yes
   UseKeychain yes
   StrictHostKeyChecking accept-new
