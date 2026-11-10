@@ -34,6 +34,11 @@ curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix 
 
 It needs admin rights. Verify with `nix --version`.
 
+If you installed Nix another way and see `experimental Nix feature 'nix-command'
+is disabled`, run `./scripts/enable-nix-features` from the repo root. It writes
+`experimental-features = nix-command flakes` to `/etc/nix/nix.conf` (keeping any
+features already set) and restarts the daemon.
+
 The flake exposes both Apple Silicon (`aarch64-darwin`) and Intel
 (`x86_64-darwin`), so there is nothing to edit — `nix profile add` picks the
 right one. (Heads-up: nixpkgs 26.05 is the last release with Intel macOS
@@ -339,6 +344,7 @@ ssh -v olimar
 | `Connection refused` on port 2222 | The NixOS host lacks `./ssh.nix` in `configuration.nix`, or the firewall/rebuild didn't apply. |
 | Linux → pikpik times out | Remote Login is off, or the macOS firewall is blocking `sshd`. |
 | `Bad configuration option: UseKeychain` | You're running nixpkgs `openssh`, which shadows `/usr/bin/ssh`; remove it from the PATH/profile. |
+| `experimental Nix feature 'nix-command' is disabled` | Run `./scripts/enable-nix-features` from the repo root, then re-run install. |
 | `ssh olimar` says `Could not resolve hostname` / ignores the config | The `Include config.d/*` line is missing from the top of `~/.ssh/config` (see §5). |
 | fish aliases/prompt/`zed` function missing | fish is not the login shell — see §2a. |
 | Key passphrase asked every time | `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`, and keep `UseKeychain yes`. |

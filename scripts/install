@@ -75,6 +75,25 @@ if [ "$MODE" = "windows" ]; then
     exit 0
 fi
 
+# Both nix modes need `nix-command` and `flakes`. Catch the common
+# "experimental Nix feature ... is disabled" error before doing any work.
+if ! command -v nix >/dev/null 2>&1; then
+    echo "Error: 'nix' is not on PATH. Install Nix first, then re-run."
+    exit 1
+fi
+
+NIX_FEATURES="$(nix show-config 2>/dev/null | sed -n 's/^experimental-features[[:space:]]*=[[:space:]]*//p' | tail -n1 || true)"
+for feature in nix-command flakes; do
+    case " $NIX_FEATURES " in
+        *" $feature "*) ;;
+        *)
+            echo "Error: this Nix install is missing the '$feature' experimental feature."
+            echo "Fix it with: ./scripts/enable-nix-features"
+            exit 1
+            ;;
+    esac
+done
+
 if [ "$MODE" = "nixos" ]; then
     NIXOS_DIR="${REPO_ROOT}/nixos"
 

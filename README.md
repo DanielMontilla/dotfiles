@@ -35,6 +35,7 @@ On **Linux/WSL** (bash):
 ./scripts/install <name>   # install packages / check prerequisites
 ./scripts/link <name>      # link config files with dotbot
 ./scripts/update <name>    # refresh flake inputs, then rebuild (nixos) or upgrade (nix-profile)
+./scripts/enable-nix-features  # turn on nix-command + flakes (official installer leaves them off)
 ```
 
 On **Windows** (PowerShell, no bash needed):

@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+#
+# Enable the Nix experimental features this repo relies on:
+#   nix-command  — `nix profile`, `nix build`, `nix eval`, ...
+#   flakes       — `path:profiles/<name>/nixos` installs
+#
+# The official nixos.org installer leaves both off; Determinate Systems'
+# installer enables them. Safe to re-run: it only touches the
+# `experimental-features` line and keeps any features already configured.
+#
+# Usage: ./scripts/enable-nix-features
+#
+# NIX_CONF may override the config path (useful for testing).
+
+set -euo pipefail
+
+CONFIG="${NIX_CONF:-/etc/nix/nix.conf}"
+REQUIRED=(nix-command flakes)
+
+if ! command -v nix >/dev/null 2>&1; then
+    echo "Error: 'nix' is not on PATH. Install Nix first:" >&2
+    echo "  see profiles/pikpik/README.md (or the README for your platform)" >&2
+    exit 1
+fi
+
+# Features Nix currently reports. Empty when the setting is disabled, because
+# `nix show-config` is itself a nix-command subcommand.
+current_features() {
+    nix show-config 2>/dev/null \
+        | sed -n 's/^experimental-features[[:space:]]*=[[:space:]]*//p' \
+        | tail -n1
+}
+
+has_required() {
+    local features=" $1 " feature
+    for feature in "${REQUIRED[@]}"; do
+        case "$features" in
+            *" $feature "*) ;;
+            *) return 1 ;;
+        esac
+    done
+    return 0
+}
+
+features="$(current_features || true)"
+if has_required "$features"; then
+    printf 'Nix already has %s enabled (experimental-features = %s).\n' \
+        "${REQUIRED[*]}" "$features"
+    exit 0
+fi
+
+# Merge with whatever is already configured so we don't drop other features.
+configured=""
+if [ -r "$CONFIG" ]; then
+    configured="$(sed -n 's/^[[:space:]]*experimental-features[[:space:]]*=[[:space:]]*//p' "$CONFIG" | tail -n1)"
+fi
+
+merged="$(printf '%s\n%s\n' "$configured" "${REQUIRED[*]}" \
+    | tr ' ' '\n' \
+    | sed '/^$/d' \
+    | sort -u \
+    | paste -sd' ' -)"
+
+tmp="$(mktemp)"
+trap 'rm -f "$tmp"' EXIT
+if [ -r "$CONFIG" ]; then
+    grep -v -E '^[[:space:]]*experimental-features[[:space:]]*=' "$CONFIG" > "$tmp" || true
+fi
+printf 'experimental-features = %s\n' "$merged" >> "$tmp"
+
+as_root() {
+    if [ -w "$CONFIG" ] || { [ ! -e "$CONFIG" ] && [ -w "$(dirname "$CONFIG")" ]; }; then
+        "$@"
+    else
+        sudo "$@"
+    fi
+}
+
+echo "Enabling: experimental-features = $merged"
+as_root mkdir -p "$(dirname "$CONFIG")"
+as_root tee "$CONFIG" >/dev/null < "$tmp"
+
+# Multi-user installs: the daemon reads nix.conf at start-up.
+restart_daemon() {
+    if [ "$(uname -s)" = "Darwin" ]; then
+        local label
+        for label in systems.determinate.nix-daemon org.nixos.nix-daemon; do
+            if sudo launchctl print "system/$label" >/dev/null 2>&1; then
+                sudo launchctl kickstart -k "system/$label" >/dev/null
+                echo "Restarted $label."
+                return 0
+            fi
+        done
+        echo "No nix-daemon launchd job found; a reboot will apply the change."
+    elif command -v systemctl >/dev/null 2>&1 \
+        && systemctl list-unit-files nix-daemon.service >/dev/null 2>&1; then
+        sudo systemctl restart nix-daemon.service
+        echo "Restarted nix-daemon."
+    else
+        echo "No nix-daemon service found; the change applies to new nix invocations."
+    fi
+}
+restart_daemon
+
+features="$(current_features || true)"
+if has_required "$features"; then
+    printf 'OK: experimental-features = %s\n' "$features"
+else
+    cat >&2 <<'EOF'
+Warning: Nix still does not report the features. Open a new terminal; if it
+persists, check for a NIX_CONFIG override or a per-user ~/.config/nix/nix.conf
+that sets experimental-features.
+EOF
+    exit 1
+fi
