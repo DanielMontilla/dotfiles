@@ -121,19 +121,25 @@ vim.opt.undofile = true
 -- Mouse in all modes
 vim.opt.mouse = "a"
 
--- Use system clipboard (OSC 52 for SSH — copies through terminal to local clipboard)
+-- Use system clipboard. Locally, let Neovim auto-detect the native provider
+-- (wl-copy on Wayland, pbcopy on macOS, win32yank on Windows). Only force
+-- OSC 52 over SSH, where there is no local clipboard to talk to. Forcing it
+-- locally breaks paste: terminals like Ghostty default to clipboard-read =
+-- "ask", so Neovim sits at "Waiting for OSC 52 response from the terminal".
 vim.opt.clipboard = "unnamedplus"
-vim.g.clipboard = {
-  name = "OSC 52",
-  copy = {
-    ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
-    ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
-  },
-  paste = {
-    ["+"] = require("vim.ui.clipboard.osc52").paste("+"),
-    ["*"] = require("vim.ui.clipboard.osc52").paste("*"),
-  },
-}
+if vim.env.SSH_CONNECTION or vim.env.SSH_TTY then
+  vim.g.clipboard = {
+    name = "OSC 52",
+    copy = {
+      ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
+      ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
+    },
+    paste = {
+      ["+"] = require("vim.ui.clipboard.osc52").paste("+"),
+      ["*"] = require("vim.ui.clipboard.osc52").paste("*"),
+    },
+  }
+end
 
 -- Popup completion menu behavior
 vim.opt.completeopt = { "menu", "menuone", "noselect" }
