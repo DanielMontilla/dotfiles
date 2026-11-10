@@ -14,9 +14,10 @@ avoids touching the system on a work machine.
 ```
 profiles/pikpik/
 ├── .nix-profile          # mode marker (read by scripts/install)
-├── nixos/flake.nix       # aarch64-darwin buildEnv + devShell
-├── dotbot.yaml           # links ssh config, fish, nvim, starship
-├── vendor-apps.sh        # optional idempotent curl installers
+├── nixos/flake.nix       # darwin (arm64 + x86_64) buildEnv + devShell
+├── nixos/flake.lock      # pinned nixpkgs inputs (update: ./scripts/update pikpik)
+├── dotbot.yaml           # links ssh config.d, fish, nvim, starship
+├── vendor-apps.sh        # curl installers, ~/Applications links, shadow warnings
 ├── ssh/config            # client config: pikpik -> olimar/louie
 ├── ssh/authorized_keys   # source of truth: olimar/louie -> pikpik
 └── README.md
@@ -33,8 +34,10 @@ curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix 
 
 It needs admin rights. Verify with `nix --version`.
 
-If the Mac is Intel, change `system = "aarch64-darwin";` to
-`"x86_64-darwin"` in `nixos/flake.nix` (check with `uname -m`).
+The flake exposes both Apple Silicon (`aarch64-darwin`) and Intel
+(`x86_64-darwin`), so there is nothing to edit — `nix profile add` picks the
+right one. (Heads-up: nixpkgs 26.05 is the last release with Intel macOS
+support.)
 
 ## 2. Install packages and link configs
 
@@ -52,6 +55,37 @@ Herdr (see 2b–2d); `link` only links config files.
 > not the profile. `scripts/install` already accounts for this; don't run
 > `nix profile upgrade pikpik` manually.
 
+To pull new nixpkgs inputs and vendor-app versions later:
+
+```bash
+./scripts/update pikpik
+```
+
+That runs `nix flake update` in `profiles/pikpik/nixos` and then upgrades the
+profile. `nix profile upgrade` on its own re-evaluates the flake with the
+**existing** `flake.lock`, so it never picks up nixpkgs fixes by itself.
+
+## 2a. Make fish your login shell
+
+macOS defaults to zsh, so the linked fish config does nothing until fish is your
+login shell. Add the Nix fish to the allowed shells and switch (needs your
+admin password):
+
+```bash
+echo "$HOME/.nix-profile/bin/fish" | sudo tee -a /etc/shells
+chsh -s "$HOME/.nix-profile/bin/fish"
+```
+
+Open a new terminal, then check `echo $SHELL` and `starship --version`.
+
+If you would rather keep zsh as the login shell, point Ghostty at fish instead —
+add this to `~/Library/Application Support/com.mitchellh.ghostty/config`
+(replace `<you>` with your user name; Ghostty does not expand `~` here):
+
+```
+command = /Users/<you>/.nix-profile/bin/fish
+```
+
 ## 2b. Zed (prebuilt app, not a source build)
 
 `nixpkgs` does have `zed-editor`, but on Darwin it is a **from-source Rust
@@ -60,16 +94,14 @@ can compile Zed and WebRTC for a very long time. This flake instead packages the
 official **prebuilt** `.dmg` (the same artifact the curl installer downloads),
 pinned by version and SHA-256 in `nixos/flake.nix` (`zedVersion`).
 
-After the profile is installed, expose the app to Finder/Launchpad:
+`scripts/install` links the app into `~/Applications` automatically
+(`vendor-apps.sh` does it; `~/.nix-profile` is stable across upgrades, so the
+link survives). Finder and Launchpad pick it up from there. The CLI is on PATH
+as both `zed` and `zeditor` (the latter keeps the shared fish `zed` function
+working).
 
-```bash
-mkdir -p ~/Applications
-ln -sfn ~/.nix-profile/Applications/Zed.app ~/Applications/Zed.app
-```
-
-`~/.nix-profile` is stable across profile upgrades, so the symlink survives.
-The CLI is on PATH as both `zed` and `zeditor` (the latter keeps the shared
-fish `zed` function working).
+Zed's `.dmg` is APFS, and nixpkgs' `undmg` only reads HFS — that is why the
+flake unpacks it with 7-Zip (`pkgs._7zz`).
 
 Notes:
 
@@ -92,14 +124,8 @@ on Apple Silicon and Intel), pinned by version and SHA-256 in
 The `.zip` is used rather than the `.dmg` because Ghostty's DMG is APFS and
 nixpkgs' `undmg` only reads HFS.
 
-Expose the app to Finder/Launchpad:
-
-```bash
-mkdir -p ~/Applications
-ln -sfn ~/.nix-profile/Applications/Ghostty.app ~/Applications/Ghostty.app
-```
-
-The CLI is on PATH as `ghostty`.
+`scripts/install` links the app into `~/Applications` automatically, so there
+is no manual `ln -sfn` step. The CLI is on PATH as `ghostty`.
 
 If you previously installed Ghostty from its DMG, remove
 `/Applications/Ghostty.app` first so Launchpad does not show two copies.
@@ -139,7 +165,7 @@ Nix one wins (keep the data dirs):
 
 ```bash
 rm -f ~/.local/bin/claude ~/.local/bin/codex ~/.local/bin/zed ~/.local/bin/herdr
-which -a claude codex zed herdr    # Nix entries under ~/.nix-profile/bin should win
+type -a claude codex zed herdr    # Nix entries under ~/.nix-profile/bin should win
 ```
 
 **Herdr config is not linked:** `profiles/shared/herdr/` includes Linux/Windows
@@ -159,9 +185,10 @@ vendor_app "mytool" \
 
 `scripts/install pikpik` runs that file after the Nix step. The `check` runs
 first, so an already-installed app is skipped and re-running install is
-idempotent. These installs are outside Nix's reproducibility/uninstall
-guarantees — prefer packaging the release (as done for Zed, Ghostty, and Codex)
-when it matters.
+idempotent. It also links Zed and Ghostty into `~/Applications`, and warns when
+a curl-installed binary in `~/.local/bin` would shadow a Nix one. These installs
+are outside Nix's reproducibility/uninstall guarantees — prefer packaging the
+release (as done for Zed, Ghostty, and Codex) when it matters.
 
 ## 3. Install Tailscale
 
@@ -170,6 +197,12 @@ Extension and integrates with macOS networking.
 
 ```bash
 brew install --cask tailscale      # or install "Tailscale" from the App Store
+```
+
+`brew` is not preinstalled on macOS. If it is missing, install Homebrew first:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
 1. Open the app and sign in to the **same tailnet** as olimar/louie
@@ -220,15 +253,27 @@ sudo nixos-rebuild switch --flake ".#olimar"
 sudo nixos-rebuild switch --flake ".#louie"
 ```
 
-Then, on pikpik:
+Then, on pikpik, `scripts/link` puts the client config at
+`~/.ssh/config.d/pikpik.conf` instead of overwriting `~/.ssh/config` (a work Mac
+may already have a corporate config). Add one include line, at the **top** of
+`~/.ssh/config` — the first value wins, so it must come before any `Host *`
+block:
+
+```bash
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
+touch ~/.ssh/config
+{ echo 'Include config.d/*'; cat ~/.ssh/config; } > ~/.ssh/config.new
+mv ~/.ssh/config.new ~/.ssh/config
+chmod 600 ~/.ssh/config
+```
+
+Both servers are key-only on port **2222**, and the firewall already allows it.
+Now try:
 
 ```bash
 ssh olimar
 ssh louie
 ```
-
-Both servers are key-only on port **2222**, and the firewall already allows it.
-The client config for those hosts is linked from `ssh/config`.
 
 ## 6. olimar / louie → pikpik
 
@@ -294,6 +339,8 @@ ssh -v olimar
 | `Connection refused` on port 2222 | The NixOS host lacks `./ssh.nix` in `configuration.nix`, or the firewall/rebuild didn't apply. |
 | Linux → pikpik times out | Remote Login is off, or the macOS firewall is blocking `sshd`. |
 | `Bad configuration option: UseKeychain` | You're running nixpkgs `openssh`, which shadows `/usr/bin/ssh`; remove it from the PATH/profile. |
+| `ssh olimar` says `Could not resolve hostname` / ignores the config | The `Include config.d/*` line is missing from the top of `~/.ssh/config` (see §5). |
+| fish aliases/prompt/`zed` function missing | fish is not the login shell — see §2a. |
 | Key passphrase asked every time | `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`, and keep `UseKeychain yes`. |
 | Works on LAN but not away | `tailscale status` / `tailscale netcheck`; check tailnet ACLs (default allows all). |
 
@@ -304,6 +351,13 @@ ssh -v olimar
   `nixos/hosts/louie/packages.nix`.
 - **No git config linked:** the shared `~/.gitconfig` uses a personal identity.
   Create `profiles/pikpik/gitconfig` with your work name/email and link it.
+- **fish universal variables are not linked:** `fish_variables` is per-machine
+  state that fish rewrites, so it is gitignored instead of tracked. Only
+  `config.fish` is linked.
+- **`git` and `curl` come from Nix**, so they shadow `/usr/bin/git` and
+  `/usr/bin/curl`. Nix's git ships the Keychain credential helper, so HTTPS auth
+  works; if corporate tooling insists on the Xcode shim, drop `git`/`curl` from
+  `cliPackages`.
 - **No Zed config linked:** `profiles/shared/zed/` hardcodes a NixOS fish path;
   a macOS Zed config needs its own copy.
 - **Backups:** exclude `/nix` from Time Machine — it is reproducible and large.

@@ -41,15 +41,40 @@ vendor_app() {
 }
 
 # Add profile-specific curl installers below. Currently every app pikpik needs
-# (zed, codex, claude) is packaged in nixos/flake.nix, so there is nothing to
-# do here. Uncomment and adapt when you add something nixpkgs does not have.
+# (zed, ghostty, codex, claude, herdr) is packaged in nixos/flake.nix, so there
+# is nothing to do here. Uncomment and adapt when you add something nixpkgs
+# does not have.
 
 # vendor_app "mytool" \
 #     "[ -x \"$HOME/.local/bin/mytool\" ] || command -v mytool" \
 #     sh -c 'curl -fsSL https://example.com/install.sh | sh'
 
+# Expose the Nix-packaged GUI apps to Finder/Launchpad. ~/.nix-profile is
+# stable across upgrades, so these links survive `nix profile upgrade`.
+if [ -d "$HOME/.nix-profile/Applications" ]; then
+    mkdir -p "$HOME/Applications"
+    for app in Zed Ghostty; do
+        src="$HOME/.nix-profile/Applications/$app.app"
+        dst="$HOME/Applications/$app.app"
+        [ -d "$src" ] || continue
+
+        # Never replace a real app bundle the user installed themselves.
+        if [ -e "$dst" ] && [ ! -L "$dst" ]; then
+            printf '  %-14s exists at %s (not a symlink) — leaving it alone\n' \
+                "$app" "$dst" >&2
+            continue
+        fi
+
+        if ln -sfn "$src" "$dst"; then
+            printf '  %-14s linked into ~/Applications\n' "$app"
+        else
+            printf '  warning: could not link %s into ~/Applications\n' "$app" >&2
+        fi
+    done
+fi
+
 # A previous curl install in ~/.local/bin can shadow the Nix-managed binary.
-for app in zed codex claude; do
+for app in zed codex claude ghostty herdr; do
     if [ -x "$HOME/.local/bin/$app" ]; then
         printf '  warning: %s exists and may shadow ~/.nix-profile/bin/%s\n' \
             "$HOME/.local/bin/$app" "$app" >&2
