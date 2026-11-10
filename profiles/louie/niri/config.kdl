@@ -6,7 +6,6 @@ include "input.kdl"
 include "layout.kdl"
 include "keybinds.kdl"
 include "output.kdl"
-include "screencast.kdl"
 
 input {
     keyboard {
