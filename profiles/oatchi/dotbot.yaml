@@ -22,8 +22,8 @@
       path: profiles/oatchi/bashrc
       force: true
 
-    ~/.config/fish/:
-      path: profiles/shared/fish/*
+    # Only config.fish: fish_variables is generated per-machine state.
+    ~/.config/fish/config.fish: profiles/shared/fish/config.fish
 
     ~/.config/nvim/:
       path: profiles/shared/neovim/*

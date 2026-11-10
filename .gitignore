@@ -586,3 +586,6 @@ FodyWeavers.xsd
 
 # Nix build artifacts
 result
+
+# Generated fish universal variables (per-machine state; fish rewrites it)
+fish_variables
