@@ -55,6 +55,11 @@
 
   services.upower.enable = true;
 
+  # RGB lighting: the bar's "Display off" action uses this to turn off the
+  # G703's LEDs when the monitors are blanked. Runs the OpenRGB root daemon
+  # (which owns the hidraw devices) and installs its udev rules.
+  services.hardware.openrgb.enable = true;
+
   # DDC/CI monitor brightness/contrast control (external/desktop displays)
   boot.kernelModules = [ "i2c_dev" ];
   services.udev.extraRules = ''
@@ -97,6 +102,8 @@
     brightnessctl
     ddcutil
     playerctl
+    mpv
+    scrcpy
     fish
     starship
     quickshell

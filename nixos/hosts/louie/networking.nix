@@ -105,6 +105,8 @@ in
       '') vpnNames}    '';
   };
 
+  networking.firewall.interfaces.enp6s0.allowedTCPPorts = [ 8081 ];
+
   networking.firewall.allowedUDPPorts =
     lib.filter (p: p != null) (lib.mapAttrsToList (_: v: v.listenPort or null) vpns);
   networking.firewall.trustedInterfaces = vpnNames;

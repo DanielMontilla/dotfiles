@@ -145,6 +145,7 @@ Item {
         Repeater {
           model: [
             { icon: "../assets/lock.svg",       label: "Lock",     cmd: ["sh", "-c", "loginctl lock-session"] },
+            { icon: "../assets/monitor-off.svg", label: "Display off", cmd: ["sh", "-c", "openrgb --device 'G703 LIGHTSPEED Wireless Gaming Mouse w/ HERO' --mode off; niri msg action power-off-monitors"] },
             { icon: "../assets/logout.svg",      label: "Logout",   cmd: ["sh", "-c", "loginctl terminate-session $XDG_SESSION_ID"] },
             { icon: "../assets/suspend.svg",     label: "Suspend",  cmd: ["sh", "-c", "systemctl suspend"] },
             { icon: "../assets/restart.svg",     label: "Reboot",   cmd: ["sh", "-c", "systemctl reboot"] },
