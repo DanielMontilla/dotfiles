@@ -34,7 +34,7 @@ On **Linux/WSL** (bash):
 ```bash
 ./scripts/install <name>   # install packages / check prerequisites
 ./scripts/link <name>      # link config files with dotbot
-./scripts/update <host>    # nix flake update + rebuild (NixOS hosts only)
+./scripts/update <name>    # refresh flake inputs, then rebuild (nixos) or upgrade (nix-profile)
 ```
 
 On **Windows** (PowerShell, no bash needed):

@@ -2,17 +2,39 @@
 
 set -e
 
-# Check if host argument is provided
+# Check if host/profile argument is provided
 if [ $# -eq 0 ]; then
-    echo "Error: Host argument is required."
-    echo "Usage: $0 <host>"
-    echo "Example: $0 framework"
+    echo "Error: Host or profile argument is required."
+    echo "Usage: $0 <host-or-profile>"
+    echo "Example: $0 louie    # NixOS host: flake update + rebuild"
+    echo "Example: $0 pikpik   # nix-profile: flake update + profile upgrade"
     exit 1
 fi
 
-host="$1"
+name="$1"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROFILE_DIR="${REPO_ROOT}/profiles/${name}"
+
+# nix-profile profiles (macOS/WSL) have their own flake. Refresh its inputs,
+# then let scripts/install upgrade the profile with the new lock. `nix profile
+# upgrade` on its own reuses the existing lock, so nixpkgs fixes would never
+# arrive without this.
+if [ -f "${PROFILE_DIR}/.nix-profile" ]; then
+    if [ ! -f "${PROFILE_DIR}/nixos/flake.nix" ]; then
+        echo "Error: Nix profile flake '${PROFILE_DIR}/nixos/flake.nix' does not exist."
+        exit 1
+    fi
+
+    echo "Using profile: $name (mode: nix-profile)"
+    echo "Updating flake inputs..."
+
+    ( cd "${PROFILE_DIR}/nixos" && nix flake update )
+
+    echo "Upgrading Nix profile..."
+
+    exec "${REPO_ROOT}/scripts/install" "$name" "${@:2}"
+fi
 
 NIXOS_DIR="${REPO_ROOT}/nixos"
 
@@ -23,13 +45,13 @@ if [ ! -d "$NIXOS_DIR" ]; then
 fi
 
 # Check if host directory exists
-HOST_DIR="${NIXOS_DIR}/hosts/${host}"
+HOST_DIR="${NIXOS_DIR}/hosts/${name}"
 if [ ! -d "$HOST_DIR" ]; then
     echo "Error: Host directory '$HOST_DIR' does not exist."
     exit 1
 fi
 
-echo "Using host: $host"
+echo "Using host: $name"
 echo "Updating flake inputs..."
 
 cd "${NIXOS_DIR}"
@@ -38,5 +60,4 @@ nix flake update
 
 echo "Rebuilding NixOS configuration..."
 
-sudo nixos-rebuild switch --flake ".#${host}" "${@:2}"
-
+sudo nixos-rebuild switch --flake ".#${name}" "${@:2}"
