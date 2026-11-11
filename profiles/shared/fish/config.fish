@@ -6,14 +6,19 @@ if type -q zeditor
     end
 end
 
-# Tailscale on macOS keeps its CLI inside the app bundle. The pkg also links
-# /usr/local/bin/tailscale, but fish never reads /etc/paths, so that path is
-# often not on PATH. Point at the bundle directly; guarded so Linux profiles
-# are unaffected. (The GUI is still what owns the tunnel/Network Extension —
-# this only makes `tailscale status`/`up`/`ping` work from a terminal.)
-if test -x /Applications/Tailscale.app/Contents/MacOS/Tailscale
+# Tailscale on macOS keeps its CLI inside the app bundle, and that same binary
+# decides at startup whether to be the GUI app or the CLI based on environment
+# variables (SHLVL, TERM, TERM_PROGRAM, PS1). Under fish it can pick the GUI and
+# then the terminal just waits on a windowed process. TAILSCALE_BE_CLI=1 forces
+# CLI mode. Prefer the official launcher (/usr/local/bin/tailscale, installed by
+# the app's Settings -> CLI integration) when it exists; it sets this itself.
+if test -x /usr/local/bin/tailscale
+    function tailscale --description 'Tailscale CLI (official launcher)'
+        /usr/local/bin/tailscale $argv
+    end
+else if test -x /Applications/Tailscale.app/Contents/MacOS/Tailscale
     function tailscale --description 'Tailscale CLI (macOS app bundle)'
-        /Applications/Tailscale.app/Contents/MacOS/Tailscale $argv
+        env TAILSCALE_BE_CLI=1 /Applications/Tailscale.app/Contents/MacOS/Tailscale $argv
     end
 end
 

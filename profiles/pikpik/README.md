@@ -225,13 +225,20 @@ tailscale status
 tailscale ping olimar
 ```
 
-The CLI lives inside the app bundle (`/Applications/Tailscale.app/Contents/MacOS/Tailscale`).
-The pkg also drops `/usr/local/bin/tailscale`, but fish does not read
-`/etc/paths`, so that directory is often missing from `PATH`. The shared fish
-config therefore defines a `tailscale` function pointing at the bundle, which
-is why plain `tailscale status` works. You never have to open the GUI after
-the one-time login — but the app must stay installed and running as a login
-item, because it owns the tunnel and the Network Extension.
+The CLI lives inside the app bundle (`/Applications/Tailscale.app/Contents/MacOS/Tailscale`),
+but that binary is also the GUI app: it picks a mode at startup from environment
+variables (`SHLVL`, `TERM`, `TERM_PROGRAM`, `PS1`). Under fish it can choose the
+windowed app, which leaves the terminal waiting on a process that never exits.
+
+The shared fish config therefore defines a `tailscale` function:
+
+- if the official launcher `/usr/local/bin/tailscale` exists (installed from the
+  app's **Settings → CLI integration → Install Now**), it uses that;
+- otherwise it calls the bundle with `TAILSCALE_BE_CLI=1`, which forces CLI mode.
+
+You never have to open the GUI after the one-time login — but the app must stay
+installed and running as a login item, because it owns the tunnel and the
+Network Extension.
 
 > **CLI-only alternative:** `brew install tailscale` installs `tailscaled` and
 > a real CLI, and `sudo brew services start tailscale` runs it. It conflicts
@@ -417,7 +424,8 @@ sudo darwin-rebuild --rollback
 | `ssh olimar` ignores the config | The `Include config.d/*` line is missing from the top of `~/.ssh/config` (see §9). Run `./scripts/ssh-setup pikpik`; it prepends the include and warns if the drop-in still isn't applied. |
 | `Bad configuration option: UseKeychain` | You're running nixpkgs `openssh`, which shadows `/usr/bin/ssh`; it is deliberately not installed. |
 | Key passphrase asked every time | `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`, and keep `UseKeychain yes`. |
-| `fish: Unknown command: tailscale` | The shared fish config only defines the `tailscale` function when `/Applications/Tailscale.app` exists. Install the cask (`tailscale-app`), then `exec fish`. |
+| `fish: Unknown command: tailscale` | The shared fish config only defines the `tailscale` function when the app exists. Install the cask (`tailscale-app`), then `exec fish`. |
+| Terminal hangs after `tailscale ...` | The app binary launched the GUI instead of the CLI. The fish function sets `TAILSCALE_BE_CLI=1`; pull latest. Run it by hand as `env TAILSCALE_BE_CLI=1 /Applications/Tailscale.app/Contents/MacOS/Tailscale status`. |
 | New terminal still starts zsh | `~/.zshrc` is not linked (dotbot will not replace a regular file). `ls -l ~/.zshrc`, move an existing file aside, then `./scripts/link pikpik` — see §4. |
 | fish aliases/prompt missing | fish is not the login shell — see §4. |
 | Ghostty hotkey does nothing | Grant Ghostty Accessibility permission; re-toggle it after an app update. |
