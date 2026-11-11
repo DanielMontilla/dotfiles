@@ -16,6 +16,10 @@
     # so linking it would dirty the repo and carry Linux paths onto macOS.
     ~/.config/fish/config.fish: profiles/shared/fish/config.fish
 
+    # macOS's login shell stays zsh (nix-darwin cannot change an account it
+    # did not create), so this file hands interactive zsh to fish.
+    ~/.zshrc: profiles/pikpik/zshrc
+
     ~/.config/nvim/:
       path: profiles/shared/neovim/*
 

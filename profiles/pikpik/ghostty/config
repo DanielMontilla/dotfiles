@@ -19,9 +19,10 @@ keybind = global:ctrl+backquote=toggle_quick_terminal
 quick-terminal-position = top
 quick-terminal-animation-duration = 0.15
 
-# No `command = fish`: Ghostty falls back to the login shell, which is the Nix
-# fish after the `chsh` step in README §4. If you kept zsh as the login shell,
-# add the absolute path instead (Ghostty does not expand ~ here):
+# No `command = fish`: Ghostty falls back to the login shell. On macOS that is
+# zsh, and profiles/pikpik/zshrc execs fish, so this is already fish. If you
+# ever bypass the zshrc handoff, point Ghostty at the shell directly (Ghostty
+# does not expand ~ here):
 #   command = /run/current-system/sw/bin/fish
 
 font-size = 14

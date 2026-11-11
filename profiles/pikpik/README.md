@@ -109,41 +109,49 @@ mv ~/Library/Application\ Support/com.mitchellh.ghostty/config{,.bak}
 
 ## 4. Make fish your login shell
 
-macOS defaults to zsh, and **nix-darwin cannot change the shell of an account it
-did not create** (`users.knownUsers` is for accounts nix-darwin owns, not your
-admin user) — so this is the one imperative step. Run it *after* the first
-rebuild: `environment.shells` puts fish in `/etc/shells`, and `chsh` only accepts
-shells listed there.
+macOS keeps `/bin/zsh` as the login shell, and **nix-darwin cannot change the
+shell of an account it did not create** — `users.knownUsers` is only for
+accounts nix-darwin owns, and its own docs say not to put the admin user there.
+So rather than mutating the account record, this profile hands interactive zsh
+to fish with a linked config file:
 
-```bash
-./scripts/login-shell
+`profiles/pikpik/zshrc` → `~/.zshrc`:
+
+```zsh
+if [[ -o interactive ]] && [[ -z $FISH_VERSION ]] && [[ -x /run/current-system/sw/bin/fish ]]; then
+    exec /run/current-system/sw/bin/fish
+fi
 ```
 
-It checks that fish exists and is listed in `/etc/shells`, runs `chsh` only if
-the login shell is not fish yet, then re-reads the account record to verify the
-change actually stuck. Idempotent — re-running it is a no-op.
+Ghostty, Terminal, VS Code, and an interactive `ssh` into this Mac all start an
+interactive zsh, so all of them land in fish. Non-interactive shells
+(`zsh -c ...`, scripts) are deliberately left alone. `scripts/link pikpik`
+installs it like any other config; no extra step.
 
-The shell it sets is `/run/current-system/sw/bin/fish`, not the `/nix/store`
-path: it is stable across `darwin-rebuild` generations, so upgrades never break
-your login.
+The shared fish config also exports `SHELL` on Darwin so tools that spawn
+`"$SHELL"` (the `nd` alias, for example) get fish rather than the zsh the
+account record still says.
 
-Open a new terminal afterwards (or log out and back in). Then:
+Check in a **new** terminal:
 
 ```bash
-echo $SHELL        # /run/current-system/sw/bin/fish
+echo $SHELL        # /run/current-system/sw/bin/fish (set by fish itself)
+echo $FISH_VERSION # non-empty: you are in fish
 starship --version # from nixos/packages.nix
 ```
 
 fish reads the linked `~/.config/fish/config.fish`, which starts starship with
 the linked `~/.config/starship.toml` — same setup as the Linux profiles.
 
-> **If the shell reverts** (work Macs with MDM can pin it), the script says so
-> and exits non-zero. Fallback: point Ghostty at fish directly by adding this to
-> `profiles/pikpik/ghostty/config`:
+> **Why not `chsh`?** It changes the account record, which is OS state like the
+> password, not dotfiles state — and on a work Mac an MDM profile can pin it
+> anyway. If you want `$SHELL` to be truthful before fish starts (e.g. for
+> non-interactive `ssh host command`), run `chsh -s /run/current-system/sw/bin/fish`
+> once; it is optional and the zshrc handoff keeps working either way.
 >
-> ```
-> command = /run/current-system/sw/bin/fish
-> ```
+> **If `~/.zshrc` already exists** (corporate setup), dotbot will refuse to
+> replace a regular file — see §3. Move it aside first; nothing is overwritten
+> silently.
 
 ## 5. Apps (Homebrew casks)
 
@@ -410,6 +418,7 @@ sudo darwin-rebuild --rollback
 | `Bad configuration option: UseKeychain` | You're running nixpkgs `openssh`, which shadows `/usr/bin/ssh`; it is deliberately not installed. |
 | Key passphrase asked every time | `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`, and keep `UseKeychain yes`. |
 | `fish: Unknown command: tailscale` | The shared fish config only defines the `tailscale` function when `/Applications/Tailscale.app` exists. Install the cask (`tailscale-app`), then `exec fish`. |
+| New terminal still starts zsh | `~/.zshrc` is not linked (dotbot will not replace a regular file). `ls -l ~/.zshrc`, move an existing file aside, then `./scripts/link pikpik` — see §4. |
 | fish aliases/prompt missing | fish is not the login shell — see §4. |
 | Ghostty hotkey does nothing | Grant Ghostty Accessibility permission; re-toggle it after an app update. |
 | `darwin-rebuild: command not found` | The first bootstrap didn't finish — re-run `./scripts/install pikpik`. |
