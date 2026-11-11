@@ -21,7 +21,6 @@ profiles/pikpik/
 ├── ghostty/config         # macOS Ghostty config (incl. the drop-down hotkey)
 ├── vendor-apps.sh         # only warns about shadowing ~/.local/bin leftovers
 ├── ssh/config             # client config: pikpik -> olimar/louie
-├── ssh/authorized_keys    # source of truth: olimar/louie -> pikpik
 └── README.md
 ```
 
@@ -265,13 +264,20 @@ ssh louie
 ## 10. olimar / louie → pikpik
 
 `services.openssh.enable = true` in `configuration.nix` turns on Remote Login,
-so there is no `systemsetup` step. It is **key-only**, so authorize the Linux
-hosts' existing keys first:
+so there is no `systemsetup` step. It is **key-only**, and the allowed keys are
+declared in the same file:
 
-```bash
-cat ~/dotfiles/profiles/pikpik/ssh/authorized_keys >> ~/.ssh/authorized_keys
-chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys
+```nix
+users.users.danielmontilla.openssh.authorizedKeys.keys = [
+  "ssh-ed25519 AAAA... daniel@olimar"
+  "ssh-ed25519 AAAA... daniel@louie"
+];
 ```
+
+nix-darwin writes them to `/etc/ssh/nix_authorized_keys.d/<user>` and reads that
+through sshd's `AuthorizedKeysCommand` — *in addition to* the usual
+`~/.ssh/authorized_keys`, which is left alone. So there is nothing to append by
+hand, and an existing file on a work Mac keeps working.
 
 Those are the same `daniel@olimar` / `daniel@louie` keys already used on the
 mesh. From either Linux box:
@@ -366,7 +372,7 @@ sudo darwin-rebuild --rollback
 | `experimental Nix feature 'nix-command' is disabled` | Only on a fresh Mac: `./scripts/enable-nix-features`. After the first `darwin-rebuild` this comes from `nix.settings`. |
 | `Could not resolve hostname ...ts.net` | Tailscale not connected, or MagicDNS off. Check `Tailscale status`; use the `100.x` IP temporarily. |
 | `Permission denied (publickey)` (pikpik → Linux) | pikpik's pubkey isn't in that host's `ssh.nix`, or the host wasn't rebuilt. |
-| `Permission denied (publickey)` (Linux → pikpik) | `~/.ssh/authorized_keys` on pikpik is empty — see §10. Password auth is disabled. |
+| `Permission denied (publickey)` (Linux → pikpik) | The host's key is missing from `users.users.<user>.openssh.authorizedKeys.keys` in `configuration.nix`, or the Mac has not rebuilt since — see §10. Password auth is disabled. |
 | `Connection refused` on port 2222 | The NixOS host lacks `./ssh.nix` in `configuration.nix`, or the firewall/rebuild didn't apply. |
 | `ssh olimar` ignores the config | The `Include config.d/*` line is missing from the top of `~/.ssh/config` (see §9). |
 | `Bad configuration option: UseKeychain` | You're running nixpkgs `openssh`, which shadows `/usr/bin/ssh`; it is deliberately not installed. |

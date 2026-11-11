@@ -49,8 +49,8 @@ in
   nix.optimise.automatic = true;
 
   # -------------------------------------------------------------------- ssh
-  # Replaces `sudo systemsetup -setremotelogin on`. Key-only: add the Linux
-  # hosts' keys to ~/.ssh/authorized_keys first (README §10).
+  # Replaces `sudo systemsetup -setremotelogin on`. Key-only, and the allowed
+  # keys are declared below rather than appended to ~/.ssh/authorized_keys.
   services.openssh = {
     enable = true;
     extraConfig = ''
@@ -58,6 +58,16 @@ in
       KbdInteractiveAuthentication no
     '';
   };
+
+  # Keys allowed to log in as this account (README §10). nix-darwin writes them
+  # to /etc/ssh/nix_authorized_keys.d/<user> and reads that through
+  # `AuthorizedKeysCommand`, in addition to the usual ~/.ssh/authorized_keys —
+  # so a pre-existing file on a work Mac keeps working, and nothing is appended
+  # by hand. These are the same keys olimar/louie use on the mesh.
+  users.users.${user}.openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIZ+ZZJOYG8B7Rn5ZQdBAXsBgBQygJ7Vk6zlTfogMwyJ daniel@olimar"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN/nUf7c2Sekdov5CZspz7GslJacskM2MA8mrnwKdbhO daniel@louie"
+  ];
 
   # --------------------------------------------------------------- homebrew
   homebrew = {
