@@ -105,6 +105,25 @@ if [ "$MODE" = "nix-darwin" ]; then
     fi
 
     FLAKE_REF="path:${DARWIN_FLAKE}#${profile}"
+    CONFIG_REF="path:${DARWIN_FLAKE}#darwinConfigurations.${profile}.config"
+
+    # nix-darwin only *drives* an existing Homebrew: the module writes a
+    # Brewfile and runs `brew bundle`. Its activation check aborts when
+    # <prefix>/bin/brew is missing, but only after the whole system has been
+    # built — so ask the configuration whether it wants Homebrew and fail here
+    # instead. Empty output means the eval failed; let the build report that.
+    HOMEBREW_PREFIX="$(nix eval --raw "$CONFIG_REF" \
+        --apply 'c: if c.homebrew.enable then c.homebrew.prefix else ""' 2>/dev/null || true)"
+    if [ -n "$HOMEBREW_PREFIX" ] && [ ! -x "${HOMEBREW_PREFIX}/bin/brew" ]; then
+        echo "Error: this configuration enables the nix-darwin homebrew module,"
+        echo "but Homebrew is not installed at ${HOMEBREW_PREFIX}."
+        echo
+        echo "nix-darwin does not install Homebrew; it runs 'brew bundle' against"
+        echo "an existing one. Install it once, then re-run this script:"
+        echo
+        echo '  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+        exit 1
+    fi
 
     if command -v darwin-rebuild >/dev/null 2>&1; then
         echo "Rebuilding nix-darwin configuration..."

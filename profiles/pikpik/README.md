@@ -47,6 +47,29 @@ needed to bootstrap.
 
 ## 2. Install nix-darwin (first run)
 
+### First, install Homebrew (once)
+
+nix-darwin **does not install Homebrew**. Its `homebrew` module is a driver: it
+writes a Brewfile and runs `brew bundle` against an existing install. The module
+checks for `${homebrew.prefix}/bin/brew` during activation and aborts if it is
+missing, so install it *before* the first rebuild (the installer is interactive
+and wants your password):
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+On Apple Silicon that puts `brew` in `/opt/homebrew/bin`. `scripts/install`
+runs the same check before it builds, so a missing Homebrew costs you seconds,
+not a full rebuild.
+
+> If you would rather have Nix own Homebrew too, add the
+> [`nix-homebrew`](https://github.com/zhaofengli/nix-homebrew) flake input — it
+> installs and pins Homebrew declaratively. It is an extra input and a larger
+> surface, which is why this profile does not use it.
+
+### Then bootstrap nix-darwin
+
 ```bash
 git clone https://github.com/DanielMontilla/dotfiles.git ~/dotfiles
 cd ~/dotfiles
@@ -118,13 +141,7 @@ Declared in `nixos/configuration.nix`:
 | `ghostty` | Same: self-updating, and a stable `/Applications` path keeps permission grants alive. |
 | `tailscale` | Needs the Network Extension; only the app ships it. |
 
-Homebrew is not preinstalled:
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
-Then `sudo darwin-rebuild switch --flake ~/dotfiles/profiles/pikpik/nixos#pikpik`
+Homebrew is installed in §2; `darwin-rebuild switch` then runs `brew bundle` and
 installs the casks. Notes:
 
 - All three casks are `auto_updates: true`, so Homebrew deliberately skips them
@@ -360,6 +377,7 @@ sudo darwin-rebuild --rollback
 | `Some links were not successfully set up` | dotbot will not overwrite a regular file. Move it aside and re-run `./scripts/link pikpik` (see §3). |
 | `chsh: /run/current-system/sw/bin/fish: non-standard shell` | The first `darwin-rebuild` has not run yet, so fish is not in `/etc/shells`. |
 | `primary user ... does not exist, aborting activation` | `system.primaryUser` in `nixos/configuration.nix` must match `whoami` — nix-darwin checks it with `id` at activation. |
+| `Using the homebrew module requires homebrew installed` | Install Homebrew (§2) — nix-darwin only drives an existing `brew`. `scripts/install` checks this before building. |
 | `command not found` after emptying the old profile | Your login shell was `~/.nix-profile/bin/fish` — recover with `chsh -s /bin/zsh`, redo §4, then §12. |
 
 ## Notes
