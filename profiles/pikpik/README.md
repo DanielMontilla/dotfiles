@@ -199,7 +199,7 @@ alias tailscale='/Applications/Tailscale.app/Contents/MacOS/Tailscale'
 ## 8. Create the machine key (once)
 
 ```bash
-ssh-keygen -t ed25519 -C "daniel@pikpik"
+ssh-keygen -t ed25519 -C "danielmontilla@pikpik"
 ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 cat ~/.ssh/id_ed25519.pub
 ```
@@ -359,6 +359,7 @@ sudo darwin-rebuild --rollback
 | `darwin-rebuild: command not found` | The first bootstrap didn't finish — re-run `./scripts/install pikpik`. |
 | `Some links were not successfully set up` | dotbot will not overwrite a regular file. Move it aside and re-run `./scripts/link pikpik` (see §3). |
 | `chsh: /run/current-system/sw/bin/fish: non-standard shell` | The first `darwin-rebuild` has not run yet, so fish is not in `/etc/shells`. |
+| `primary user ... does not exist, aborting activation` | `system.primaryUser` in `nixos/configuration.nix` must match `whoami` — nix-darwin checks it with `id` at activation. |
 | `command not found` after emptying the old profile | Your login shell was `~/.nix-profile/bin/fish` — recover with `chsh -s /bin/zsh`, redo §4, then §12. |
 
 ## Notes

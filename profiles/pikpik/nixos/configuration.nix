@@ -1,9 +1,10 @@
 { config, lib, pkgs, unstable, ... }:
 
 let
-  # Change this if `whoami` on the Mac is not `daniel`. It is used for
-  # Homebrew's ownership and for per-user `defaults write`.
-  user = "daniel";
+  # `whoami` on the Mac. nix-darwin checks at activation that this account
+  # exists (`id -- "$primaryUser"`), and it is used for Homebrew's ownership
+  # and for per-user `defaults write`.
+  user = "danielmontilla";
 in
 {
   # Set once on a new machine; do not bump it later (see `darwin-rebuild changelog`).

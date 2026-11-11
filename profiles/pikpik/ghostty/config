@@ -22,7 +22,7 @@ quick-terminal-animation-duration = 0.15
 # No `command = fish`: Ghostty falls back to the login shell, which is the Nix
 # fish after the `chsh` step in README §4. If you kept zsh as the login shell,
 # add the absolute path instead (Ghostty does not expand ~ here):
-#   command = /Users/<you>/.nix-profile/bin/fish
+#   command = /run/current-system/sw/bin/fish
 
 font-size = 14
 window-padding-x = 4
