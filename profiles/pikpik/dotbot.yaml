@@ -21,6 +21,11 @@
 
     ~/.config/starship.toml: profiles/shared/starship/starship.toml
 
+    # Ghostty on macOS reads Application Support, not ~/.config/ghostty, so the
+    # shared Linux config (GTK-only options, Nerd Font pikpik does not install)
+    # is not used here.
+    "~/Library/Application Support/com.mitchellh.ghostty/config": profiles/pikpik/ghostty/config
+
 # Deliberately not linked on a work machine:
 #   ~/.gitconfig  — the shared one uses a personal identity. Create
 #                   profiles/pikpik/gitconfig with your work name/email and

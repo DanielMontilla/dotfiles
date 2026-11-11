@@ -1,0 +1,123 @@
+{ config, lib, pkgs, unstable, ... }:
+
+let
+  # Change this if `whoami` on the Mac is not `daniel`. It is used for
+  # Homebrew's ownership and for per-user `defaults write`.
+  user = "daniel";
+in
+{
+  # Set once on a new machine; do not bump it later (see `darwin-rebuild changelog`).
+  system.stateVersion = 7;
+
+  # Required by the Homebrew module and by user-scoped defaults.
+  system.primaryUser = user;
+
+  nixpkgs.hostPlatform = "aarch64-darwin";
+  nixpkgs.config.allowUnfreePredicate = pkg:
+    builtins.elem (lib.getName pkg) [ "claude-code" ];
+
+  # --------------------------------------------------------------- packages
+  # CLI tools only. GUI apps come from Homebrew casks (see `homebrew` below):
+  # a cask lands in /Applications with a stable Developer ID signature, so
+  # Accessibility/Network-Extension grants survive updates, and the app can
+  # update itself.
+  environment.systemPackages = import ./packages.nix { inherit pkgs unstable; };
+
+  programs.fish.enable = true;
+  environment.shells = [ pkgs.fish ];
+
+  # -------------------------------------------------------------------- nix
+  # nix-darwin owns /etc/nix/nix.conf now — this replaces
+  # `scripts/enable-nix-features` (which is only needed to bootstrap).
+  nix.settings = {
+    experimental-features = [ "nix-command" "flakes" ];
+    trusted-users = [ "@admin" ];
+    # Known to corrupt the store; `nix.optimise.automatic` below is the
+    # supported way to deduplicate.
+    auto-optimise-store = false;
+  };
+
+  nix.channel.enable = false;
+
+  nix.gc = {
+    automatic = true;
+    interval = { Weekday = 7; Hour = 3; Minute = 15; };
+    options = "--delete-older-than 14d";
+  };
+
+  nix.optimise.automatic = true;
+
+  # -------------------------------------------------------------------- ssh
+  # Replaces `sudo systemsetup -setremotelogin on`. Key-only: add the Linux
+  # hosts' keys to ~/.ssh/authorized_keys first (README §6).
+  services.openssh = {
+    enable = true;
+    extraConfig = ''
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+    '';
+  };
+
+  # --------------------------------------------------------------- homebrew
+  homebrew = {
+    enable = true;
+
+    # Zed, Ghostty, and Tailscale all self-update (`auto_updates: true` in
+    # their casks), so Homebrew skips them unless `greedy` is set. That is why
+    # `upgrade` stays off: `darwin-rebuild switch` remains idempotent, and the
+    # apps keep themselves current.
+    onActivation = {
+      autoUpdate = true;
+      upgrade = false;
+      # NOT "zap": the Zed cask would delete ~/.config/zed, and Ghostty's would
+      # delete ~/Library/Application Support/com.mitchellh.ghostty, which is
+      # where the linked config lives.
+      cleanup = "none";
+    };
+
+    casks = [ "ghostty" "zed" "tailscale" ];
+    enableFishIntegration = true;
+  };
+
+  # --------------------------------------------------------------- defaults
+  # Only what is worth declaring. Add more as you notice yourself clicking the
+  # same checkbox twice; anything not covered here can go in
+  # system.defaults.CustomUserPreferences.
+  system.defaults = {
+    NSGlobalDomain = {
+      AppleInterfaceStyle = "Dark";
+      AppleShowAllExtensions = true;
+      KeyRepeat = 2;
+      InitialKeyRepeat = 15;
+      NSAutomaticCapitalizationEnabled = false;
+      NSAutomaticSpellingCorrectionEnabled = false;
+      NSAutomaticQuoteSubstitutionEnabled = false;
+      NSAutomaticDashSubstitutionEnabled = false;
+    };
+
+    dock = {
+      autohide = true;
+      tilesize = 48;
+      show-recents = false;
+      mru-spaces = false;
+    };
+
+    finder = {
+      AppleShowAllFiles = true;
+      ShowPathbar = true;
+      ShowStatusBar = true;
+      FXPreferredViewStyle = "Nlsv";
+      _FXSortFoldersFirst = true;
+    };
+
+    trackpad = {
+      Clicking = true;
+      TrackpadThreeFingerDrag = true;
+    };
+
+    screencapture.location = "~/Pictures/Screenshots";
+  };
+
+  # Touch ID for sudo, with the password as fallback.
+  security.pam.services.sudo_local.touchIdAuth = true;
+}

@@ -1,82 +1,17 @@
 #!/usr/bin/env bash
 #
-# Imperative installers for apps that are NOT packaged in nixpkgs/Nix.
-# `scripts/install <profile>` runs this after the mode-specific package step.
-#
-# Declare one line per app:
-#
-#   vendor_app <name> <check> <install command...>
-#
-# `check` is evaluated first. If it succeeds, the installer is skipped, so
-# re-running install is idempotent. Prefer a real Nix package when one exists;
-# these installs happen outside Nix's reproducibility/uninstall guarantees.
-#
-# Examples:
-#
-#   vendor_app "mytool" \
-#       "[ -x \"$HOME/.local/bin/mytool\" ] || command -v mytool" \
-#       sh -c 'curl -fsSL https://example.com/install.sh | sh'
-#
-#   vendor_app "another" \
-#       "command -v another" \
-#       sh -c 'curl -fsSL https://another.dev/install | bash'
-#
-# Note: if you already installed one of the Nix-packaged apps with curl, its
-# binary in ~/.local/bin may shadow the Nix one. Remove the old binary/symlink
-# (or add the app here instead of profilePackages) before relying on it.
+# Per-profile imperative steps, run by scripts/install after the Nix/darwin
+# step. Zed, Ghostty, and Tailscale are Homebrew casks now (declared in
+# nixos/configuration.nix), so there is nothing to install here — only the
+# shadow check below, which catches leftovers from the old curl installers.
 
-set -euo pipefail
+set -u
 
-vendor_app() {
-    local name="$1" check="$2"
-    shift 2
-
-    if eval "$check" >/dev/null 2>&1; then
-        printf '  %-14s already installed — skipping\n' "$name"
-        return 0
-    fi
-
-    printf '  %-14s installing...\n' "$name"
-    "$@"
-}
-
-# Add profile-specific curl installers below. Currently every app pikpik needs
-# (zed, ghostty, codex, claude, herdr) is packaged in nixos/flake.nix, so there
-# is nothing to do here. Uncomment and adapt when you add something nixpkgs
-# does not have.
-
-# vendor_app "mytool" \
-#     "[ -x \"$HOME/.local/bin/mytool\" ] || command -v mytool" \
-#     sh -c 'curl -fsSL https://example.com/install.sh | sh'
-
-# Expose the Nix-packaged GUI apps to Finder/Launchpad. ~/.nix-profile is
-# stable across upgrades, so these links survive `nix profile upgrade`.
-if [ -d "$HOME/.nix-profile/Applications" ]; then
-    mkdir -p "$HOME/Applications"
-    for app in Zed Ghostty; do
-        src="$HOME/.nix-profile/Applications/$app.app"
-        dst="$HOME/Applications/$app.app"
-        [ -d "$src" ] || continue
-
-        # Never replace a real app bundle the user installed themselves.
-        if [ -e "$dst" ] && [ ! -L "$dst" ]; then
-            printf '  %-14s exists at %s (not a symlink) — leaving it alone\n' \
-                "$app" "$dst" >&2
-            continue
-        fi
-
-        if ln -sfn "$src" "$dst"; then
-            printf '  %-14s linked into ~/Applications\n' "$app"
-        else
-            printf '  warning: could not link %s into ~/Applications\n' "$app" >&2
-        fi
-    done
-fi
-
-# A previous curl install in ~/.local/bin can shadow the Nix-managed binary.
-for app in zed codex claude ghostty herdr; do
+# A previous curl install in ~/.local/bin can shadow the cask or the Nix binary.
+# fish puts ~/.local/bin first, so this is not theoretical.
+for app in zed ghostty codex claude herdr; do
     if [ -x "$HOME/.local/bin/$app" ]; then
-        printf '  warning: %s exists and may shadow ~/.nix-profile/bin/%s\n' \
+        printf '  warning: %s exists and may shadow the managed %s\n' \
             "$HOME/.local/bin/$app" "$app" >&2
     fi
 done

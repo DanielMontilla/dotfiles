@@ -1,0 +1,31 @@
+# Ghostty on macOS — pikpik
+#
+# macOS reads its config from Application Support, not ~/.config/ghostty, so
+# this file is linked to:
+#   ~/Library/Application Support/com.mitchellh.ghostty/config
+#
+# The shared Linux config is deliberately not used here: it sets a Nerd Font
+# that pikpik does not install and uses GTK-only options.
+
+# Quake-style drop-down terminal, summoned from anywhere on the system.
+#   * `global:` is macOS-only and needs Accessibility permission for Ghostty
+#     (System Settings -> Privacy & Security -> Accessibility).
+#   * ctrl+backquote is unclaimed by macOS, so nothing else breaks. If you
+#     prefer the classic Cmd+` (macOS uses that for window cycling), change it
+#     to `global:cmd+backquote=...`.
+keybind = global:ctrl+backquote=toggle_quick_terminal
+
+# Drop-down geometry. Valid positions: top, bottom, left, right, center.
+quick-terminal-position = top
+quick-terminal-animation-duration = 0.15
+
+# No `command = fish`: Ghostty falls back to the login shell, which is the Nix
+# fish after the `chsh` step in README §2a. If you kept zsh as the login shell,
+# add the absolute path instead (Ghostty does not expand ~ here):
+#   command = /Users/<you>/.nix-profile/bin/fish
+
+font-size = 14
+window-padding-x = 4
+window-padding-y = 4
+window-padding-color = extend
+shell-integration = fish
