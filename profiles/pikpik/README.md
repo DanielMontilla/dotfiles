@@ -138,14 +138,14 @@ Declared in `nixos/configuration.nix`:
 |---|---|
 | `zed` | Cask tracks the latest release (`autobump`), and Zed **updates itself**. The Nix-packaged app lives in the read-only store, so auto-update was impossible. |
 | `ghostty` | Same: self-updating, and a stable `/Applications` path keeps permission grants alive. |
-| `tailscale` | Needs the Network Extension; only the app ships it. |
+| `tailscale-app` | Needs the Network Extension; only the app ships it. Homebrew renamed this cask from `tailscale` to `tailscale-app` — the old token still installs but prints a rename warning. |
 
 Homebrew is installed in §2; `darwin-rebuild switch` then runs `brew bundle` and
 installs the casks. Notes:
 
 - All three casks are `auto_updates: true`, so Homebrew deliberately skips them
   in `brew upgrade`. They update themselves; force it with
-  `brew upgrade --cask --greedy zed ghostty tailscale`.
+  `brew upgrade --cask --greedy zed ghostty tailscale-app`.
 - `homebrew.onActivation.cleanup` is `"none"` on purpose — `"zap"` would delete
   `~/.config/zed` and `~/Library/Application Support/com.mitchellh.ghostty`,
   i.e. the linked config.
@@ -198,15 +198,24 @@ The cask is installed by nix-darwin, but signing in is manual:
 3. Verify:
 
 ```bash
-/Applications/Tailscale.app/Contents/MacOS/Tailscale status
-/Applications/Tailscale.app/Contents/MacOS/Tailscale ping olimar
+tailscale status
+tailscale ping olimar
 ```
 
-The app's CLI is capital-`T` `Tailscale`. Add an alias if you like:
+The CLI lives inside the app bundle (`/Applications/Tailscale.app/Contents/MacOS/Tailscale`).
+The pkg also drops `/usr/local/bin/tailscale`, but fish does not read
+`/etc/paths`, so that directory is often missing from `PATH`. The shared fish
+config therefore defines a `tailscale` function pointing at the bundle, which
+is why plain `tailscale status` works. You never have to open the GUI after
+the one-time login — but the app must stay installed and running as a login
+item, because it owns the tunnel and the Network Extension.
 
-```bash
-alias tailscale='/Applications/Tailscale.app/Contents/MacOS/Tailscale'
-```
+> **CLI-only alternative:** `brew install tailscale` installs `tailscaled` and
+> a real CLI, and `sudo brew services start tailscale` runs it. It conflicts
+> with the app (both manage `utun` and routes), so remove the cask first, and
+> MagicDNS/`.ts.net` names are not reliably set up by the OSS daemon on macOS —
+> which is what this profile's SSH configs rely on. Keep the app unless you
+> have a reason not to.
 
 > **Work-machine caveat:** corporate MDM can block system extensions, and using
 > a personal tailnet on a work laptop may violate policy. Confirm with IT. The
@@ -385,6 +394,7 @@ sudo darwin-rebuild --rollback
 | `ssh olimar` ignores the config | The `Include config.d/*` line is missing from the top of `~/.ssh/config` (see §9). Run `./scripts/ssh-setup pikpik`; it prepends the include and warns if the drop-in still isn't applied. |
 | `Bad configuration option: UseKeychain` | You're running nixpkgs `openssh`, which shadows `/usr/bin/ssh`; it is deliberately not installed. |
 | Key passphrase asked every time | `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`, and keep `UseKeychain yes`. |
+| `fish: Unknown command: tailscale` | The shared fish config only defines the `tailscale` function when `/Applications/Tailscale.app` exists. Install the cask (`tailscale-app`), then `exec fish`. |
 | fish aliases/prompt missing | fish is not the login shell — see §4. |
 | Ghostty hotkey does nothing | Grant Ghostty Accessibility permission; re-toggle it after an app update. |
 | `darwin-rebuild: command not found` | The first bootstrap didn't finish — re-run `./scripts/install pikpik`. |

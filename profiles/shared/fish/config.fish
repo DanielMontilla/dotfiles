@@ -6,6 +6,17 @@ if type -q zeditor
     end
 end
 
+# Tailscale on macOS keeps its CLI inside the app bundle. The pkg also links
+# /usr/local/bin/tailscale, but fish never reads /etc/paths, so that path is
+# often not on PATH. Point at the bundle directly; guarded so Linux profiles
+# are unaffected. (The GUI is still what owns the tunnel/Network Extension —
+# this only makes `tailscale status`/`up`/`ping` work from a terminal.)
+if test -x /Applications/Tailscale.app/Contents/MacOS/Tailscale
+    function tailscale --description 'Tailscale CLI (macOS app bundle)'
+        /Applications/Tailscale.app/Contents/MacOS/Tailscale $argv
+    end
+end
+
 # Herdr starts the remote server over SSH, so panes inherit SSH_CONNECTION from
 # that bootstrap session. Starship keys off SSH_CONNECTION and draws the
 # host/SSH indicator even though you're in a Herdr pane, not a raw SSH shell.

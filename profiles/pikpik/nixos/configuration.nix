@@ -76,7 +76,8 @@ in
     # Zed, Ghostty, and Tailscale all self-update (`auto_updates: true` in
     # their casks), so Homebrew skips them unless `greedy` is set. That is why
     # `upgrade` stays off: `darwin-rebuild switch` remains idempotent, and the
-    # apps keep themselves current.
+    # apps keep themselves current. The Tailscale cask was renamed from
+    # `tailscale` to `tailscale-app`; the old token still resolves but warns.
     onActivation = {
       autoUpdate = true;
       upgrade = false;
@@ -86,7 +87,7 @@ in
       cleanup = "none";
     };
 
-    casks = [ "ghostty" "zed" "tailscale" ];
+    casks = [ "ghostty" "zed" "tailscale-app" ];
     enableFishIntegration = true;
   };
 
