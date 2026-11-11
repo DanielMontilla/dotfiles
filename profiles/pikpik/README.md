@@ -225,13 +225,9 @@ Keychain. Keep the private key on pikpik.
 
 ## 9. pikpik → olimar / louie
 
-Add pikpik's public key to each NixOS host's `authorizedKeys`. There is a
-commented placeholder in both files:
-
-- `nixos/hosts/olimar/ssh.nix`
-- `nixos/hosts/louie/ssh.nix`
-
-Paste the line, then rebuild each host from the repo root:
+pikpik's key is already in both NixOS hosts (`nixos/hosts/{olimar,louie}/ssh.nix`,
+fingerprint `SHA256:eiQ5u0YqSr6GgwYK5Gm7/F9TmR4chsZOFyHUGGcEdbQ`), so only a
+rebuild is needed — after `git pull` on each host:
 
 ```bash
 cd nixos
@@ -239,22 +235,34 @@ sudo nixos-rebuild switch --flake ".#olimar"
 sudo nixos-rebuild switch --flake ".#louie"
 ```
 
-Then, on pikpik, `scripts/link` puts the client config at
-`~/.ssh/config.d/pikpik.conf` instead of overwriting `~/.ssh/config` (a work Mac
-may already have a corporate config). Add one include line, at the **top** of
-`~/.ssh/config` — the first value wins, so it must come before any `Host *`
-block:
+Then, on pikpik:
 
 ```bash
-mkdir -p ~/.ssh && chmod 700 ~/.ssh
-touch ~/.ssh/config
-{ echo 'Include config.d/*'; cat ~/.ssh/config; } > ~/.ssh/config.new
-mv ~/.ssh/config.new ~/.ssh/config
-chmod 600 ~/.ssh/config
+cd ~/dotfiles && git pull --ff-only
+./scripts/ssh-setup pikpik
+```
+
+That runs `scripts/link` (which puts the client config at
+`~/.ssh/config.d/pikpik.conf` instead of overwriting `~/.ssh/config`, since a
+work Mac may already have a corporate config), then:
+
+1. prepends `Include config.d/*` to `~/.ssh/config` if it is not already the
+   first directive — ssh keeps the *first* value it sees, so it must come
+   before any `Host *` block;
+2. fixes permissions (`700` on `~/.ssh`, `600` on the config);
+3. loads the key into the login Keychain with `ssh-add --apple-use-keychain`;
+4. prints what ssh actually resolves for every `Host`, and warns if the
+   drop-in is not in effect.
+
+Re-running it is safe; it only changes what is missing. Add `--test` to also
+try a real connection to each host:
+
+```bash
+./scripts/ssh-setup pikpik --test
 ```
 
 Both servers are key-only on port **2222**, and the firewall already allows it.
-Now try:
+Then:
 
 ```bash
 ssh olimar
@@ -374,7 +382,7 @@ sudo darwin-rebuild --rollback
 | `Permission denied (publickey)` (pikpik → Linux) | pikpik's pubkey isn't in that host's `ssh.nix`, or the host wasn't rebuilt. |
 | `Permission denied (publickey)` (Linux → pikpik) | The host's key is missing from `users.users.<user>.openssh.authorizedKeys.keys` in `configuration.nix`, or the Mac has not rebuilt since — see §10. Password auth is disabled. |
 | `Connection refused` on port 2222 | The NixOS host lacks `./ssh.nix` in `configuration.nix`, or the firewall/rebuild didn't apply. |
-| `ssh olimar` ignores the config | The `Include config.d/*` line is missing from the top of `~/.ssh/config` (see §9). |
+| `ssh olimar` ignores the config | The `Include config.d/*` line is missing from the top of `~/.ssh/config` (see §9). Run `./scripts/ssh-setup pikpik`; it prepends the include and warns if the drop-in still isn't applied. |
 | `Bad configuration option: UseKeychain` | You're running nixpkgs `openssh`, which shadows `/usr/bin/ssh`; it is deliberately not installed. |
 | Key passphrase asked every time | `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`, and keep `UseKeychain yes`. |
 | fish aliases/prompt missing | fish is not the login shell — see §4. |

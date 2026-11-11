@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+#
+# Finish the SSH *client* setup for a profile.
+#
+# `scripts/link` already drops the profile's ssh config into place. This script
+# does the parts dotbot cannot: it makes ~/.ssh/config include the drop-in
+# directory (idempotent, and prepended because ssh takes the first value it
+# sees), fixes permissions, loads the key into the macOS login keychain, and
+# prints what ssh actually resolves for every Host in the profile.
+#
+# Usage: ./scripts/ssh-setup <profile> [--test]
+#
+#   --test   also try `ssh <host> true` for each Host (BatchMode, 8s timeout)
+
+set -eu
+
+usage() {
+    echo "Usage: $0 <profile> [--test]"
+    echo "Example: $0 pikpik --test"
+}
+
+profile=""
+run_test=0
+
+for arg in "$@"; do
+    case "$arg" in
+        --test) run_test=1 ;;
+        -h|--help) usage; exit 0 ;;
+        -*) echo "Error: unknown option '$arg'"; usage; exit 1 ;;
+        *)
+            if [ -n "$profile" ]; then
+                echo "Error: only one profile can be set up at a time."
+                usage
+                exit 1
+            fi
+            profile="$arg"
+            ;;
+    esac
+done
+
+if [ -z "$profile" ]; then
+    usage
+    exit 1
+fi
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROFILE_DIR="${REPO_ROOT}/profiles/${profile}"
+SSH_SRC="${PROFILE_DIR}/ssh/config"
+
+if [ ! -d "$PROFILE_DIR" ]; then
+    echo "Error: profile directory '$PROFILE_DIR' does not exist."
+    exit 1
+fi
+
+if [ ! -f "$SSH_SRC" ]; then
+    echo "Error: '$SSH_SRC' does not exist — this profile has no ssh client config."
+    exit 1
+fi
+
+echo "Using profile: $profile"
+
+# 1. Link the profile (dotbot is idempotent; this also fixes a missing drop-in).
+"${REPO_ROOT}/scripts/link" "$profile"
+
+# 2. Profiles that link ~/.ssh/config itself are done: dotbot owns that file,
+#    so there is no include to add (Linux hosts do this).
+if grep -qE '^[[:space:]]*~?/?\.ssh/config:[[:space:]]' "${PROFILE_DIR}/dotbot.yaml"; then
+    echo
+    echo "~/.ssh/config is linked directly by this profile; nothing else to do."
+    exit 0
+fi
+
+dropin="${HOME}/.ssh/config.d/${profile}.conf"
+if [ ! -e "$dropin" ]; then
+    echo "Error: '$dropin' was not created — add it to profiles/${profile}/dotbot.yaml."
+    exit 1
+fi
+
+# 3. Include the drop-in directory. ssh_config is first-match-wins, so the
+#    Include has to be the first directive: a `Host *` block above it would
+#    swallow the profile's settings.
+mkdir -p "${HOME}/.ssh"
+chmod 700 "${HOME}/.ssh"
+
+config="${HOME}/.ssh/config"
+if [ ! -e "$config" ]; then
+    : > "$config"
+fi
+
+first_directive="$(grep -vE '^[[:space:]]*(#|$)' "$config" | head -n 1 || true)"
+
+case "$first_directive" in
+    Include\ config.d/*)
+        echo "  'Include config.d/*' already first in ${config}"
+        ;;
+    *)
+        echo "  Prepending 'Include config.d/*' to ${config}"
+        tmp="$(mktemp "${HOME}/.ssh/config.XXXXXX")"
+        {
+            printf '# Managed by dotfiles (scripts/ssh-setup): profile drop-ins.\n'
+            printf 'Include config.d/*\n\n'
+            cat "$config"
+        } > "$tmp"
+        chmod 600 "$tmp"
+        if [ -L "$config" ]; then
+            # Write through the symlink instead of replacing it.
+            cat "$tmp" > "$config"
+            rm -f "$tmp"
+        else
+            mv -f "$tmp" "$config"
+        fi
+        ;;
+esac
+
+chmod 600 "$config"
+
+# 4. The key the profile points at must exist before anything will work.
+key="$(sed -n 's/^[[:space:]]*IdentityFile[[:space:]]\{1,\}//p' "$SSH_SRC" | head -n 1)"
+if [ -z "$key" ]; then
+    key="~/.ssh/id_ed25519"
+fi
+key="${key/#\~/${HOME}}"
+
+if [ ! -f "$key" ]; then
+    echo
+    echo "Error: '$key' does not exist. Create it first:"
+    echo "  ssh-keygen -t ed25519 -C \"$(id -un)@$(hostname -s)\" -f $key"
+    echo "Then add the public key to the hosts' ssh.nix and rebuild them."
+    exit 1
+fi
+
+# 5. macOS keeps passphrases in the login keychain (the profile sets
+#    UseKeychain/AddKeysToAgent, which only matter once the key is loaded).
+if [ "$(uname -s)" = "Darwin" ] && command -v ssh-add >/dev/null 2>&1; then
+    fingerprint="$(ssh-keygen -lf "$key" 2>/dev/null | awk '{print $2}' || true)"
+    if [ -n "$fingerprint" ] && ! ssh-add -l 2>/dev/null | grep -qF "$fingerprint"; then
+        echo "  Loading ${key} into the login keychain"
+        ssh-add --apple-use-keychain "$key" ||
+            echo "  warning: ssh-add failed — run it yourself if it needs a passphrase." >&2
+    fi
+fi
+
+# 6. Show the effective settings, so a shadowed Host block is visible. Use -F
+#    explicitly: ssh resolves `~` from passwd, not $HOME, and relative Include
+#    paths are relative to ~/.ssh — so a plain `ssh -G` is not a reliable check
+#    of the file we just wrote.
+hosts="$(sed -n 's/^[[:space:]]*Host[[:space:]]\{1,\}//p' "$SSH_SRC" | tr ' ' '\n' | grep -v '^\*$' || true)"
+
+echo
+echo "Effective settings (from ${config}):"
+include_ok=1
+for host in $hosts; do
+    resolved="$(ssh -F "$config" -G "$host" 2>/dev/null |
+        awk '/^(hostname|user|port) / { printf "%s=%s ", $1, $2 }' || true)"
+    printf '  %-10s %s\n' "$host" "$resolved"
+
+    # What the drop-in asks for, to catch an Include that is not in effect.
+    expected="$(awk -v h="$host" '
+        /^[[:space:]]*Host[[:space:]]/ {
+            found = 0
+            for (i = 2; i <= NF; i++) if ($i == h) found = 1
+            next
+        }
+        found && tolower($1) == "hostname" { print $2; exit }
+    ' "$SSH_SRC")"
+    actual="$(ssh -F "$config" -G "$host" 2>/dev/null |
+        awk '/^hostname / { print $2; exit }' || true)"
+
+    if [ -n "$expected" ] && [ "$expected" != "$actual" ]; then
+        include_ok=0
+    fi
+done
+
+if [ "$include_ok" -eq 0 ]; then
+    echo
+    echo "warning: '${config}' does not apply ${dropin}." >&2
+    echo "  Another Host block is probably shadowing it, or the Include was moved" >&2
+    echo "  below a 'Host *' section. 'Include config.d/*' must be the first" >&2
+    echo "  directive in ${config} (ssh keeps the first value it sees)." >&2
+fi
+
+if [ "$run_test" -eq 1 ]; then
+    echo
+    echo "Connecting:"
+    for host in $hosts; do
+        if ssh -o BatchMode=yes -o ConnectTimeout=8 "$host" true 2>/dev/null; then
+            printf '  %-10s ok\n' "$host"
+        else
+            printf '  %-10s FAILED (host down, tailscale off, or key not authorized)\n' "$host"
+        fi
+    done
+fi

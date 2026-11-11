@@ -36,6 +36,7 @@ On **Linux/WSL** (bash):
 ./scripts/install <name>   # install packages / check prerequisites
 ./scripts/link <name>      # link config files with dotbot
 ./scripts/update <name>    # refresh flake inputs, then rebuild (nixos/nix-darwin) or upgrade (nix-profile)
+./scripts/ssh-setup <name> [--test]  # link + finish ~/.ssh (Include, perms, keychain, ssh -G)
 ./scripts/enable-nix-features  # turn on nix-command + flakes (official installer leaves them off)
 ```
 
@@ -55,6 +56,12 @@ On **Windows** (PowerShell, no bash needed):
   `dotbot` on PATH (nix modes get it from the profile; windows mode installs
   it via pip), falling back to `python -m dotbot` if the binary isn't on PATH.
 - Install **before** link on nix machines (link needs the `dotbot` binary).
+- `ssh-setup` is `link` plus the parts dotbot cannot do: it makes
+  `~/.ssh/config` include the profile's drop-in (first directive, since ssh
+  keeps the first value it sees), fixes permissions, loads the key into the
+  macOS login Keychain, and prints `ssh -G` for every `Host` so a shadowed
+  block is visible. `--test` also tries a connection. Profiles that link
+  `~/.ssh/config` itself (olimar, louie) stop after `link`.
 
 ## Windows profiles (koppai)
 
