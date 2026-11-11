@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+#
+# Make fish the login shell (macOS).
+#
+# nix-darwin can only set the shell of accounts it created: `users.knownUsers`
+# is for accounts nix-darwin owns, not your admin user, so this last step has
+# to be imperative. Run it after the first rebuild — `environment.shells` is
+# what puts fish into /etc/shells, and chsh refuses shells that are not listed
+# there.
+#
+# Usage: ./scripts/login-shell
+
+set -eu
+
+fish=/run/current-system/sw/bin/fish
+user="$(id -un)"
+
+if [ "$(uname -s)" != "Darwin" ]; then
+    echo "Not needed on this host: the login shell is declarative on NixOS"
+    echo "(users.users.<name>.shell in the configuration)."
+    exit 0
+fi
+
+if [ ! -x "$fish" ]; then
+    echo "Error: $fish does not exist yet."
+    echo "Run ./scripts/install <profile> first — that installs fish."
+    exit 1
+fi
+
+if ! grep -qxF "$fish" /etc/shells 2>/dev/null; then
+    echo "Error: $fish is not in /etc/shells, so chsh would refuse it."
+    echo "That file is written by environment.shells; re-run"
+    echo "./scripts/install <profile> so the rebuild applies it."
+    exit 1
+fi
+
+current="$(dscl . -read "/Users/${user}" UserShell 2>/dev/null | awk '{print $2}' || true)"
+
+if [ "$current" = "$fish" ]; then
+    echo "Already using $fish."
+else
+    echo "Login shell is currently: ${current:-unknown}"
+    echo "Changing to $fish — chsh will ask for your password."
+    chsh -s "$fish"
+fi
+
+current="$(dscl . -read "/Users/${user}" UserShell 2>/dev/null | awk '{print $2}' || true)"
+
+if [ "$current" = "$fish" ]; then
+    echo "Done. Open a new terminal (or log out and back in); \$SHELL will be"
+    echo "$fish, and fish will read ~/.config/fish/config.fish (starship etc.)."
+else
+    echo "warning: the login shell is still '${current:-unknown}'." >&2
+    echo "A management profile (MDM) may be pinning it. Fallback: point the" >&2
+    echo "terminal at fish directly, in profiles/pikpik/ghostty/config:" >&2
+    echo "  command = $fish" >&2
+    exit 1
+fi

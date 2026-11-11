@@ -37,6 +37,7 @@ On **Linux/WSL** (bash):
 ./scripts/link <name>      # link config files with dotbot
 ./scripts/update <name>    # refresh flake inputs, then rebuild (nixos/nix-darwin) or upgrade (nix-profile)
 ./scripts/ssh-setup <name> [--test]  # link + finish ~/.ssh (Include, perms, keychain, ssh -G)
+./scripts/login-shell      # macOS: make fish the login shell (chsh) and verify
 ./scripts/enable-nix-features  # turn on nix-command + flakes (official installer leaves them off)
 ```
 

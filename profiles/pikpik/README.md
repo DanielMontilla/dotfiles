@@ -110,25 +110,40 @@ mv ~/Library/Application\ Support/com.mitchellh.ghostty/config{,.bak}
 ## 4. Make fish your login shell
 
 macOS defaults to zsh, and **nix-darwin cannot change the shell of an account it
-did not create** — so this is the one manual step. Run it *after* the first
+did not create** (`users.knownUsers` is for accounts nix-darwin owns, not your
+admin user) — so this is the one imperative step. Run it *after* the first
 rebuild: `environment.shells` puts fish in `/etc/shells`, and `chsh` only accepts
 shells listed there.
 
 ```bash
-chsh -s /run/current-system/sw/bin/fish
+./scripts/login-shell
 ```
 
-Use the `/run/current-system` path, not the `/nix/store` one: it is stable across
-`darwin-rebuild` generations, so upgrades never break your login.
+It checks that fish exists and is listed in `/etc/shells`, runs `chsh` only if
+the login shell is not fish yet, then re-reads the account record to verify the
+change actually stuck. Idempotent — re-running it is a no-op.
 
-Check with `echo $SHELL`, then `starship --version`.
+The shell it sets is `/run/current-system/sw/bin/fish`, not the `/nix/store`
+path: it is stable across `darwin-rebuild` generations, so upgrades never break
+your login.
 
-Prefer to keep zsh? Point Ghostty at fish instead — add to the linked Ghostty
-config (`profiles/pikpik/ghostty/config`):
+Open a new terminal afterwards (or log out and back in). Then:
 
+```bash
+echo $SHELL        # /run/current-system/sw/bin/fish
+starship --version # from nixos/packages.nix
 ```
-command = /run/current-system/sw/bin/fish
-```
+
+fish reads the linked `~/.config/fish/config.fish`, which starts starship with
+the linked `~/.config/starship.toml` — same setup as the Linux profiles.
+
+> **If the shell reverts** (work Macs with MDM can pin it), the script says so
+> and exits non-zero. Fallback: point Ghostty at fish directly by adding this to
+> `profiles/pikpik/ghostty/config`:
+>
+> ```
+> command = /run/current-system/sw/bin/fish
+> ```
 
 ## 5. Apps (Homebrew casks)
 
