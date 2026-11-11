@@ -284,6 +284,45 @@ tailscale ping olimar
 ssh -v olimar
 ```
 
+## 12. Remove the old nix profile (one-time)
+
+Before the migration pikpik installed packages with `nix profile add`. nix-darwin
+keeps `$HOME/.nix-profile` **first** in `PATH`, so those packages keep shadowing
+the system ones — `fish`, `git`, `neovim`, `codex`, `claude`, `herdr`, and the
+Nix-packaged Zed/Ghostty apps.
+
+Run this **after** §4 (`chsh`) has worked and a fresh terminal starts with the
+new fish. If your login shell is still `~/.nix-profile/bin/fish`, emptying the
+profile leaves you with no shell to log in to.
+
+```bash
+nix profile list          # what is in there, and which flake it came from
+nix profile remove --all  # empty the profile
+nix profile wipe-history --older-than 0d   # drop the old generations
+```
+
+The old `vendor-apps.sh` also put `Zed.app` / `Ghostty.app` symlinks into
+`~/Applications`. They point into the store, so they are dangling now (and
+Spotlight shows a second Zed/Ghostty next to the casks):
+
+```bash
+ls -l ~/Applications
+for app in Zed Ghostty; do
+    [ -L "$HOME/Applications/$app.app" ] && rm "$HOME/Applications/$app.app"
+done
+```
+
+Reclaim the space — plain `nix-collect-garbage`, **without** `-d`, so
+`darwin-rebuild --rollback` keeps its generations:
+
+```bash
+nix-collect-garbage
+sudo nix-collect-garbage
+```
+
+Keep `/etc/nix/nix.conf.before-nix-darwin` until the new system is verified, then
+delete it.
+
 ## Updating
 
 ```bash
@@ -319,13 +358,14 @@ sudo darwin-rebuild --rollback
 | Ghostty hotkey does nothing | Grant Ghostty Accessibility permission; re-toggle it after an app update. |
 | `darwin-rebuild: command not found` | The first bootstrap didn't finish — re-run `./scripts/install pikpik`. |
 | `Some links were not successfully set up` | dotbot will not overwrite a regular file. Move it aside and re-run `./scripts/link pikpik` (see §3). |
-| `chsh: /run/current-system/sw/bin/fish: non-standard shell` | The first `darwin-rebuild` has not run yet, so fish is not in `/etc/shells`.
+| `chsh: /run/current-system/sw/bin/fish: non-standard shell` | The first `darwin-rebuild` has not run yet, so fish is not in `/etc/shells`. |
+| `command not found` after emptying the old profile | Your login shell was `~/.nix-profile/bin/fish` — recover with `chsh -s /bin/zsh`, redo §4, then §12. |
 
 ## Notes
 
 - **Old `nix profile` leftovers:** before the migration pikpik used `nix profile`.
-  Those entries still exist in `~/.nix-profile` but nothing puts them on `PATH`.
-  Clean up with `nix profile list` then `nix profile remove <name>`.
+  nix-darwin keeps `$HOME/.nix-profile` first in `PATH`, so those entries shadow
+  the system packages until you empty it — see §12.
 - **Two nixpkgs inputs:** the system tracks `nixpkgs-26.05-darwin` (the macOS
   release branch: same packages as `nixos-26.05` plus Darwin fixes), while
   `nixpkgs-unstable` supplies only `claude-code` and `herdr`. Running
