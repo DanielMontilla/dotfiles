@@ -13,6 +13,13 @@ in
   # Required by the Homebrew module and by user-scoped defaults.
   system.primaryUser = user;
 
+  # The Tailscale device name comes from the OS hostname, and MagicDNS derives
+  # <device>.<tailnet>.ts.net from it. Set all three so a fresh install registers
+  # as pikpik without renaming by hand in the admin console, and so
+  # pikpik.local works on the local network. localHostName defaults to hostName.
+  networking.hostName = "pikpik";
+  networking.computerName = "pikpik";
+
   nixpkgs.hostPlatform = "aarch64-darwin";
   nixpkgs.config.allowUnfreePredicate = pkg:
     builtins.elem (lib.getName pkg) [ "claude-code" ];
