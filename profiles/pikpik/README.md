@@ -389,6 +389,7 @@ sudo darwin-rebuild --rollback
 | Ghostty hotkey does nothing | Grant Ghostty Accessibility permission; re-toggle it after an app update. |
 | `darwin-rebuild: command not found` | The first bootstrap didn't finish — re-run `./scripts/install pikpik`. |
 | `Some links were not successfully set up` | dotbot will not overwrite a regular file. Move it aside and re-run `./scripts/link pikpik` (see §3). |
+| `dotbot is not installed` / `dotbot: command not found` | `dotbot` comes from the system profile, which only exists after `./scripts/install pikpik`. `scripts/link` also finds it in the profile dirs (stale `PATH`) and falls back to `nix run nixpkgs#dotbot`, so pulling latest is usually enough. |
 | `chsh: /run/current-system/sw/bin/fish: non-standard shell` | The first `darwin-rebuild` has not run yet, so fish is not in `/etc/shells`. |
 | `primary user ... does not exist, aborting activation` | `system.primaryUser` in `nixos/configuration.nix` must match `whoami` — nix-darwin checks it with `id` at activation. |
 | `Using the homebrew module requires homebrew installed` | Install Homebrew (§2) — nix-darwin only drives an existing `brew`. `scripts/install` checks this before building. |

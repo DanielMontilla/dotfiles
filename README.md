@@ -52,9 +52,13 @@ On **Windows** (PowerShell, no bash needed):
   mode-specific step — for imperative leftovers the declarative step cannot
   handle (pikpik's only warns about binaries in `~/.local/bin` that would
   shadow the managed ones).
-- `link` runs `dotbot -d <repo> -c profiles/<name>/dotbot.yaml`. Needs
-  `dotbot` on PATH (nix modes get it from the profile; windows mode installs
-  it via pip), falling back to `python -m dotbot` if the binary isn't on PATH.
+- `link` runs `dotbot -d <repo> -c profiles/<name>/dotbot.yaml`. It needs
+  `dotbot`, which nix modes get from the system profile and windows mode from
+  pip. If it is not on `PATH` it also looks in `/run/current-system/sw/bin`,
+  `~/.nix-profile/bin`, and `/nix/var/nix/profiles/default/bin` (a terminal
+  opened before the first rebuild has a stale `PATH`), then falls back to
+  `python -c ...`, then to `nix run nixpkgs#dotbot` — so `link`/`ssh-setup`
+  work even before `install` has put dotbot in the system profile.
 - Install **before** link on nix machines (link needs the `dotbot` binary).
 - `ssh-setup` is `link` plus the parts dotbot cannot do: it makes
   `~/.ssh/config` include the profile's drop-in (first directive, since ssh

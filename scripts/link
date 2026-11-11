@@ -32,6 +32,22 @@ echo "Using config: $CONFIG"
 # (dotbot has no __main__.py, so 'python -m dotbot' does not work;
 # the console script entry point is dotbot.cli:main. On Windows, pip --user
 # installs dotbot to a Scripts dir that may not be on PATH.)
+#
+# On nix machines dotbot comes from the system profile. A terminal opened
+# before the first rebuild (or before `darwin-rebuild switch` finished) has a
+# stale PATH, so look in the known profile locations too instead of claiming
+# it is not installed.
+if ! command -v dotbot >/dev/null 2>&1; then
+    for dir in /run/current-system/sw/bin "${HOME}/.nix-profile/bin" /nix/var/nix/profiles/default/bin; do
+        if [ -x "${dir}/dotbot" ]; then
+            PATH="${dir}:${PATH}"
+            export PATH
+            echo "dotbot is not on PATH — using ${dir}/dotbot"
+            break
+        fi
+    done
+fi
+
 if command -v dotbot >/dev/null 2>&1; then
     dotbot -d "${BASEDIR}" -c "${CONFIG}" "${@:2}"
 else
@@ -49,7 +65,21 @@ sys.exit(main())
             exit $?
         fi
     done
+
+    # Last resort: run it straight from nixpkgs. This is what makes `link`
+    # (and `ssh-setup`) usable before the first rebuild has installed dotbot
+    # into the system profile.
+    if command -v nix >/dev/null 2>&1; then
+        echo "dotbot is not installed — running it from nixpkgs (one-off)."
+        nix run --extra-experimental-features 'nix-command flakes' \
+            nixpkgs#dotbot -- -d "${BASEDIR}" -c "${CONFIG}" "${@:2}"
+        exit $?
+    fi
+
     echo "Error: dotbot is not installed."
-    echo "Run: ./scripts/install $profile  (installs dotbot via pip)"
+    echo
+    echo "On nix machines it comes from the system profile, so run:"
+    echo "  ./scripts/install $profile"
+    echo "then open a new terminal (the old one has a stale PATH)."
     exit 1
 fi
