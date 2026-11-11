@@ -34,7 +34,7 @@ On **Linux/WSL** (bash):
 ```bash
 ./scripts/install <name>   # install packages / check prerequisites
 ./scripts/link <name>      # link config files with dotbot
-./scripts/update <name>    # refresh flake inputs, then rebuild (nixos) or upgrade (nix-profile)
+./scripts/update <name>    # refresh flake inputs, then rebuild (nixos/nix-darwin) or upgrade (nix-profile)
 ./scripts/enable-nix-features  # turn on nix-command + flakes (official installer leaves them off)
 ```
 

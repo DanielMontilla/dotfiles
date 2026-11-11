@@ -1,219 +1,184 @@
 # pikpik — macOS (work)
 
-Profile for a macOS work laptop. macOS stays the OS; Nix provides **user-level
-CLI packages only**, dotbot links configs, and the machine joins the existing
-**Tailscale mesh** so it can SSH to `olimar`/`louie` (and they to it).
+Apple Silicon work laptop, declared with **nix-darwin**: CLI packages, Nix
+settings, sshd, Homebrew casks, and macOS defaults live in Nix; dotbot links the
+dotfiles. The machine joins the existing **Tailscale mesh** so it can SSH to
+`olimar`/`louie` (and they to it).
 
-This is the `nix-profile` mode (same as `oatchi`), so `scripts/install` needs no
-new code path. If you later want declarative macOS defaults, launchd, or
-Homebrew casks, add a `nix-darwin` layer on top; this profile deliberately
-avoids touching the system on a work machine.
+This is the `nix-darwin` mode: `scripts/install` runs `darwin-rebuild switch`
+instead of `nix profile add`.
 
 ## Layout
 
 ```
 profiles/pikpik/
-├── .nix-profile          # mode marker (read by scripts/install)
-├── nixos/flake.nix       # darwin (arm64 + x86_64) buildEnv + devShell
-├── nixos/flake.lock      # pinned nixpkgs inputs (update: ./scripts/update pikpik)
-├── dotbot.yaml           # links ssh config.d, fish, nvim, starship
-├── vendor-apps.sh        # curl installers, ~/Applications links, shadow warnings
-├── ssh/config            # client config: pikpik -> olimar/louie
-├── ssh/authorized_keys   # source of truth: olimar/louie -> pikpik
+├── .nix-darwin            # mode marker (read by scripts/install)
+├── nixos/flake.nix        # inputs + darwinConfigurations.pikpik + devShell
+├── nixos/configuration.nix# the system: packages, nix, sshd, casks, defaults
+├── nixos/packages.nix     # CLI package list shared with the dev shell
+├── nixos/flake.lock       # pinned inputs (update: ./scripts/update pikpik)
+├── dotbot.yaml            # links ssh config.d, fish, nvim, starship, ghostty
+├── ghostty/config         # macOS Ghostty config (incl. the drop-down hotkey)
+├── vendor-apps.sh         # only warns about shadowing ~/.local/bin leftovers
+├── ssh/config             # client config: pikpik -> olimar/louie
+├── ssh/authorized_keys    # source of truth: olimar/louie -> pikpik
 └── README.md
 ```
 
 ## 1. Install Nix (once)
 
-Use the Determinate Systems installer — it handles upgrades and uninstall, and
-enables flakes by default:
+Use the **official** installer (this is what pikpik was set up with):
 
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+sh <(curl -L https://nixos.org/nix/install)
 ```
 
-It needs admin rights. Verify with `nix --version`.
+It needs admin rights. Open a new terminal afterwards, then `nix --version`.
 
-If you installed Nix another way and see `experimental Nix feature 'nix-command'
-is disabled`, run `./scripts/enable-nix-features` from the repo root. It writes
-`experimental-features = nix-command flakes` to `/etc/nix/nix.conf` (keeping any
-features already set) and restarts the daemon.
-
-The flake exposes both Apple Silicon (`aarch64-darwin`) and Intel
-(`x86_64-darwin`), so there is nothing to edit — `nix profile add` picks the
-right one. (Heads-up: nixpkgs 26.05 is the last release with Intel macOS
-support.)
-
-## 2. Install packages and link configs
-
-From the repo root on pikpik:
+Unlike Determinate's installer it leaves `nix-command` and `flakes` disabled, so
+run this once from the repo root:
 
 ```bash
-./scripts/install pikpik   # nix profile add path:profiles/pikpik/nixos
-./scripts/link pikpik      # dotbot
+./scripts/enable-nix-features
 ```
 
-`install` brings in the CLI tools plus Zed, Ghostty, Claude Code, Codex, and
-Herdr (see 2b–2d); `link` only links config files.
+nix-darwin takes over `/etc/nix/nix.conf` from then on, so this script is only
+needed to bootstrap.
 
-> **Gotcha:** `nix profile` names the entry after the flake directory (`nixos`),
-> not the profile. `scripts/install` already accounts for this; don't run
-> `nix profile upgrade pikpik` manually.
-
-To pull new nixpkgs inputs and vendor-app versions later:
+## 2. Install nix-darwin (first run)
 
 ```bash
-./scripts/update pikpik
+git clone https://github.com/DanielMontilla/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+./scripts/install pikpik
 ```
 
-That runs `nix flake update` in `profiles/pikpik/nixos` and then upgrades the
-profile. `nix profile upgrade` on its own re-evaluates the flake with the
-**existing** `flake.lock`, so it never picks up nixpkgs fixes by itself.
+On the first run `darwin-rebuild` does not exist yet, so `scripts/install`:
 
-## 2a. Make fish your login shell
+1. moves `/etc/nix/nix.conf` to `/etc/nix/nix.conf.before-nix-darwin` (nix-darwin
+   refuses to overwrite a file it does not recognise, and the bootstrap script
+   above modified it);
+2. runs `nix run github:nix-darwin/nix-darwin#darwin-rebuild -- switch` with the
+   experimental features passed explicitly for that one invocation.
 
-macOS defaults to zsh, so the linked fish config does nothing until fish is your
-login shell. Add the Nix fish to the allowed shells and switch (needs your
-admin password):
+Afterwards `/etc/nix/nix.conf` is a symlink into the Nix store managed by
+`nix.settings`, and later runs are just `sudo darwin-rebuild switch`.
+
+It will ask for your password. First build downloads a few hundred MiB.
+
+## 3. Link configs
 
 ```bash
-echo "$HOME/.nix-profile/bin/fish" | sudo tee -a /etc/shells
-chsh -s "$HOME/.nix-profile/bin/fish"
+./scripts/link pikpik
 ```
 
-Open a new terminal, then check `echo $SHELL` and `starship --version`.
+Links `~/.ssh/config.d/pikpik.conf`, `~/.config/fish/config.fish`,
+`~/.config/nvim`, `~/.config/starship.toml`, and the Ghostty config into
+`~/Library/Application Support/com.mitchellh.ghostty/config`.
 
-If you would rather keep zsh as the login shell, point Ghostty at fish instead —
-add this to `~/Library/Application Support/com.mitchellh.ghostty/config`
-(replace `<you>` with your user name; Ghostty does not expand `~` here):
+dotbot replaces existing **symlinks** (`relink: true`) but refuses to overwrite
+a regular file it did not create. If Ghostty (or you) already wrote a config
+there, move it aside first:
+
+```bash
+mv ~/Library/Application\ Support/com.mitchellh.ghostty/config{,.bak}
+./scripts/link pikpik
+```
+
+## 4. Make fish your login shell
+
+macOS defaults to zsh, and **nix-darwin cannot change the shell of an account it
+did not create** — so this is the one manual step. Run it *after* the first
+rebuild: `environment.shells` puts fish in `/etc/shells`, and `chsh` only accepts
+shells listed there.
+
+```bash
+chsh -s /run/current-system/sw/bin/fish
+```
+
+Use the `/run/current-system` path, not the `/nix/store` one: it is stable across
+`darwin-rebuild` generations, so upgrades never break your login.
+
+Check with `echo $SHELL`, then `starship --version`.
+
+Prefer to keep zsh? Point Ghostty at fish instead — add to the linked Ghostty
+config (`profiles/pikpik/ghostty/config`):
 
 ```
-command = /Users/<you>/.nix-profile/bin/fish
+command = /run/current-system/sw/bin/fish
 ```
 
-## 2b. Zed (prebuilt app, not a source build)
+## 5. Apps (Homebrew casks)
 
-`nixpkgs` does have `zed-editor`, but on Darwin it is a **from-source Rust
-build** and there is no official `aarch64-darwin` binary cache — installing it
-can compile Zed and WebRTC for a very long time. This flake instead packages the
-official **prebuilt** `.dmg` (the same artifact the curl installer downloads),
-pinned by version and SHA-256 in `nixos/flake.nix` (`zedVersion`).
+Declared in `nixos/configuration.nix`:
 
-`scripts/install` links the app into `~/Applications` automatically
-(`vendor-apps.sh` does it; `~/.nix-profile` is stable across upgrades, so the
-link survives). Finder and Launchpad pick it up from there. The CLI is on PATH
-as both `zed` and `zeditor` (the latter keeps the shared fish `zed` function
-working).
+| Cask | Why not Nix |
+|---|---|
+| `zed` | Cask tracks the latest release (`autobump`), and Zed **updates itself**. The Nix-packaged app lives in the read-only store, so auto-update was impossible. |
+| `ghostty` | Same: self-updating, and a stable `/Applications` path keeps permission grants alive. |
+| `tailscale` | Needs the Network Extension; only the app ships it. |
 
-Zed's `.dmg` is APFS, and nixpkgs' `undmg` only reads HFS — that is why the
-flake unpacks it with 7-Zip (`pkgs._7zz`).
+Homebrew is not preinstalled:
 
-Notes:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
 
-- **Auto-update won't work** — the app lives in the read-only Nix store. Update
-  via Nix: bump `zedVersion`, blank both `zedHash` values, run
-  `nix build path:profiles/pikpik/nixos#zed`, then paste the hashes from the
-  error. Then `./scripts/install pikpik`.
-- **Prefer vendor tools?** `brew install --cask zed` is the pragmatic
-  alternative; drop `zed` from `profilePackages` and the two Zed lines in the
-  fish config become inert because of the `type -q zeditor` guard.
+Then `sudo darwin-rebuild switch --flake ~/dotfiles/profiles/pikpik/nixos#pikpik`
+installs the casks. Notes:
 
-## 2c. Ghostty (prebuilt app)
+- All three casks are `auto_updates: true`, so Homebrew deliberately skips them
+  in `brew upgrade`. They update themselves; force it with
+  `brew upgrade --cask --greedy zed ghostty tailscale`.
+- `homebrew.onActivation.cleanup` is `"none"` on purpose — `"zap"` would delete
+  `~/.config/zed` and `~/Library/Application Support/com.mitchellh.ghostty`,
+  i.e. the linked config.
+- The Zed CLI is `/opt/homebrew/bin/zed`. The cask does **not** ship `zeditor`,
+  so the shared fish `zed` wrapper (guarded by `type -q zeditor`) is inert and
+  `zed` opens in the foreground.
 
-Ghostty's own flake **cannot build on macOS** — it needs Swift 6 and
-`xcodebuild`, which nixpkgs does not provide. The Linux hosts keep using the
-upstream flake input; pikpik uses the official **universal** macOS app (works
-on Apple Silicon and Intel), pinned by version and SHA-256 in
-`nixos/flake.nix` (`ghosttyVersion`).
+### Terminal hotkey
 
-The `.zip` is used rather than the `.dmg` because Ghostty's DMG is APFS and
-nixpkgs' `undmg` only reads HFS.
+`ghostty/config` binds `ctrl+backquote` to `toggle_quick_terminal`: a
+Quake-style drop-down terminal, available system-wide.
 
-`scripts/install` links the app into `~/Applications` automatically, so there
-is no manual `ln -sfn` step. The CLI is on PATH as `ghostty`.
+Ghostty must be granted **Accessibility** permission for a `global:` keybind
+(System Settings → Privacy & Security → Accessibility). If the hotkey stops
+working after an update, toggle Ghostty off/on in that list.
 
-If you previously installed Ghostty from its DMG, remove
-`/Applications/Ghostty.app` first so Launchpad does not show two copies.
+Change the key in `profiles/pikpik/ghostty/config` (`global:cmd+backquote=...`
+is the classic choice, but macOS uses Cmd+\` for window cycling).
 
-Notes:
+## 6. Claude Code, Codex, and Herdr
 
-- **Sparkle auto-update can't replace the app** inside the read-only Nix store.
-  Update via Nix: bump `ghosttyVersion`, blank `ghosttyHash`, run
-  `nix build path:profiles/pikpik/nixos#ghostty`, paste the hash from the
-  error, then `./scripts/install pikpik`.
-- **Config is not linked:** `profiles/shared/ghostty/config` is tuned for
-  GTK/Linux (`gtk-single-instance`, `window-decoration`) and sets
-  `command = fish`, which a Finder-launched app may not find on PATH. On macOS
-  use `~/Library/Application Support/com.mitchellh.ghostty/config` (or the XDG
-  path `~/.config/ghostty/config`) instead.
-- Ghostty 1.4 requires **macOS 13+ (Ventura)**.
-
-## 2d. Claude Code, Codex, and Herdr
-
-All three are in the profile, so no curl installer is needed:
+All three come from Nix (`nixos/packages.nix`), no curl installer:
 
 | Command | Source | Notes |
 |---|---|---|
-| `claude` | `nixpkgs-unstable.claude-code` (stable on Intel) | Anthropic license (unfree); allowed only for this package via `allowUnfreePredicate` |
-| `codex` | pinned prebuilt `codex-package-*-apple-darwin.tar.gz` | same artifact the OpenAI installer downloads (includes helpers + ripgrep) |
-| `herdr` | `nixpkgs-unstable.herdr` (prebuilt release on Intel) | cached for aarch64-darwin; unstable dropped x86_64-darwin |
+| `claude` | `nixpkgs-unstable.claude-code` | Anthropic license (unfree); allowed only for this package |
+| `codex` | pinned prebuilt `codex-package-aarch64-apple-darwin.tar.gz` | nixpkgs' `codex` builds from Rust source, which is very slow on Darwin |
+| `herdr` | `nixpkgs-unstable.herdr` | already in the aarch64-darwin binary cache |
 
-Claude Code is a prebuilt binary in nixpkgs, so it does not compile. Codex is
-packaged here as a prebuilt tarball because nixpkgs' `codex` compiles from Rust
-source, which is very slow on Darwin. Herdr is nixpkgs-unstable's package on
-Apple Silicon (already in the official binary cache, with its integration
-assets); Intel uses the upstream prebuilt binary because nixpkgs-unstable no
-longer supports x86_64-darwin.
-
-If you already installed any of these with curl, remove the old binary so the
-Nix one wins (keep the data dirs):
+If you previously installed any of these with curl, remove the old binary so the
+managed one wins (keep the data dirs):
 
 ```bash
 rm -f ~/.local/bin/claude ~/.local/bin/codex ~/.local/bin/zed ~/.local/bin/herdr
-type -a claude codex zed herdr    # Nix entries under ~/.nix-profile/bin should win
+type -a claude codex zed herdr
 ```
 
 **Herdr config is not linked:** `profiles/shared/herdr/` includes Linux/Windows
 notification plugins. Link only `config.toml` on macOS if you want the same
 prefix key, theme, and fish default shell.
 
-## 2e. Apps that are not in nixpkgs (`vendor-apps.sh`)
+## 7. Tailscale
 
-For anything not packaged, edit `profiles/pikpik/vendor-apps.sh` and add one
-line per app:
+The cask is installed by nix-darwin, but signing in is manual:
 
-```bash
-vendor_app "mytool" \
-    "[ -x \"$HOME/.local/bin/mytool\" ] || command -v mytool" \
-    sh -c 'curl -fsSL https://example.com/install.sh | sh'
-```
-
-`scripts/install pikpik` runs that file after the Nix step. The `check` runs
-first, so an already-installed app is skipped and re-running install is
-idempotent. It also links Zed and Ghostty into `~/Applications`, and warns when
-a curl-installed binary in `~/.local/bin` would shadow a Nix one. These installs
-are outside Nix's reproducibility/uninstall guarantees — prefer packaging the
-release (as done for Zed, Ghostty, and Codex) when it matters.
-
-## 3. Install Tailscale
-
-Use the **macOS app**, not the nixpkgs package: only the app ships the Network
-Extension and integrates with macOS networking.
-
-```bash
-brew install --cask tailscale      # or install "Tailscale" from the App Store
-```
-
-`brew` is not preinstalled on macOS. If it is missing, install Homebrew first:
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
-1. Open the app and sign in to the **same tailnet** as olimar/louie
+1. Open **Tailscale** and sign in to the same tailnet as olimar/louie
    (`tail5c357b`).
-2. In the Tailscale admin console, rename this device to **pikpik** so MagicDNS
-   gives it `pikpik.tail5c357b.ts.net`.
+2. In the admin console, rename this device to **pikpik** so MagicDNS gives it
+   `pikpik.tail5c357b.ts.net`.
 3. Verify:
 
 ```bash
@@ -231,7 +196,7 @@ alias tailscale='/Applications/Tailscale.app/Contents/MacOS/Tailscale'
 > a personal tailnet on a work laptop may violate policy. Confirm with IT. The
 > macOS app can switch between tailnets, but not join two at once.
 
-## 4. Create the machine key (once)
+## 8. Create the machine key (once)
 
 ```bash
 ssh-keygen -t ed25519 -C "daniel@pikpik"
@@ -242,7 +207,7 @@ cat ~/.ssh/id_ed25519.pub
 `ssh/config` sets `UseKeychain yes`, so the passphrase lives in the login
 Keychain. Keep the private key on pikpik.
 
-## 5. pikpik → olimar / louie
+## 9. pikpik → olimar / louie
 
 Add pikpik's public key to each NixOS host's `authorizedKeys`. There is a
 commented placeholder in both files:
@@ -280,27 +245,19 @@ ssh olimar
 ssh louie
 ```
 
-## 6. olimar / louie → pikpik
+## 10. olimar / louie → pikpik
 
-This direction uses the macOS **system sshd** (Remote Login), not Nix. On
-pikpik:
-
-```bash
-# GUI: System Settings → General → Sharing → Remote Login
-# CLI:
-sudo systemsetup -setremotelogin on
-sudo systemsetup -getremotelogin      # "Remote Login: On"
-```
-
-Then authorize the Linux hosts' existing keys:
+`services.openssh.enable = true` in `configuration.nix` turns on Remote Login,
+so there is no `systemsetup` step. It is **key-only**, so authorize the Linux
+hosts' existing keys first:
 
 ```bash
-cat profiles/pikpik/ssh/authorized_keys >> ~/.ssh/authorized_keys
+cat ~/dotfiles/profiles/pikpik/ssh/authorized_keys >> ~/.ssh/authorized_keys
 chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys
 ```
 
-Those keys are the same `daniel@olimar` / `daniel@louie` keys already used on
-the mesh. From either Linux box:
+Those are the same `daniel@olimar` / `daniel@louie` keys already used on the
+mesh. From either Linux box:
 
 ```bash
 ssh pikpik            # config in profiles/{olimar,louie}/ssh/config
@@ -308,19 +265,11 @@ ssh pikpik            # config in profiles/{olimar,louie}/ssh/config
 ssh pikpik.tail5c357b.ts.net
 ```
 
-Inbound to pikpik is port **22** (macOS default); outbound to the Linux boxes
-stays **2222**. If you want 2222 inbound too, edit `/etc/ssh/sshd_config`
-(`Port 2222`) and restart `sshd` — that file is outside this repo in
-nix-profile mode.
+Inbound to pikpik is port **22**; outbound to the Linux boxes stays **2222**.
+To change the inbound port, add `Port 2222` to `services.openssh.extraConfig`
+and rebuild (it is `/etc/ssh/sshd_config.d/100-nix-darwin.conf`).
 
-Optional hardening: set `PasswordAuthentication no` in `/etc/ssh/sshd_config`
-(back it up first, keep an active session open, then restart):
-
-```bash
-sudo launchctl kickstart -k system/com.openssh.sshd
-```
-
-## 7. Verify
+## 11. Verify
 
 ```bash
 # on pikpik
@@ -335,37 +284,68 @@ tailscale ping olimar
 ssh -v olimar
 ```
 
+## Updating
+
+```bash
+cd ~/dotfiles
+./scripts/update pikpik     # nix flake update, then darwin-rebuild switch
+```
+
+That refreshes nixpkgs and nix-darwin, then rebuilds. The casks self-update on
+their own; use `brew upgrade --cask --greedy <name>` to force one.
+
+Rollback if a generation misbehaves:
+
+```bash
+sudo darwin-rebuild --list-generations
+sudo darwin-rebuild --rollback
+```
+
 ## Troubleshooting
 
 | Symptom | Likely fix |
 |---|---|
+| `error: Unexpected files in /etc, aborting activation` | Something else wrote a file nix-darwin owns. Rename it with a `.before-nix-darwin` suffix, then rebuild. |
+| `Unexpected files in /etc: /etc/nix/nix.conf` | `sudo mv /etc/nix/nix.conf{,.before-nix-darwin}` — nix-darwin manages that file now. |
+| `experimental Nix feature 'nix-command' is disabled` | Only on a fresh Mac: `./scripts/enable-nix-features`. After the first `darwin-rebuild` this comes from `nix.settings`. |
 | `Could not resolve hostname ...ts.net` | Tailscale not connected, or MagicDNS off. Check `Tailscale status`; use the `100.x` IP temporarily. |
-| `Permission denied (publickey)` | pikpik's pubkey isn't in that host's `ssh.nix`, or the host wasn't rebuilt. |
+| `Permission denied (publickey)` (pikpik → Linux) | pikpik's pubkey isn't in that host's `ssh.nix`, or the host wasn't rebuilt. |
+| `Permission denied (publickey)` (Linux → pikpik) | `~/.ssh/authorized_keys` on pikpik is empty — see §10. Password auth is disabled. |
 | `Connection refused` on port 2222 | The NixOS host lacks `./ssh.nix` in `configuration.nix`, or the firewall/rebuild didn't apply. |
-| Linux → pikpik times out | Remote Login is off, or the macOS firewall is blocking `sshd`. |
-| `Bad configuration option: UseKeychain` | You're running nixpkgs `openssh`, which shadows `/usr/bin/ssh`; remove it from the PATH/profile. |
-| `experimental Nix feature 'nix-command' is disabled` | Run `./scripts/enable-nix-features` from the repo root, then re-run install. |
-| `ssh olimar` says `Could not resolve hostname` / ignores the config | The `Include config.d/*` line is missing from the top of `~/.ssh/config` (see §5). |
-| fish aliases/prompt/`zed` function missing | fish is not the login shell — see §2a. |
+| `ssh olimar` ignores the config | The `Include config.d/*` line is missing from the top of `~/.ssh/config` (see §9). |
+| `Bad configuration option: UseKeychain` | You're running nixpkgs `openssh`, which shadows `/usr/bin/ssh`; it is deliberately not installed. |
 | Key passphrase asked every time | `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`, and keep `UseKeychain yes`. |
-| Works on LAN but not away | `tailscale status` / `tailscale netcheck`; check tailnet ACLs (default allows all). |
+| fish aliases/prompt missing | fish is not the login shell — see §4. |
+| Ghostty hotkey does nothing | Grant Ghostty Accessibility permission; re-toggle it after an app update. |
+| `darwin-rebuild: command not found` | The first bootstrap didn't finish — re-run `./scripts/install pikpik`. |
+| `Some links were not successfully set up` | dotbot will not overwrite a regular file. Move it aside and re-run `./scripts/link pikpik` (see §3). |
+| `chsh: /run/current-system/sw/bin/fish: non-standard shell` | The first `darwin-rebuild` has not run yet, so fish is not in `/etc/shells`.
 
 ## Notes
 
+- **Old `nix profile` leftovers:** before the migration pikpik used `nix profile`.
+  Those entries still exist in `~/.nix-profile` but nothing puts them on `PATH`.
+  Clean up with `nix profile list` then `nix profile remove <name>`.
+- **Two nixpkgs inputs:** the system tracks `nixpkgs-26.05-darwin` (the macOS
+  release branch: same packages as `nixos-26.05` plus Darwin fixes), while
+  `nixpkgs-unstable` supplies only `claude-code` and `herdr`. Running
+  `./scripts/update pikpik` moves both.
 - **Mosh:** `mosh olimar` works (olimar enables `programs.mosh`). louie does not
   yet — use plain `ssh louie`, or add `programs.mosh.enable = true;` to
   `nixos/hosts/louie/packages.nix`.
 - **No git config linked:** the shared `~/.gitconfig` uses a personal identity.
   Create `profiles/pikpik/gitconfig` with your work name/email and link it.
 - **fish universal variables are not linked:** `fish_variables` is per-machine
-  state that fish rewrites, so it is gitignored instead of tracked. Only
-  `config.fish` is linked.
+  state that fish rewrites, so it is gitignored instead of tracked.
 - **`git` and `curl` come from Nix**, so they shadow `/usr/bin/git` and
   `/usr/bin/curl`. Nix's git ships the Keychain credential helper, so HTTPS auth
   works; if corporate tooling insists on the Xcode shim, drop `git`/`curl` from
-  `cliPackages`.
+  `packages.nix`.
 - **No Zed config linked:** `profiles/shared/zed/` hardcodes a NixOS fish path;
   a macOS Zed config needs its own copy.
 - **Backups:** exclude `/nix` from Time Machine — it is reproducible and large.
 - **Tailscale key expiry:** personal tailnets expire device keys (180 days by
   default). Disable expiry for pikpik in the admin console if that's annoying.
+- **Not managed by Nix:** App Store apps, FileVault, and anything else behind a
+  System Settings UI. `system.defaults.CustomUserPreferences` covers extra
+  `defaults write` keys.
