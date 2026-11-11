@@ -7,7 +7,7 @@ if [ $# -eq 0 ]; then
     echo "Error: Host or profile argument is required."
     echo "Usage: $0 <host-or-profile>"
     echo "Example: $0 louie    # NixOS host: flake update + rebuild"
-    echo "Example: $0 pikpik   # nix-profile: flake update + profile upgrade"
+    echo "Example: $0 pikpik   # nix-darwin / nix-profile: flake update + rebuild or upgrade"
     exit 1
 fi
 
@@ -15,6 +15,25 @@ name="$1"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROFILE_DIR="${REPO_ROOT}/profiles/${name}"
+
+# nix-darwin profiles (macOS) rebuild the whole system, so refresh the flake
+# inputs first and then hand off to scripts/install (which knows the bootstrap
+# case for the very first run).
+if [ -f "${PROFILE_DIR}/.nix-darwin" ]; then
+    if [ ! -f "${PROFILE_DIR}/nixos/flake.nix" ]; then
+        echo "Error: nix-darwin flake '${PROFILE_DIR}/nixos/flake.nix' does not exist."
+        exit 1
+    fi
+
+    echo "Using profile: $name (mode: nix-darwin)"
+    echo "Updating flake inputs..."
+
+    ( cd "${PROFILE_DIR}/nixos" && nix flake update )
+
+    echo "Rebuilding nix-darwin configuration..."
+
+    exec "${REPO_ROOT}/scripts/install" "$name" "${@:2}"
+fi
 
 # nix-profile profiles (macOS/WSL) have their own flake. Refresh its inputs,
 # then let scripts/install upgrade the profile with the new lock. `nix profile

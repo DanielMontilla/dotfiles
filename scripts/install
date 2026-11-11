@@ -25,12 +25,14 @@ fi
 # Determine profile mode from marker files
 if [ -f "${PROFILE_DIR}/.nixos" ]; then
     MODE="nixos"
+elif [ -f "${PROFILE_DIR}/.nix-darwin" ]; then
+    MODE="nix-darwin"
 elif [ -f "${PROFILE_DIR}/.nix-profile" ]; then
     MODE="nix-profile"
 elif [ -f "${PROFILE_DIR}/.windows" ]; then
     MODE="windows"
 else
-    echo "Error: Cannot determine mode for profile '$profile' (missing .nixos, .nix-profile, or .windows marker)."
+    echo "Error: Cannot determine mode for profile '$profile' (missing .nixos, .nix-darwin, .nix-profile, or .windows marker)."
     exit 1
 fi
 
@@ -94,7 +96,39 @@ for feature in nix-command flakes; do
     esac
 done
 
-if [ "$MODE" = "nixos" ]; then
+if [ "$MODE" = "nix-darwin" ]; then
+    DARWIN_FLAKE="${PROFILE_DIR}/nixos"
+
+    if [ ! -f "${DARWIN_FLAKE}/flake.nix" ]; then
+        echo "Error: nix-darwin flake '${DARWIN_FLAKE}/flake.nix' does not exist."
+        exit 1
+    fi
+
+    FLAKE_REF="path:${DARWIN_FLAKE}#${profile}"
+
+    if command -v darwin-rebuild >/dev/null 2>&1; then
+        echo "Rebuilding nix-darwin configuration..."
+        sudo darwin-rebuild switch --flake "$FLAKE_REF" "${@:2}"
+    else
+        # First run: nix-darwin is not installed yet, so darwin-rebuild is not
+        # on PATH. It also refuses to overwrite /etc/nix/nix.conf unless the
+        # file matches a stock installer, and scripts/enable-nix-features has
+        # already appended to it — so move it aside (nix-darwin writes a
+        # managed one). The original is kept next to it.
+        NIX_CONF="${NIX_CONF:-/etc/nix/nix.conf}"
+        if [ -e "$NIX_CONF" ] && [ ! -L "$NIX_CONF" ]; then
+            echo "Moving $NIX_CONF aside so nix-darwin can own it."
+            echo "  (backup: ${NIX_CONF}.before-nix-darwin)"
+            sudo mv "$NIX_CONF" "${NIX_CONF}.before-nix-darwin"
+        fi
+
+        echo "Bootstrapping nix-darwin (first run)..."
+        # /etc/nix/nix.conf is gone, so pass the features for this invocation.
+        sudo NIX_CONFIG='experimental-features = nix-command flakes' \
+            "$(command -v nix)" run github:nix-darwin/nix-darwin#darwin-rebuild \
+            -- switch --flake "$FLAKE_REF" "${@:2}"
+    fi
+elif [ "$MODE" = "nixos" ]; then
     NIXOS_DIR="${REPO_ROOT}/nixos"
 
     if [ ! -d "$NIXOS_DIR" ]; then
