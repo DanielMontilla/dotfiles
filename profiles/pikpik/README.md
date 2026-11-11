@@ -107,7 +107,7 @@ mv ~/Library/Application\ Support/com.mitchellh.ghostty/config{,.bak}
 ./scripts/link pikpik
 ```
 
-## 4. Make fish your login shell
+## 4. Start fish from zsh
 
 macOS keeps `/bin/zsh` as the login shell, and **nix-darwin cannot change the
 shell of an account it did not create** — `users.knownUsers` is only for
@@ -218,42 +218,18 @@ The cask is installed by nix-darwin, but signing in is manual:
    (`tail5c357b`).
 2. In the admin console, rename this device to **pikpik** so MagicDNS gives it
    `pikpik.tail5c357b.ts.net`.
-3. Verify:
+3. Leave the app running as a login item. It owns the tunnel and the Network
+   Extension, so it has to stay installed and signed in.
 
-```bash
-tailscale status
-tailscale ping olimar
-```
+Verify connectivity with a plain `ping olimar` or `ssh olimar` (§11).
 
-The CLI lives inside the app bundle (`/Applications/Tailscale.app/Contents/MacOS/Tailscale`),
-but that binary is also the GUI app: it picks a mode at startup from environment
-variables (`SHLVL`, `TERM`, `TERM_PROGRAM`, `PS1`). Under fish it can choose the
-windowed app, which leaves the terminal waiting on a process that never exits.
-
-Worse, **typing `tailscale ` is enough** to trigger it, without pressing Enter.
-fish autoloads a command's completion file when you type the command and a
-space, and the Cobra completion that ships with fish runs this at load time:
-
-```fish
-if type -q tailscale
-    complete --do-complete "tailscale " > /dev/null 2>&1
-end
-```
-
-That executes the CLI. So `profiles/pikpik/fish/completions/tailscale.fish`
-shadows the vendor file (fish searches `~/.config/fish/completions` first) and
-is inert at load time, listing the subcommands itself. The shared fish config
-also exports `TAILSCALE_BE_CLI=1` on Darwin, so anything that does run the
-bundle — the `tailscale` function, `/usr/local/bin/tailscale`, a completion —
-stays in CLI mode.
-
-The `tailscale` function itself uses `/usr/local/bin/tailscale` when the app's
-**Settings → CLI integration → Install Now** has installed it, and otherwise the
-bundle with `TAILSCALE_BE_CLI=1`.
-
-You never have to open the GUI after the one-time login — but the app must stay
-installed and running as a login item, because it owns the tunnel and the
-Network Extension.
+> **Use the app, not the CLI.** On macOS the `tailscale` command and the GUI are
+> the same bundle binary, and it decides at startup whether to be the windowed
+> app or a CLI. Under fish it can start the app instead, so the terminal waits on
+> a process that never exits — and fish autoloads the CLI's completion file as
+> soon as you type `tailscale` plus a space, so even that can trigger it. This
+> profile deliberately has no CLI wrapper or completion overrides; manage the
+> device from the menu bar.
 
 > **CLI-only alternative:** `brew install tailscale` installs `tailscaled` and
 > a real CLI, and `sudo brew services start tailscale` runs it. It conflicts
@@ -365,7 +341,6 @@ ssh louie 'hostname'
 ssh pikpik 'hostname'
 
 # path/debug
-tailscale ping olimar
 ssh -v olimar
 ```
 
@@ -376,9 +351,9 @@ keeps `$HOME/.nix-profile` **first** in `PATH`, so those packages keep shadowing
 the system ones — `fish`, `git`, `neovim`, `codex`, `claude`, `herdr`, and the
 Nix-packaged Zed/Ghostty apps.
 
-Run this **after** §4 (`chsh`) has worked and a fresh terminal starts with the
-new fish. If your login shell is still `~/.nix-profile/bin/fish`, emptying the
-profile leaves you with no shell to log in to.
+Run this **after** §4 works and a fresh terminal starts in fish. If your login
+shell is still `~/.nix-profile/bin/fish`, emptying the profile leaves you with no
+shell to log in to.
 
 ```bash
 nix profile list          # what is in there, and which flake it came from
@@ -432,17 +407,15 @@ sudo darwin-rebuild --rollback
 | `error: Unexpected files in /etc, aborting activation` | Something else wrote a file nix-darwin owns. Rename it with a `.before-nix-darwin` suffix, then rebuild. |
 | `Unexpected files in /etc: /etc/nix/nix.conf` | `sudo mv /etc/nix/nix.conf{,.before-nix-darwin}` — nix-darwin manages that file now. |
 | `experimental Nix feature 'nix-command' is disabled` | Only on a fresh Mac: `./scripts/enable-nix-features`. After the first `darwin-rebuild` this comes from `nix.settings`. |
-| `Could not resolve hostname ...ts.net` | Tailscale not connected, or MagicDNS off. Check `Tailscale status`; use the `100.x` IP temporarily. |
+| `Could not resolve hostname ...ts.net` | Tailscale not connected, or MagicDNS off. Check the Tailscale menu bar app; use the `100.x` IP temporarily. |
 | `Permission denied (publickey)` (pikpik → Linux) | pikpik's pubkey isn't in that host's `ssh.nix`, or the host wasn't rebuilt. |
 | `Permission denied (publickey)` (Linux → pikpik) | The host's key is missing from `users.users.<user>.openssh.authorizedKeys.keys` in `configuration.nix`, or the Mac has not rebuilt since — see §10. Password auth is disabled. |
 | `Connection refused` on port 2222 | The NixOS host lacks `./ssh.nix` in `configuration.nix`, or the firewall/rebuild didn't apply. |
 | `ssh olimar` ignores the config | The `Include config.d/*` line is missing from the top of `~/.ssh/config` (see §9). Run `./scripts/ssh-setup pikpik`; it prepends the include and warns if the drop-in still isn't applied. |
 | `Bad configuration option: UseKeychain` | You're running nixpkgs `openssh`, which shadows `/usr/bin/ssh`; it is deliberately not installed. |
 | Key passphrase asked every time | `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`, and keep `UseKeychain yes`. |
-| `fish: Unknown command: tailscale` | The shared fish config only defines the `tailscale` function when the app exists. Install the cask (`tailscale-app`), then `exec fish`. |
-| Terminal hangs as soon as you type `tailscale ` | fish autoloads the Cobra completion for `tailscale` on the space, and that file executes the CLI; the macOS bundle then starts the GUI. Fixed by the shadowing completion in `profiles/pikpik/fish/completions/tailscale.fish` plus `TAILSCALE_BE_CLI=1` (pull + re-link). Quick workaround: `set -gx TAILSCALE_BE_CLI 1` in a fresh shell before typing. |
 | New terminal still starts zsh | `~/.zshrc` is not linked (dotbot will not replace a regular file). `ls -l ~/.zshrc`, move an existing file aside, then `./scripts/link pikpik` — see §4. |
-| fish aliases/prompt missing | fish is not the login shell — see §4. |
+| fish aliases/prompt missing | `~/.zshrc` did not hand off to fish — see §4. |
 | Ghostty hotkey does nothing | Grant Ghostty Accessibility permission; re-toggle it after an app update. |
 | `darwin-rebuild: command not found` | The first bootstrap didn't finish — re-run `./scripts/install pikpik`. |
 | `Some links were not successfully set up` | dotbot will not overwrite a regular file. Move it aside and re-run `./scripts/link pikpik` (see §3). |

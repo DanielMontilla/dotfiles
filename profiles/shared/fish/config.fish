@@ -6,33 +6,11 @@ if type -q zeditor
     end
 end
 
-# Tailscale on macOS keeps its CLI inside the app bundle, and that same binary
-# decides at startup whether to be the GUI app or the CLI based on environment
-# variables (SHLVL, TERM, TERM_PROGRAM, PS1). Under fish it can pick the GUI and
-# then the terminal just waits on a windowed process. TAILSCALE_BE_CLI=1 forces
-# CLI mode. Prefer the official launcher (/usr/local/bin/tailscale, installed by
-# the app's Settings -> CLI integration) when it exists; it sets this itself.
-if test -x /usr/local/bin/tailscale
-    function tailscale --description 'Tailscale CLI (official launcher)'
-        /usr/local/bin/tailscale $argv
-    end
-else if test -x /Applications/Tailscale.app/Contents/MacOS/Tailscale
-    function tailscale --description 'Tailscale CLI (macOS app bundle)'
-        env TAILSCALE_BE_CLI=1 /Applications/Tailscale.app/Contents/MacOS/Tailscale $argv
-    end
-end
-
 # On macOS the account's login shell stays /bin/zsh and profiles/pikpik/zshrc
 # execs fish (nix-darwin cannot change an account it did not create). Make
 # $SHELL agree, so tools that spawn "$SHELL" (e.g. `nd`) get fish, not zsh.
-# Also force the Tailscale app bundle into CLI mode: it is both the GUI and the
-# CLI, and anything that runs it (the function below, the official launcher,
-# a completion) can otherwise start the windowed app.
-if test (uname) = Darwin
-    set -gx TAILSCALE_BE_CLI 1
-    if test -x /run/current-system/sw/bin/fish
-        set -gx SHELL /run/current-system/sw/bin/fish
-    end
+if test (uname) = Darwin; and test -x /run/current-system/sw/bin/fish
+    set -gx SHELL /run/current-system/sw/bin/fish
 end
 
 # Herdr starts the remote server over SSH, so panes inherit SSH_CONNECTION from
