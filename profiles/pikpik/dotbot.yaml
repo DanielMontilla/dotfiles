@@ -8,7 +8,7 @@
 # No `clean:` on a work Mac: ~/.config may already hold managed/user state.
 - link:
     # Not ~/.ssh/config: a work Mac may already have a corporate SSH config.
-    # Link into config.d and add one `Include config.d/*` line (README §5).
+    # Link into config.d and add one `Include config.d/*` line (README §9).
     ~/.ssh/config.d/pikpik.conf:
       path: profiles/pikpik/ssh/config
 

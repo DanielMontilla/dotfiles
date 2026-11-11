@@ -49,7 +49,7 @@ in
 
   # -------------------------------------------------------------------- ssh
   # Replaces `sudo systemsetup -setremotelogin on`. Key-only: add the Linux
-  # hosts' keys to ~/.ssh/authorized_keys first (README §6).
+  # hosts' keys to ~/.ssh/authorized_keys first (README §10).
   services.openssh = {
     enable = true;
     extraConfig = ''

@@ -1,11 +1,12 @@
 # dotfiles
 
 Config files for all machines. One **profile** per machine under `profiles/`,
-each in one of three modes chosen by a marker file:
+each in one of four modes chosen by a marker file:
 
 | Marker | Mode | What it does |
 |--------|------|--------------|
 | `.nixos` | nixos | Full NixOS system: `sudo nixos-rebuild switch --flake ".#<name>"` |
+| `.nix-darwin` | nix-darwin | Full macOS system: `sudo darwin-rebuild switch --flake profiles/<name>/nixos#<name>` |
 | `.nix-profile` | nix-profile | User packages: `nix profile add path:profiles/<name>/nixos` |
 | `.windows` | windows | No nix — just links config files with dotbot (needs Python 3.7+) |
 
@@ -20,7 +21,7 @@ windows profiles). `scripts/link <name>` always links config via dotbot.
 | `louie` | NixOS | nixos | `nixos/hosts/louie/` |
 | `olimar` | NixOS | nixos | `nixos/hosts/olimar/` + `profiles/olimar/` |
 | `oatchi` | WSL | nix-profile | `profiles/oatchi/` |
-| `pikpik` | macOS (work) | nix-profile | [`profiles/pikpik/README.md`](profiles/pikpik/README.md) |
+| `pikpik` | macOS (work) | nix-darwin | [`profiles/pikpik/README.md`](profiles/pikpik/README.md) |
 | `koppai` | Windows | windows | [`profiles/koppai/README.md`](profiles/koppai/README.md) |
 
 Shared, app-level configs (alacritty, fish, git, neovim, starship, zed, ...)
@@ -47,8 +48,9 @@ On **Windows** (PowerShell, no bash needed):
 
 - `install` picks the mode from the marker file in `profiles/<name>/`.
 - If `profiles/<name>/vendor-apps.sh` exists, `install` runs it after the
-  mode-specific step — for idempotent curl installers of apps not in nixpkgs
-  (see `profiles/pikpik/vendor-apps.sh`).
+  mode-specific step — for imperative leftovers the declarative step cannot
+  handle (pikpik's only warns about binaries in `~/.local/bin` that would
+  shadow the managed ones).
 - `link` runs `dotbot -d <repo> -c profiles/<name>/dotbot.yaml`. Needs
   `dotbot` on PATH (nix modes get it from the profile; windows mode installs
   it via pip), falling back to `python -m dotbot` if the binary isn't on PATH.

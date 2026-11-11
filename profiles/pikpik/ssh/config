@@ -2,7 +2,7 @@
 #
 # Linked to ~/.ssh/config.d/pikpik.conf, not ~/.ssh/config: a work Mac may
 # already have a corporate SSH config. Add one line at the top of
-# ~/.ssh/config (see profiles/pikpik/README.md §5):
+# ~/.ssh/config (see profiles/pikpik/README.md §9):
 #
 #   Include config.d/*
 #
