@@ -230,11 +230,26 @@ but that binary is also the GUI app: it picks a mode at startup from environment
 variables (`SHLVL`, `TERM`, `TERM_PROGRAM`, `PS1`). Under fish it can choose the
 windowed app, which leaves the terminal waiting on a process that never exits.
 
-The shared fish config therefore defines a `tailscale` function:
+Worse, **typing `tailscale ` is enough** to trigger it, without pressing Enter.
+fish autoloads a command's completion file when you type the command and a
+space, and the Cobra completion that ships with fish runs this at load time:
 
-- if the official launcher `/usr/local/bin/tailscale` exists (installed from the
-  app's **Settings → CLI integration → Install Now**), it uses that;
-- otherwise it calls the bundle with `TAILSCALE_BE_CLI=1`, which forces CLI mode.
+```fish
+if type -q tailscale
+    complete --do-complete "tailscale " > /dev/null 2>&1
+end
+```
+
+That executes the CLI. So `profiles/pikpik/fish/completions/tailscale.fish`
+shadows the vendor file (fish searches `~/.config/fish/completions` first) and
+is inert at load time, listing the subcommands itself. The shared fish config
+also exports `TAILSCALE_BE_CLI=1` on Darwin, so anything that does run the
+bundle — the `tailscale` function, `/usr/local/bin/tailscale`, a completion —
+stays in CLI mode.
+
+The `tailscale` function itself uses `/usr/local/bin/tailscale` when the app's
+**Settings → CLI integration → Install Now** has installed it, and otherwise the
+bundle with `TAILSCALE_BE_CLI=1`.
 
 You never have to open the GUI after the one-time login — but the app must stay
 installed and running as a login item, because it owns the tunnel and the
@@ -425,7 +440,7 @@ sudo darwin-rebuild --rollback
 | `Bad configuration option: UseKeychain` | You're running nixpkgs `openssh`, which shadows `/usr/bin/ssh`; it is deliberately not installed. |
 | Key passphrase asked every time | `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`, and keep `UseKeychain yes`. |
 | `fish: Unknown command: tailscale` | The shared fish config only defines the `tailscale` function when the app exists. Install the cask (`tailscale-app`), then `exec fish`. |
-| Terminal hangs after `tailscale ...` | The app binary launched the GUI instead of the CLI. The fish function sets `TAILSCALE_BE_CLI=1`; pull latest. Run it by hand as `env TAILSCALE_BE_CLI=1 /Applications/Tailscale.app/Contents/MacOS/Tailscale status`. |
+| Terminal hangs as soon as you type `tailscale ` | fish autoloads the Cobra completion for `tailscale` on the space, and that file executes the CLI; the macOS bundle then starts the GUI. Fixed by the shadowing completion in `profiles/pikpik/fish/completions/tailscale.fish` plus `TAILSCALE_BE_CLI=1` (pull + re-link). Quick workaround: `set -gx TAILSCALE_BE_CLI 1` in a fresh shell before typing. |
 | New terminal still starts zsh | `~/.zshrc` is not linked (dotbot will not replace a regular file). `ls -l ~/.zshrc`, move an existing file aside, then `./scripts/link pikpik` — see §4. |
 | fish aliases/prompt missing | fish is not the login shell — see §4. |
 | Ghostty hotkey does nothing | Grant Ghostty Accessibility permission; re-toggle it after an app update. |

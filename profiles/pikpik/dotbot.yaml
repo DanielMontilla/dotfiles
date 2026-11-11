@@ -20,6 +20,10 @@
     # did not create), so this file hands interactive zsh to fish.
     ~/.zshrc: profiles/pikpik/zshrc
 
+    # Shadows fish's vendor completion for tailscale, which executes the CLI at
+    # load time (typing `tailscale ` triggers it) and can launch the GUI.
+    ~/.config/fish/completions/tailscale.fish: profiles/pikpik/fish/completions/tailscale.fish
+
     ~/.config/nvim/:
       path: profiles/shared/neovim/*
 

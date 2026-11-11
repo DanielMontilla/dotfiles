@@ -25,8 +25,14 @@ end
 # On macOS the account's login shell stays /bin/zsh and profiles/pikpik/zshrc
 # execs fish (nix-darwin cannot change an account it did not create). Make
 # $SHELL agree, so tools that spawn "$SHELL" (e.g. `nd`) get fish, not zsh.
-if test (uname) = Darwin; and test -x /run/current-system/sw/bin/fish
-    set -gx SHELL /run/current-system/sw/bin/fish
+# Also force the Tailscale app bundle into CLI mode: it is both the GUI and the
+# CLI, and anything that runs it (the function below, the official launcher,
+# a completion) can otherwise start the windowed app.
+if test (uname) = Darwin
+    set -gx TAILSCALE_BE_CLI 1
+    if test -x /run/current-system/sw/bin/fish
+        set -gx SHELL /run/current-system/sw/bin/fish
+    end
 end
 
 # Herdr starts the remote server over SSH, so panes inherit SSH_CONNECTION from
