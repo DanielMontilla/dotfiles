@@ -64,4 +64,5 @@ with pkgs;
   codex
   unstable.claude-code
   unstable.herdr
+  unstable.opencode
 ]

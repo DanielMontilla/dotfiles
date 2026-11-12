@@ -23,6 +23,13 @@
     ~/.config/nvim/:
       path: profiles/shared/neovim/*
 
+    ~/.config/herdr/config.toml:
+      path: profiles/shared/herdr/config.toml
+      force: true
+
+    ~/.config/zed/:
+      path: profiles/shared/zed/*
+
     ~/.config/starship.toml: profiles/shared/starship/starship.toml
 
     # Ghostty on macOS reads Application Support, not ~/.config/ghostty, so the
@@ -34,5 +41,5 @@
 #   ~/.gitconfig  — the shared one uses a personal identity. Create
 #                   profiles/pikpik/gitconfig with your work name/email and
 #                   link that instead.
-#   ~/.config/zed — profiles/shared/zed/settings.json hardcodes a NixOS fish
-#                   path; a macOS Zed config needs its own copy.
+#   Herdr plugins — profiles/shared/herdr/plugins/ includes Linux/Windows
+#                   notification plugins; only config.toml is linked above.

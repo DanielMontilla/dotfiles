@@ -135,6 +135,7 @@ in
     };
 
     screencapture.location = "~/Pictures/Screenshots";
+
   };
 
   # Touch ID for sudo, with the password as fallback.
