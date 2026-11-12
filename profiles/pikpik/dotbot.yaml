@@ -32,6 +32,10 @@
 
     ~/.config/starship.toml: profiles/shared/starship/starship.toml
 
+    # Karabiner-Elements reads its main config from this path. Keep the JSON in
+    # the profile so the modifier remap is versioned and reproducible.
+    ~/.config/karabiner/karabiner.json: profiles/pikpik/karabiner/karabiner.json
+
     # Ghostty on macOS reads Application Support, not ~/.config/ghostty, so the
     # shared Linux config (GTK-only options, Nerd Font pikpik does not install)
     # is not used here.

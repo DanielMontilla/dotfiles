@@ -94,7 +94,7 @@ in
       cleanup = "none";
     };
 
-    casks = [ "ghostty" "zed" "tailscale-app" ];
+    casks = [ "ghostty" "zed" "tailscale-app" "karabiner-elements" ];
     enableFishIntegration = true;
   };
 
