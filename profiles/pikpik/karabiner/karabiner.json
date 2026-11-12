@@ -92,8 +92,7 @@
                 },
                 "to": [
                   {
-                    "key_code": "n",
-                    "modifiers": ["left_command"]
+                    "shell_command": "/usr/bin/open -na /Applications/Ghostty.app"
                   }
                 ]
               }
