@@ -9,6 +9,13 @@ Host louie
   IdentityFile ~/.ssh/id_ed25519
   StrictHostKeyChecking accept-new
 
+Host olimar
+  HostName olimar.tail5c357b.ts.net
+  User daniel
+  Port 2222
+  IdentityFile ~/.ssh/id_ed25519
+  StrictHostKeyChecking accept-new
+
 # pikpik: macOS work laptop (macOS Remote Login / system sshd, port 22)
 Host pikpik
   HostName pikpik.tail5c357b.ts.net
