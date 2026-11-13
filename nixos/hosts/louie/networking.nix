@@ -107,6 +107,14 @@ in
 
   networking.firewall.interfaces.enp6s0.allowedTCPPorts = [ 8081 ];
 
+  # Full-tunnel provider VPNs (Surfshark etc., imported at runtime) use
+  # policy routing: the default route lives in a dedicated table reached by
+  # an fwmark rule. Strict reverse-path filtering then drops the replies that
+  # come back on enp6s0, which kills anything that deliberately bypasses the
+  # tunnel (Tailscale in particular). olimar/hocotate already use "loose" for
+  # the same multi-homed reason.
+  networking.firewall.checkReversePath = "loose";
+
   networking.firewall.allowedUDPPorts =
     lib.filter (p: p != null) (lib.mapAttrsToList (_: v: v.listenPort or null) vpns);
   networking.firewall.trustedInterfaces = vpnNames;
