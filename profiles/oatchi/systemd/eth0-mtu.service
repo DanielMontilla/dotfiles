@@ -1,0 +1,13 @@
+[Unit]
+Description=Raise eth0 MTU to 1500 for Tailscale post-quantum handshake
+Documentation=https://tailscale.com/kb/1035/mtu/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/ip link set eth0 mtu 1500
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

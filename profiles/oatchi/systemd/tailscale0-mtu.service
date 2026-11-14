@@ -1,0 +1,13 @@
+[Unit]
+Description=Clamp tailscale0 MTU to 1200 (direct path drops packets >=1260B)
+Documentation=https://tailscale.com/kb/1035/mtu/
+After=tailscaled.service
+Wants=tailscaled.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/ip link set dev tailscale0 mtu 1200
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
