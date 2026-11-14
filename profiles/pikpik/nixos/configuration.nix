@@ -74,6 +74,8 @@ in
   users.users.${user}.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIZ+ZZJOYG8B7Rn5ZQdBAXsBgBQygJ7Vk6zlTfogMwyJ daniel@olimar"
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN/nUf7c2Sekdov5CZspz7GslJacskM2MA8mrnwKdbhO daniel@louie"
+    # oatchi (Linux). Fingerprint: SHA256:aM0msWCwmJj5gTUXTHat7cDlGG4zcyomkrdAqQONvuw
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPRA9twrCHL///CFOBc0ZYqKFIpQVaPjUflyHVaCZnni daniel@oatchi"
   ];
 
   # --------------------------------------------------------------- homebrew
