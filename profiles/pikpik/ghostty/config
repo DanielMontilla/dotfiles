@@ -26,6 +26,7 @@ quick-terminal-animation-duration = 0.15
 #   command = /run/current-system/sw/bin/fish
 
 font-size = 14
+theme = Atom
 window-padding-x = 4
 window-padding-y = 4
 window-padding-color = extend
