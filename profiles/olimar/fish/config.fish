@@ -19,6 +19,9 @@ fish_add_path $HOME/.local/bin
 # default bash, so aliases, prompt, and direnv carry into the dev shell.
 alias nd='nix develop -c $SHELL'
 
+# da: allow the current directory's .envrc (direnv allow).
+alias da='direnv allow'
+
 # eza: modern, maintained replacement for ls
 # Defined in the user config.fish (sourced last) so it overrides the
 # NixOS-generated `alias ls 'ls --color=tty'` in /etc/fish/config.fish,

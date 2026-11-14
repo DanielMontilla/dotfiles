@@ -17,6 +17,9 @@ fish_add_path $HOME/.local/bin
 # default bash, so aliases, prompt, and direnv carry into the dev shell.
 alias nd='nix develop -c $SHELL'
 
+# da: allow the current directory's .envrc (direnv allow).
+alias da='direnv allow'
+
 # direnv: auto-load each directory's .envrc on cd. Repos with a
 # .envrc (e.g. montflow's `use flake`) get their environment injected
 # into this shell instead of a nested `nix develop` shell.

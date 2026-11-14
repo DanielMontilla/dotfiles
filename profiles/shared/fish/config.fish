@@ -52,6 +52,9 @@ fish_add_path $HOME/.local/bin
 # default bash, so aliases, prompt, and direnv carry into the dev shell.
 alias nd='nix develop -c $SHELL'
 
+# da: allow the current directory's .envrc (direnv allow).
+alias da='direnv allow'
+
 # Warm the persistent Herdr server from the first graphical terminal, so
 # `herdr --remote` attaches to a running server with the desktop session
 # environment instead of cold-bootstrapping one over SSH (which inherits
