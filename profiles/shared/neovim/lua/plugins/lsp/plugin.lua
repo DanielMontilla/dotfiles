@@ -55,7 +55,8 @@ return {
         map("n", "<leader>ca", vim.lsp.buf.code_action, opts)
         map("n", "[d", vim.diagnostic.goto_prev, opts)
         map("n", "]d", vim.diagnostic.goto_next, opts)
-        map("n", "<leader>e", vim.diagnostic.open_float, opts)
+        -- Moved from <leader>e (now the file tree) to <leader>xd
+        map("n", "<leader>xd", vim.diagnostic.open_float, opts)
 
         vim.api.nvim_create_autocmd("BufWritePre", {
           buffer = bufnr,
