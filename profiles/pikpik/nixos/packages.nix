@@ -53,6 +53,7 @@ with pkgs;
   neovim
   starship
   eza
+  yazi
   ripgrep
   fd
   fzf

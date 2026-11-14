@@ -32,6 +32,13 @@ in
   environment.systemPackages = import ./packages.nix { inherit pkgs unstable; };
 
   programs.fish.enable = true;
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;
+  };
+  programs.fish.interactiveShellInit = ''
+    direnv hook fish | source
+  '';
   environment.shells = [ pkgs.fish ];
 
   # -------------------------------------------------------------------- nix

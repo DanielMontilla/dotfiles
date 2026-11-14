@@ -32,6 +32,8 @@
 
     ~/.config/starship.toml: profiles/shared/starship/starship.toml
 
+    ~/.config/yazi/yazi.toml: profiles/pikpik/yazi/yazi.toml
+
     # Karabiner-Elements reads its main config from this path. Keep the JSON in
     # the profile so the modifier remap is versioned and reproducible.
     ~/.config/karabiner/karabiner.json: profiles/pikpik/karabiner/karabiner.json

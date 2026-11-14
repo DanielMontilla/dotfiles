@@ -24,6 +24,28 @@ end
 
 starship init fish | source
 
+# eza is the maintained successor to exa; keep familiar ls commands with a
+# compact, directory-first listing and richer variants for detail/tree views.
+if type -q eza
+    alias ls='eza --icons=auto --tree --level=1 --group-directories-first'
+    alias ll='eza --icons=auto --long --group --header --git --group-directories-first'
+    alias la='eza --icons=auto --long --all --group --header --git --group-directories-first'
+    alias lt='eza --icons=auto --tree --level=2 --group-directories-first'
+end
+
+# Yazi's shell wrapper changes the current directory to the last visited one.
+if type -q yazi
+    function y --description 'Open Yazi and change to its last directory'
+        set -l tmp (mktemp -t yazi-cwd.XXXXXX)
+        yazi $argv --cwd-file="$tmp"
+        set -l cwd (cat -- "$tmp")
+        if test -n "$cwd"; and test "$cwd" != "$PWD"; and test -d "$cwd"
+            cd -- "$cwd"
+        end
+        rm -f -- "$tmp"
+    end
+end
+
 fish_add_path $HOME/.local/bin
 
 # nd: `nix develop` that drops into the current shell ($SHELL) instead of the
