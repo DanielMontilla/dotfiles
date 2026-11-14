@@ -24,8 +24,8 @@ windows profiles). `scripts/link <name>` always links config via dotbot.
 | `pikpik` | macOS (work) | nix-darwin | [`profiles/pikpik/README.md`](profiles/pikpik/README.md) |
 | `koppai` | Windows | windows | [`profiles/koppai/README.md`](profiles/koppai/README.md) |
 
-Shared, app-level configs (alacritty, fish, git, neovim, starship, zed, ...)
-live in `profiles/shared/<app>/` and are referenced by each profile's
+Shared, app-level configs (alacritty, fish, git, neovim, opencode, starship,
+zed, ...) live in `profiles/shared/<app>/` and are referenced by each profile's
 `dotbot.yaml` by repo-relative path.
 
 ## Scripts

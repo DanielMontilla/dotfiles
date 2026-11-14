@@ -12,6 +12,10 @@
 - link:
     ~/.gitconfig: profiles/shared/git/gitconfig
 
+    ~/.config/opencode/opencode.jsonc:
+      path: profiles/shared/opencode/opencode.jsonc
+      force: true
+
     ~/.ssh/config: profiles/hocotate/ssh/config
 
     ~/.config/nvim/:

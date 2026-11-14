@@ -31,6 +31,10 @@
     ~/.config/fish/conf.d/:
       path: profiles/louie/fish/conf.d/*
 
+    ~/.config/opencode/opencode.jsonc:
+      path: profiles/shared/opencode/opencode.jsonc
+      force: true
+
     ~/.config/niri/:
       path: profiles/louie/niri/*
 

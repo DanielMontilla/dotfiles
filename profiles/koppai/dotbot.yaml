@@ -14,3 +14,7 @@
     # OpenSSH on Windows reads ~/.ssh/config from the user profile dir
     "~/.ssh/config":
       path: profiles/koppai/ssh/config
+
+    ~/.config/opencode/opencode.jsonc:
+      path: profiles/shared/opencode/opencode.jsonc
+      force: true

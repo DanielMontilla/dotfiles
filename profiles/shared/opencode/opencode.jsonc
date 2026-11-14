@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // The built-in `amd` catalog entry targets AMD Token Factory / Radeon Cloud
+  // (https://developer.amd.com.cn/radeon/api/v1). AMD Developer Program keys
+  // are for Token Lab, so point the provider at that endpoint instead.
+  "providers": {
+    "amd": {
+      "settings": {
+        "baseURL": "https://api.tokenlab.amd.com/v1",
+      },
+    },
+  },
+}

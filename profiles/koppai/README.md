@@ -51,6 +51,7 @@ Nothing else — there are no packages to install on Windows.
 |---|---|
 | `profiles/shared/zed/*` | `~/AppData/Roaming/Zed/` (i.e. `%APPDATA%\Zed`) |
 | `profiles/koppai/ssh/config` | `~/.ssh/config` |
+| `profiles/shared/opencode/opencode.jsonc` | `~/.config/opencode/opencode.jsonc` |
 
 Because it's a symlink, edits you make in Zed write straight back into the
 repo (commit them like any other change).
