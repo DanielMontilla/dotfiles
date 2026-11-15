@@ -1,0 +1,28 @@
+{
+  "name": "yt-transcribe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Transcribe a YouTube video: yt-dlp audio download + local Whisper transcription",
+  "author": "Daniel Montilla",
+  "type": "module",
+  "bin": {
+    "yt-transcribe": "./src/main.ts"
+  },
+  "scripts": {
+    "start": "bun run src/main.ts",
+    "ts:check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clack/prompts": "1.8.1",
+    "@effect/platform-node": "4.0.0-rc.112",
+    "@effect/platform-node-shared": "4.0.0-rc.112",
+    "effect": "4.0.0-rc.112"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  },
+  "overrides": {
+    "@effect/platform-node-shared": "4.0.0-rc.112"
+  }
+}
