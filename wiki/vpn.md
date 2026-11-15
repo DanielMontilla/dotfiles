@@ -35,6 +35,11 @@ Time: ~5 minutes.
 - Provider tunnels are NOT declared in nix — NetworkManager keeps them in `/etc/NetworkManager/system-connections/` and they survive rebuilds. Tweak freely in wlctl.
 - Exception: infra tunnels with fixed ports or custom routing (like `wg-co-bog`) live in `nixos/hosts/olimar/networking.nix`.
 - Two tunnels sharing the same tunnel IP (e.g. both `10.14.x.x`) must never be enabled at the same time.
+  Concretely: `us-mia` is installed on both olimar and louie with tunnel IP
+  `10.14.0.2`. Enabling it on both breaks Tailscale between them (SSH times
+  out, `tailscale status` shows the peer offline). Keep it on at most one
+  machine; if louie can't reach olimar, run `nmcli connection down us-mia` on
+  louie and `tailscale ping olimar` should recover in seconds.
 - Delete a VPN: `wlctl` → `v` → select → `d`.
 
 Next: after step 3, do a quick on/off cycle in wlctl to confirm it connects before you need it.
