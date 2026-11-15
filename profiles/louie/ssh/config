@@ -9,6 +9,7 @@ Host louie
   IdentityFile ~/.ssh/id_ed25519
   StrictHostKeyChecking accept-new
 
+# olimar: NixOS box, dedicated SSH port 2222. `ssh olimar`.
 Host olimar
   HostName olimar.tail5c357b.ts.net
   User daniel
