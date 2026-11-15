@@ -105,6 +105,9 @@
     GTK_THEME = "Adwaita:dark";
     NIXOS_OZONE_WL = "1";
     XKB_CONFIG_ROOT = "${pkgs.xkeyboard_config}/share/X11/xkb";
+    # Playwright: use the Nix-built browsers (version-matched to playwright-driver) instead of downloading
+    PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
+    PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "1";
   };
 
   environment.systemPackages = with pkgs; [
@@ -144,6 +147,30 @@
     direnv
     wireguard-tools
     inputs.wlctl.packages.${pkgs.stdenv.hostPlatform.system}.default
+
+    # Agent computer-use: frame/audio extraction from video, full-desktop screen recording
+    ffmpeg
+    wf-recorder
+
+    # Agent computer-use: headless Chromium driven by chrome-devtools-mcp
+    # Pins a stable /run/current-system/sw/bin/chromium path (nix store paths move)
+    chromium
+
+    # Video transcription: yt-dlp downloads audio/captions, Whisper transcribes locally
+    # (ffmpeg above is required by both). Exposes `whisper` on PATH.
+    # Unstable: the 25.11 pin's yt-dlp gets HTTP 403 from YouTube
+    inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.yt-dlp
+    (python3.withPackages (ps: [ ps.openai-whisper ]))
+
+    # `yt-transcribe <url>`: source lives in ~/dotfiles/tools/yt-transcribe (Bun + Effect).
+    # Installs its node_modules on first run from the committed bun.lock.
+    (writeShellScriptBin "yt-transcribe" ''
+      dir="$HOME/dotfiles/tools/yt-transcribe"
+      if [ ! -d "$dir/node_modules" ]; then
+        (cd "$dir" && ${bun}/bin/bun install --frozen-lockfile)
+      fi
+      exec ${bun}/bin/bun run "$dir/src/main.ts" "$@"
+    '')
   ];
 
   programs.fish.enable = true;
