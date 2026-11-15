@@ -1,0 +1,30 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // OpenCode reads a single global config, so this profile file mirrors the
+  // shared AMD provider (profiles/shared/opencode/opencode.jsonc) and adds
+  // olimar's machine-local chrome-devtools MCP server. The server drives the
+  // NixOS Chromium installed by nixos/hosts/olimar/packages.nix.
+  "providers": {
+    "amd": {
+      "settings": {
+        "baseURL": "https://api.tokenlab.amd.com/v1",
+      },
+    },
+  },
+  "mcp": {
+    "servers": {
+      "chrome-devtools": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "chrome-devtools-mcp@1.12.0",
+          "--headless",
+          "--executablePath=/run/current-system/sw/bin/chromium",
+          "--viewport=1280x900",
+          "--no-usage-statistics",
+        ],
+      },
+    },
+  },
+}

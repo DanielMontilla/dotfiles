@@ -34,7 +34,7 @@
       path: profiles/olimar/fish/conf.d/*
 
     ~/.config/opencode/opencode.jsonc:
-      path: profiles/shared/opencode/opencode.jsonc
+      path: profiles/olimar/opencode/opencode.jsonc
       force: true
 
     ~/.config/niri/:
