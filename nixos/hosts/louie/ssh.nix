@@ -22,4 +22,10 @@
 
   # Tailscale mesh VPN for internet reachability (free personal plan)
   services.tailscale.enable = true;
+
+  # Tailscale firewall: allow Tailscale UDP port and use loose reverse-path
+  # to prevent packet drops on multi-homed setups and enable direct P2P.
+  # Matches olimar/hocotate.
+  networking.firewall.allowedUDPPorts = [ config.services.tailscale.port ];
+  networking.firewall.checkReversePath = "loose";
 }
