@@ -1,3 +1,7 @@
+# Load per-project SSH configs (e.g. port-forward aliases like pikpik-vz).
+# Must be at the very top. Loads each *.conf in ~/.ssh/config.d/.
+Include ~/.ssh/config.d/*.conf
+
 # SSH over Tailscale mesh (internet, key-only, port 2222)
 # Hostnames resolve to stable *.ts.net addresses — no port forwarding needed.
 

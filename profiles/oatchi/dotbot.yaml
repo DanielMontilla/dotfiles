@@ -35,3 +35,7 @@
     ~/.ssh/config:
       path: profiles/oatchi/ssh/config
       force: true
+
+    ~/.ssh/config.d:
+      path: profiles/oatchi/ssh/config.d
+      force: true
